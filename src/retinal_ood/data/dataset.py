@@ -11,9 +11,13 @@ from pathlib import Path
 from typing import Any, Callable
 
 import pandas as pd
+from pandas.errors import EmptyDataError
 from PIL import Image
 
-REQUIRED_COLUMNS = {"image_path", "label", "split", "source", "ood_type"}
+REQUIRED_COLUMNS = {"image_path", "split", "label", "category"}
+OPTIONAL_COLUMNS = {"patient_id", "scanner", "notes"}
+VALID_SPLITS = {"train", "val", "test"}
+VALID_LABELS = {0, 1}
 
 
 @dataclass(frozen=True)
@@ -21,8 +25,7 @@ class ManifestRecord:
     image_path: Path
     label: int
     split: str
-    source: str
-    ood_type: str
+    category: str
     metadata: dict[str, Any]
 
 
@@ -32,7 +35,8 @@ class ManifestImageDataset:
     Parameters
     ----------
     manifest_path:
-        CSV containing at least image_path,label,split,source,ood_type.
+        CSV containing at least image_path,split,label,category. Optional metadata columns
+        include patient_id, scanner, and notes.
     root_dir:
         Optional base directory for relative image paths.
     transform:
@@ -51,15 +55,84 @@ class ManifestImageDataset:
         self.manifest_path = Path(manifest_path)
         self.root_dir = Path(root_dir) if root_dir is not None else None
         self.transform = transform
-        self.df = pd.read_csv(self.manifest_path)
-        missing = REQUIRED_COLUMNS - set(self.df.columns)
-        if missing:
-            raise ValueError(f"Manifest {self.manifest_path} missing required columns: {sorted(missing)}")
+
+        if not self.manifest_path.exists():
+            raise FileNotFoundError(f"Manifest file does not exist: {self.manifest_path}")
+
+        try:
+            self.df = pd.read_csv(self.manifest_path)
+        except EmptyDataError as exc:
+            raise ValueError(f"Manifest {self.manifest_path} is empty or malformed") from exc
+
+        self._validate_schema()
+        self._validate_rows()
+
         if require_files:
             missing_files = [str(p) for p in self._resolved_paths() if not p.exists()]
             if missing_files:
                 preview = missing_files[:5]
-                raise FileNotFoundError(f"Missing {len(missing_files)} image files, examples: {preview}")
+                raise FileNotFoundError(
+                    f"Manifest {self.manifest_path} references {len(missing_files)} missing "
+                    f"image files, examples: {preview}"
+                )
+
+    def _validate_schema(self) -> None:
+        missing = REQUIRED_COLUMNS - set(self.df.columns)
+        if missing:
+            raise ValueError(f"Manifest {self.manifest_path} missing required columns: {sorted(missing)}")
+        if self.df.empty:
+            raise ValueError(f"Manifest {self.manifest_path} contains no rows")
+        for column in OPTIONAL_COLUMNS:
+            if column not in self.df.columns:
+                self.df[column] = ""
+
+    def _validate_rows(self) -> None:
+        self._validate_image_paths()
+        self._validate_splits()
+        self._validate_labels()
+        self._validate_categories()
+
+    def _validate_image_paths(self) -> None:
+        paths = self.df["image_path"].astype("string")
+        invalid_mask = paths.isna() | (paths.str.strip() == "")
+        if invalid_mask.any():
+            rows = self._row_numbers(invalid_mask)
+            raise ValueError(f"Manifest {self.manifest_path} has empty image_path values at rows: {rows}")
+
+    def _validate_splits(self) -> None:
+        splits = self.df["split"].astype("string").str.strip().str.lower()
+        invalid_mask = splits.isna() | ~splits.isin(VALID_SPLITS)
+        if invalid_mask.any():
+            invalid_values = sorted(set(self.df.loc[invalid_mask, "split"].astype(str).tolist()))
+            raise ValueError(
+                f"Manifest {self.manifest_path} has invalid split values {invalid_values}; "
+                f"expected one of {sorted(VALID_SPLITS)}"
+            )
+        self.df["split"] = splits
+
+    def _validate_labels(self) -> None:
+        labels = pd.to_numeric(self.df["label"], errors="coerce")
+        invalid_mask = labels.isna() | ~labels.isin(VALID_LABELS)
+        if invalid_mask.any():
+            invalid_values = sorted(set(self.df.loc[invalid_mask, "label"].astype(str).tolist()))
+            raise ValueError(
+                f"Manifest {self.manifest_path} has invalid label values {invalid_values}; "
+                "expected binary labels 0=ID and 1=OOD"
+            )
+        self.df["label"] = labels.astype(int)
+
+    def _validate_categories(self) -> None:
+        categories = self.df["category"].astype("string")
+        invalid_mask = categories.isna() | (categories.str.strip() == "")
+        if invalid_mask.any():
+            rows = self._row_numbers(invalid_mask)
+            raise ValueError(f"Manifest {self.manifest_path} has empty category values at rows: {rows}")
+        self.df["category"] = categories.str.strip()
+
+    @staticmethod
+    def _row_numbers(mask: pd.Series) -> list[int]:
+        """Return 1-based CSV data-row numbers for user-facing error messages."""
+        return [int(idx) + 2 for idx in mask[mask].index.tolist()]
 
     def _resolve_path(self, image_path: str | Path) -> Path:
         p = Path(image_path)

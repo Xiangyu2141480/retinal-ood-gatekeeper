@@ -72,9 +72,9 @@ python scripts/generate_report_tables.py --runs-dir runs/ --out reports/results_
 Each manifest should contain at least:
 
 ```csv
-image_path,label,split,source,ood_type,patient_id,scanner,notes
-/path/to/image.png,0,train,synthetic_faf,id,,,,
-/path/to/color_fundus.jpg,1,test,real_ood,modality_shift,,,,
+image_path,split,label,category,patient_id,scanner,notes
+data/images/example_id.png,train,0,id,,Heidelberg,
+data/images/example_ood.jpg,test,1,modality_shift,,unknown,
 ```
 
 Labels:
@@ -82,8 +82,9 @@ Labels:
 - `0`: in-distribution / valid FAF
 - `1`: anomaly / OOD / invalid input
 
-OOD types:
+Categories:
 
+- `id`
 - `modality_shift`
 - `sensory_artifact`
 - `semantic_outlier`
