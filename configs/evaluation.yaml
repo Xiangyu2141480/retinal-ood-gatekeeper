@@ -13,3 +13,7 @@ evaluation:
   validation_quantile_for_id_threshold: 0.95
   save_score_csv: true
   save_plots: true
+  save_heatmaps: false
+  heatmap_top_k: 5
+  heatmap_alpha: 0.45
+  heatmap_cmap: magma
