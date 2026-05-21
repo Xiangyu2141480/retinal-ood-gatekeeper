@@ -103,6 +103,7 @@ See the `docs/` directory:
 - `CODEX_TASKS.md` — staged Codex task list with ready-to-use prompts.
 - `GITHUB_WORKFLOW_CN.md` — GitHub branch/issue/PR workflow.
 - `FINAL_REPORT_OUTLINE_CN.md` — thesis/report writing structure.
+- `RESULTS_INTERPRETATION_TEMPLATE_CN.md` — templates for interpreting metrics, layer ablations, heatmaps, limitations, and future work.
 
 ## Privacy and safety
 
