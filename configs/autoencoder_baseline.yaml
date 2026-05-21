@@ -1,0 +1,25 @@
+project:
+  name: retinal_faf_ood_gatekeeper
+  run_name: autoencoder_baseline
+  seed: 42
+
+data:
+  train_manifest: data/manifests/train_synthetic_faf.csv
+  val_manifest: data/manifests/val_synthetic_faf.csv
+  test_id_manifest: data/manifests/test_real_id.csv
+  test_ood_manifest: data/manifests/test_ood.csv
+  image_size: 224
+  grayscale_to_rgb: false
+  normalize: minmax
+
+model:
+  name: conv_autoencoder
+  latent_dim: 128
+  epochs: 50
+  batch_size: 32
+  learning_rate: 0.001
+  device: auto
+
+output:
+  runs_dir: runs
+  save_reconstructions: true
