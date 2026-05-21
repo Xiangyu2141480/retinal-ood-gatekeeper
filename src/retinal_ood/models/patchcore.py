@@ -1,16 +1,24 @@
-"""PatchCore-style detector skeleton.
+"""PatchCore-style feature memory bank.
 
-The full implementation should be developed task-by-task with Codex. This skeleton documents
-the required public API and keeps the repository importable.
+PatchCore learns a bank of local CNN patch features from ID/normal images only. Later
+inference compares incoming patch features against this bank; this task implements the
+training-side memory construction without adding scoring logic yet.
 """
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+import torch
+import torch.nn.functional as F
+from torch import nn
+from torch.utils.data import DataLoader
+
+from retinal_ood.models.feature_extractor import build_feature_extractor
 
 
 @dataclass
@@ -19,36 +27,209 @@ class PatchCoreConfig:
     layers: tuple[str, ...] = ("layer2", "layer3")
     coreset_ratio: float = 0.1
     nearest_neighbors: int = 1
+    max_train_patches: int | None = None
+    random_seed: int = 42
+    pretrained: bool = True
+    feature_backend: str = "torchvision"
+    device: str = "cpu"
 
 
 class PatchCoreDetector:
-    """PatchCore detector API placeholder.
+    """PatchCore detector that can fit and persist a normal patch-feature memory bank.
 
-    Expected behavior after implementation:
-    - fit(dataloader): build a normal patch-feature memory bank from ID data only.
-    - predict_scores(dataloader): return anomaly scores and optional heatmaps.
-    - save/load: persist memory bank and config.
+    ``fit`` filters labelled batches to ID samples (`label == 0`) so OOD examples are never
+    used to build the unsupervised reference memory.
     """
 
-    def __init__(self, config: PatchCoreConfig) -> None:
+    def __init__(
+        self,
+        config: PatchCoreConfig,
+        feature_extractor: nn.Module | None = None,
+    ) -> None:
+        _validate_config(config)
         self.config = config
+        self.feature_extractor = feature_extractor or build_feature_extractor(
+            backbone=config.backbone,
+            layers=config.layers,
+            pretrained=config.pretrained,
+            backend=config.feature_backend,  # type: ignore[arg-type]
+        )
+        self.device = torch.device(config.device)
+        self.feature_extractor.to(self.device)
+        self.feature_extractor.eval()
         self.memory_bank: np.ndarray | None = None
+        self.feature_dim: int | None = None
 
-    def fit(self, *_: Any, **__: Any) -> None:
-        raise NotImplementedError("PatchCoreDetector.fit must be implemented by the Codex task.")
+    def fit(self, dataloader: DataLoader) -> None:
+        """Build the normal patch-feature memory bank from ID training images."""
+        if self.feature_extractor is None:
+            raise ValueError("PatchCoreDetector.load() returns a fitted detector; create a new detector to refit")
+        patch_batches: list[np.ndarray] = []
+        total_id_images = 0
+        with torch.no_grad():
+            for batch in dataloader:
+                images, labels = _split_batch(batch)
+                images = images.to(device=self.device, dtype=torch.float32)
+                id_images = _filter_id_images(images, labels)
+                if id_images.numel() == 0:
+                    continue
+                total_id_images += int(id_images.shape[0])
+                features = self.feature_extractor(id_images)
+                embeddings = patch_embeddings_from_feature_maps(features, self.config.layers)
+                patch_batches.append(embeddings.detach().cpu().numpy().astype(np.float32))
+
+        if total_id_images == 0:
+            raise ValueError("PatchCore memory bank requires at least one ID image with label=0")
+        if not patch_batches:
+            raise ValueError("PatchCore feature extractor returned no patch embeddings")
+
+        patches = np.concatenate(patch_batches, axis=0)
+        self.feature_dim = int(patches.shape[1])
+        self.memory_bank = deterministic_coreset(
+            patches,
+            coreset_ratio=self.config.coreset_ratio,
+            max_patches=self.config.max_train_patches,
+            seed=self.config.random_seed,
+        )
+        if self.memory_bank.size == 0:
+            raise ValueError("PatchCore memory bank is empty after coreset selection")
 
     def predict_scores(self, *_: Any, **__: Any) -> np.ndarray:
-        raise NotImplementedError("PatchCoreDetector.predict_scores must be implemented by the Codex task.")
+        raise NotImplementedError("PatchCoreDetector.predict_scores is implemented in Task 6.")
 
     def save(self, path: str | Path) -> None:
+        if self.memory_bank is None:
+            raise ValueError("Cannot save PatchCoreDetector before fit() builds a memory bank")
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        np.savez_compressed(path, memory_bank=self.memory_bank, layers=np.array(self.config.layers))
+        np.savez_compressed(
+            path,
+            memory_bank=self.memory_bank,
+            backbone=np.array(self.config.backbone),
+            layers=np.array(self.config.layers),
+            coreset_ratio=np.array(self.config.coreset_ratio),
+            nearest_neighbors=np.array(self.config.nearest_neighbors),
+            max_train_patches=np.array(-1 if self.config.max_train_patches is None else self.config.max_train_patches),
+            random_seed=np.array(self.config.random_seed),
+            pretrained=np.array(self.config.pretrained),
+            feature_backend=np.array(self.config.feature_backend),
+            feature_dim=np.array(-1 if self.feature_dim is None else self.feature_dim),
+        )
 
     @classmethod
     def load(cls, path: str | Path) -> "PatchCoreDetector":
         data = np.load(path, allow_pickle=False)
         layers = tuple(str(x) for x in data["layers"].tolist())
-        detector = cls(PatchCoreConfig(layers=layers))
+        max_train_patches = int(data["max_train_patches"]) if "max_train_patches" in data else -1
+        config = PatchCoreConfig(
+            backbone=str(data["backbone"]) if "backbone" in data else "resnet50",
+            layers=layers,
+            coreset_ratio=float(data["coreset_ratio"]) if "coreset_ratio" in data else 0.1,
+            nearest_neighbors=int(data["nearest_neighbors"]) if "nearest_neighbors" in data else 1,
+            max_train_patches=None if max_train_patches < 0 else max_train_patches,
+            random_seed=int(data["random_seed"]) if "random_seed" in data else 42,
+            pretrained=bool(data["pretrained"]) if "pretrained" in data else True,
+            feature_backend=str(data["feature_backend"]) if "feature_backend" in data else "torchvision",
+        )
+        detector = object.__new__(cls)
+        detector.config = config
+        detector.feature_extractor = None
+        detector.device = torch.device(config.device)
         detector.memory_bank = data["memory_bank"]
+        detector.feature_dim = int(data["feature_dim"]) if "feature_dim" in data and int(data["feature_dim"]) >= 0 else (
+            int(detector.memory_bank.shape[1]) if detector.memory_bank.ndim == 2 else None
+        )
         return detector
+
+
+def patch_embeddings_from_feature_maps(
+    features: Mapping[str, torch.Tensor],
+    layers: tuple[str, ...],
+) -> torch.Tensor:
+    """Convert selected CNN feature maps to concatenated per-patch embeddings."""
+    if not layers:
+        raise ValueError("At least one feature layer is required")
+    missing = [layer for layer in layers if layer not in features]
+    if missing:
+        raise ValueError(f"Feature maps missing requested layers: {missing}")
+
+    first = features[layers[0]]
+    if first.ndim != 4:
+        raise ValueError(f"Expected feature map shape B,C,H,W, got {tuple(first.shape)}")
+    target_size = first.shape[-2:]
+    resized: list[torch.Tensor] = []
+    batch_size = int(first.shape[0])
+    for layer in layers:
+        feature = features[layer]
+        if feature.ndim != 4:
+            raise ValueError(f"Expected feature map shape B,C,H,W for {layer}, got {tuple(feature.shape)}")
+        if int(feature.shape[0]) != batch_size:
+            raise ValueError("All feature maps must have the same batch dimension")
+        if feature.shape[-2:] != target_size:
+            feature = F.interpolate(feature, size=target_size, mode="bilinear", align_corners=False)
+        resized.append(feature)
+
+    concatenated = torch.cat(resized, dim=1)
+    patches = concatenated.permute(0, 2, 3, 1).reshape(-1, concatenated.shape[1])
+    return patches.contiguous()
+
+
+def deterministic_coreset(
+    patches: np.ndarray,
+    *,
+    coreset_ratio: float,
+    max_patches: int | None,
+    seed: int,
+) -> np.ndarray:
+    """Select a deterministic random coreset from patch embeddings."""
+    patches = np.asarray(patches, dtype=np.float32)
+    if patches.ndim != 2:
+        raise ValueError("patches must be a 2D array with shape num_patches, feature_dim")
+    if patches.shape[0] == 0:
+        raise ValueError("patches must not be empty")
+    _validate_coreset_args(coreset_ratio, max_patches)
+
+    target = int(np.ceil(patches.shape[0] * coreset_ratio))
+    if max_patches is not None:
+        target = min(target, max_patches)
+    target = max(1, min(target, patches.shape[0]))
+    if target == patches.shape[0]:
+        return patches.copy()
+
+    rng = np.random.default_rng(seed)
+    selected = np.sort(rng.choice(patches.shape[0], size=target, replace=False))
+    return patches[selected].copy()
+
+
+def _validate_config(config: PatchCoreConfig) -> None:
+    _validate_coreset_args(config.coreset_ratio, config.max_train_patches)
+    if config.nearest_neighbors <= 0:
+        raise ValueError("nearest_neighbors must be positive")
+
+
+def _validate_coreset_args(coreset_ratio: float, max_patches: int | None) -> None:
+    if not 0 < coreset_ratio <= 1:
+        raise ValueError("coreset_ratio must be in (0, 1]")
+    if max_patches is not None and max_patches <= 0:
+        raise ValueError("max_train_patches must be positive when set")
+
+
+def _split_batch(batch: Any) -> tuple[torch.Tensor, torch.Tensor | None]:
+    if torch.is_tensor(batch):
+        return batch, None
+    if isinstance(batch, (tuple, list)) and batch:
+        images = batch[0]
+        labels = batch[1] if len(batch) > 1 else None
+        if not torch.is_tensor(images):
+            raise TypeError("Expected batch images to be a torch.Tensor")
+        if labels is not None and not torch.is_tensor(labels):
+            labels = torch.as_tensor(labels)
+        return images, labels
+    raise TypeError("Expected a tensor batch or a tuple/list whose first item is a tensor")
+
+
+def _filter_id_images(images: torch.Tensor, labels: torch.Tensor | None) -> torch.Tensor:
+    if labels is None:
+        return images
+    labels = labels.to(device=images.device)
+    return images[labels == 0]
