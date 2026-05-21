@@ -22,10 +22,15 @@ from retinal_ood.evaluation.reporting import (
 from retinal_ood.evaluation.thresholds import threshold_from_id_quantile
 from retinal_ood.models.patchcore import PatchCoreDetector
 from retinal_ood.utils.io import read_yaml, write_json
+from retinal_ood.visualization.heatmaps import save_topk_heatmaps
 
 
 class ScoreDetector(Protocol):
-    def predict_scores(self, dataloader: DataLoader, **kwargs: Any) -> np.ndarray:
+    def predict_scores(
+        self,
+        dataloader: DataLoader,
+        **kwargs: Any,
+    ) -> np.ndarray | tuple[np.ndarray, list[np.ndarray]]:
         ...
 
 
@@ -69,19 +74,53 @@ def _make_loader(config: dict[str, Any], dataset: ManifestImageDataset) -> DataL
 
 
 def _dataset_metadata(dataset: ManifestImageDataset) -> list[dict[str, Any]]:
-    return [row for row in dataset.df.to_dict(orient="records")]
+    rows: list[dict[str, Any]] = []
+    for row in dataset.df.to_dict(orient="records"):
+        metadata = dict(row)
+        metadata["resolved_image_path"] = str(dataset._resolve_path(row["image_path"]))
+        rows.append(metadata)
+    return rows
 
 
 def _score_dataset(
     detector: ScoreDetector,
     config: dict[str, Any],
     dataset: ManifestImageDataset,
-) -> tuple[np.ndarray, np.ndarray, list[dict[str, Any]]]:
+    *,
+    return_patch_maps: bool = False,
+) -> tuple[np.ndarray, np.ndarray, list[dict[str, Any]], list[np.ndarray] | None]:
     labels = dataset.df["label"].astype(int).to_numpy()
-    scores = np.asarray(detector.predict_scores(_make_loader(config, dataset)), dtype=float)
+    try:
+        result = detector.predict_scores(
+            _make_loader(config, dataset),
+            return_patch_maps=return_patch_maps,
+        )
+    except TypeError as exc:
+        if return_patch_maps:
+            raise TypeError(
+                "Heatmap export requires detector.predict_scores(..., return_patch_maps=True)"
+            ) from exc
+        raise
+
+    patch_maps: list[np.ndarray] | None = None
+    raw_scores: Any = result
+    if return_patch_maps:
+        if not isinstance(result, tuple) or len(result) != 2:
+            raise ValueError(
+                "Heatmap export requires detector.predict_scores(..., return_patch_maps=True) "
+                "to return (scores, patch_maps)"
+            )
+        raw_scores, raw_patch_maps = result
+        patch_maps = list(raw_patch_maps)
+        if len(patch_maps) != labels.shape[0]:
+            raise ValueError(
+                f"Detector returned {len(patch_maps)} patch maps for {labels.shape[0]} images"
+            )
+
+    scores = np.asarray(raw_scores, dtype=float)
     if scores.shape[0] != labels.shape[0]:
         raise ValueError(f"Detector returned {scores.shape[0]} scores for {labels.shape[0]} images")
-    return labels, scores, _dataset_metadata(dataset)
+    return labels, scores, _dataset_metadata(dataset), patch_maps
 
 
 def _score_optional_validation_id(
@@ -93,7 +132,7 @@ def _score_optional_validation_id(
         val_dataset = _make_dataset(config, "val_manifest").id_subset()
         if len(val_dataset) == 0:
             raise ValueError("data.val_manifest has no ID rows for threshold calibration")
-        _, val_scores, _ = _score_dataset(detector, config, val_dataset)
+        _, val_scores, _, _ = _score_dataset(detector, config, val_dataset)
         return val_scores, "validation_id_quantile"
     return None, "test_id_quantile"
 
@@ -124,9 +163,20 @@ def run_evaluation(
     detector = detector or _load_patchcore_detector(config, checkpoint)
     id_dataset = _make_dataset(config, "test_id_manifest")
     ood_dataset = _make_dataset(config, "test_ood_manifest")
+    save_heatmaps = bool(eval_cfg.get("save_heatmaps", output_cfg.get("save_heatmaps", False)))
 
-    id_labels, id_scores, id_metadata = _score_dataset(detector, config, id_dataset)
-    ood_labels, ood_scores, ood_metadata = _score_dataset(detector, config, ood_dataset)
+    id_labels, id_scores, id_metadata, id_patch_maps = _score_dataset(
+        detector,
+        config,
+        id_dataset,
+        return_patch_maps=save_heatmaps,
+    )
+    ood_labels, ood_scores, ood_metadata, ood_patch_maps = _score_dataset(
+        detector,
+        config,
+        ood_dataset,
+        return_patch_maps=save_heatmaps,
+    )
     labels = np.concatenate([id_labels, ood_labels])
     scores = np.concatenate([id_scores, ood_scores])
     metadata_rows = id_metadata + ood_metadata
@@ -166,6 +216,26 @@ def run_evaluation(
     if bool(eval_cfg.get("save_plots", True)):
         save_roc_pr_plots(labels, scores, out_dir)
 
+    if save_heatmaps:
+        patch_maps = (id_patch_maps or []) + (ood_patch_maps or [])
+        heatmap_rows = save_topk_heatmaps(
+            metadata_rows,
+            patch_maps,
+            labels,
+            scores,
+            threshold=threshold,
+            out_dir=out_dir / "heatmaps",
+            top_k=int(eval_cfg.get("heatmap_top_k", 5)),
+            alpha=float(eval_cfg.get("heatmap_alpha", 0.45)),
+            cmap=str(eval_cfg.get("heatmap_cmap", "magma")),
+        )
+        metrics["heatmaps"] = {
+            "directory": "heatmaps",
+            "top_k": int(eval_cfg.get("heatmap_top_k", 5)),
+            "selected_count": len(heatmap_rows),
+        }
+        write_json(out_dir / "metrics.json", metrics)
+
     return out_dir
 
 
@@ -173,8 +243,23 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
     parser.add_argument("--checkpoint", required=True)
+    parser.add_argument("--save-heatmaps", action="store_true", help="Save top-K heatmaps")
+    parser.add_argument("--no-heatmaps", action="store_true", help="Disable heatmap export")
+    parser.add_argument("--heatmap-top-k", type=int, help="Examples per FP/FN/TP/TN bucket")
     args = parser.parse_args()
-    out_dir = run_evaluation(read_yaml(args.config), args.checkpoint)
+    if args.save_heatmaps and args.no_heatmaps:
+        parser.error("--save-heatmaps and --no-heatmaps are mutually exclusive")
+
+    config = read_yaml(args.config)
+    eval_cfg = config.setdefault("evaluation", {})
+    if args.save_heatmaps:
+        eval_cfg["save_heatmaps"] = True
+    if args.no_heatmaps:
+        eval_cfg["save_heatmaps"] = False
+    if args.heatmap_top_k is not None:
+        eval_cfg["heatmap_top_k"] = args.heatmap_top_k
+
+    out_dir = run_evaluation(config, args.checkpoint)
     print(f"Saved evaluation outputs to {out_dir}")
 
 

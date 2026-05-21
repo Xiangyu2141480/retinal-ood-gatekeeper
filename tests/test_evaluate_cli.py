@@ -2,17 +2,27 @@ import importlib.util
 import json
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
-import torch
 from PIL import Image
 
 
 class MeanIntensityDetector:
-    def predict_scores(self, dataloader, **_kwargs):
+    def predict_scores(self, dataloader, *, return_patch_maps=False, **_kwargs):
         scores: list[float] = []
+        patch_maps: list[np.ndarray] = []
         for images, _labels, _metadata in dataloader:
-            scores.extend(images.mean(dim=(1, 2, 3)).detach().cpu().numpy().astype(float).tolist())
-        return torch.tensor(scores).numpy()
+            batch_scores = images.mean(dim=(1, 2, 3)).detach().cpu().numpy().astype(float)
+            scores.extend(batch_scores.tolist())
+            if return_patch_maps:
+                patch_maps.extend(
+                    np.full((2, 2), float(score), dtype=np.float32)
+                    for score in batch_scores
+                )
+        scores_array = np.asarray(scores, dtype=float)
+        if return_patch_maps:
+            return scores_array, patch_maps
+        return scores_array
 
 
 def _load_evaluate_module():
@@ -124,6 +134,8 @@ def test_run_evaluation_writes_scores_metrics_and_plots(tmp_path: Path):
             "validation_quantile_for_id_threshold": 0.95,
             "save_score_csv": True,
             "save_plots": True,
+            "save_heatmaps": True,
+            "heatmap_top_k": 1,
         },
         "output": {"runs_dir": str(tmp_path / "runs")},
     }
@@ -152,3 +164,14 @@ def test_run_evaluation_writes_scores_metrics_and_plots(tmp_path: Path):
     assert metrics["confusion_matrix"] == {"tn": 2, "fp": 0, "fn": 0, "tp": 2}
     assert metrics["threshold"]["source"] == "validation_id_quantile"
     assert set(metrics["per_ood_type"]) == {"modality_shift", "semantic_outlier"}
+    assert metrics["heatmaps"] == {"directory": "heatmaps", "top_k": 1, "selected_count": 2}
+
+    heatmap_dir = out_dir / "heatmaps"
+    assert (heatmap_dir / "colorbar.png").exists()
+    assert (heatmap_dir / "heatmap_normalization.json").exists()
+    heatmap_manifest = pd.read_csv(heatmap_dir / "heatmap_manifest.csv")
+    assert len(heatmap_manifest) == 2
+    assert "patient_id" not in heatmap_manifest.columns
+    assert set(heatmap_manifest["outcome"]) == {"tp", "tn"}
+    for overlay_file in heatmap_manifest["overlay_file"]:
+        assert (heatmap_dir / overlay_file).exists()
