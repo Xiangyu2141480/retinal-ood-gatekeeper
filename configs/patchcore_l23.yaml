@@ -1,0 +1,28 @@
+project:
+  name: retinal_faf_ood_gatekeeper
+  run_name: patchcore_resnet50_layer2_layer3
+  seed: 42
+
+data:
+  train_manifest: data/manifests/train_synthetic_faf.csv
+  val_manifest: data/manifests/val_synthetic_faf.csv
+  test_id_manifest: data/manifests/test_real_id.csv
+  test_ood_manifest: data/manifests/test_ood.csv
+  image_size: 224
+  grayscale_to_rgb: true
+  normalize: imagenet
+
+model:
+  name: patchcore
+  backbone: resnet50
+  pretrained: true
+  layers: [layer2, layer3]
+  coreset_ratio: 0.1
+  max_train_patches: 100000
+  nearest_neighbors: 1
+  device: auto
+
+output:
+  runs_dir: runs
+  save_memory_bank: true
+  save_heatmaps: true
