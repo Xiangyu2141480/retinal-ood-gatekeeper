@@ -192,6 +192,47 @@ runs/patchcore_resnet50_layer2_layer3/evaluation/
   heatmaps/
 ```
 
+### 4.3 本地拖拽式 gatekeeper 界面
+
+在完成一次 evaluation 后，`metrics.json` 里会保存 threshold。然后可以启动本地网页：
+
+```bash
+python scripts/serve_gatekeeper_app.py \
+  --config configs/patchcore_l23.yaml \
+  --checkpoint runs/patchcore_resnet50_layer2_layer3/patchcore_memory.npz
+```
+
+Windows PowerShell 也可以写成一行：
+
+```powershell
+python scripts/serve_gatekeeper_app.py --config configs/patchcore_l23.yaml --checkpoint runs/patchcore_resnet50_layer2_layer3/patchcore_memory.npz
+```
+
+打开 `http://127.0.0.1:7860`，把图片拖进去即可。当前支持的输入文件是普通图片：
+
+- `.png`
+- `.jpg` / `.jpeg`
+- `.tif` / `.tiff`
+- `.bmp`
+
+输出是二分类 gatekeeper decision：
+
+- `ACCEPT: likely valid FAF`：分数低于 threshold，认为可以进入下游 FAF 诊断模型。
+- `REJECT: OOD / invalid input`：分数高于或等于 threshold，认为应被拒绝。
+
+它不会输出疾病类别，也不会把 OOD 自动细分成 colour fundus / IR / watermark 等类别；这些类别用于离线评估和 per-category metrics。
+
+如果你没有先跑 evaluation，也可以手动传 threshold：
+
+```bash
+python scripts/serve_gatekeeper_app.py \
+  --config configs/patchcore_l23.yaml \
+  --checkpoint runs/patchcore_resnet50_layer2_layer3/patchcore_memory.npz \
+  --threshold 12.34
+```
+
+在 Jackpot 上建议仍然默认只绑定本机端口，然后通过 SSH tunnel 访问；如果必须绑定外部地址，再使用 `--host 0.0.0.0`，并确保不要把私有医疗图片暴露到公网。
+
 ## 5. Layer ablation 怎么跑
 
 逐个训练和评估：

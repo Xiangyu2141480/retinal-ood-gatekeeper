@@ -64,6 +64,7 @@ Example commands once the implementation is completed:
 ```bash
 python scripts/train_patchcore.py --config configs/patchcore_l23.yaml
 python scripts/evaluate.py --config configs/patchcore_l23.yaml --checkpoint runs/patchcore_resnet50_layer2_layer3/patchcore_memory.npz --save-heatmaps
+python scripts/serve_gatekeeper_app.py --config configs/patchcore_l23.yaml --checkpoint runs/patchcore_resnet50_layer2_layer3/patchcore_memory.npz
 python scripts/generate_report_tables.py --runs-dir runs/ --out reports/generated/experiment_summary.md
 python scripts/generate_dissertation_figures.py --runs-dir runs/ --out-dir reports/generated/figures/
 ```
@@ -90,6 +91,18 @@ OOD types:
 - `semantic_outlier`
 - `scanner_shift`
 - `unknown`
+
+## Local drag-drop gatekeeper
+
+After training PatchCore and running evaluation once to set a threshold, launch the local UI:
+
+```bash
+python scripts/serve_gatekeeper_app.py --config configs/patchcore_l23.yaml --checkpoint runs/patchcore_resnet50_layer2_layer3/patchcore_memory.npz
+```
+
+Open `http://127.0.0.1:7860` and drop a `.png`, `.jpg`, `.jpeg`, `.tif`, `.tiff`, or `.bmp`
+image. The UI returns a binary gatekeeper decision: `ACCEPT: likely valid FAF` or
+`REJECT: OOD / invalid input`. It does not diagnose disease or assign disease classes.
 
 ## Project documentation
 
