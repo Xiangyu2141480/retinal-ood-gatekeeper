@@ -65,6 +65,7 @@ Example commands once the implementation is completed:
 python scripts/train_patchcore.py --config configs/patchcore_resnet50_l23.yaml
 python scripts/evaluate.py --config configs/evaluation.yaml --checkpoint runs/patchcore_l23/model.joblib
 python scripts/generate_report_tables.py --runs-dir runs/ --out reports/results_summary.md
+python scripts/generate_dissertation_figures.py --runs-dir runs/ --out-dir reports/generated/figures/
 ```
 
 ## Manifest CSV schema
