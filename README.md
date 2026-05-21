@@ -62,9 +62,9 @@ data/
 Example commands once the implementation is completed:
 
 ```bash
-python scripts/train_patchcore.py --config configs/patchcore_resnet50_l23.yaml
-python scripts/evaluate.py --config configs/evaluation.yaml --checkpoint runs/patchcore_l23/model.joblib
-python scripts/generate_report_tables.py --runs-dir runs/ --out reports/results_summary.md
+python scripts/train_patchcore.py --config configs/patchcore_l23.yaml
+python scripts/evaluate.py --config configs/patchcore_l23.yaml --checkpoint runs/patchcore_resnet50_layer2_layer3/patchcore_memory.npz --save-heatmaps
+python scripts/generate_report_tables.py --runs-dir runs/ --out reports/generated/experiment_summary.md
 python scripts/generate_dissertation_figures.py --runs-dir runs/ --out-dir reports/generated/figures/
 ```
 
@@ -98,6 +98,7 @@ See the `docs/` directory:
 - `LITERATURE_REVIEW_ANALYSIS_CN.md` — Chinese explanation of what the literature review means for implementation.
 - `PROJECT_SPEC_CN.md` — product and research specification.
 - `DATASET_PLAN_CN.md` — dataset layout, manifests, split strategy, privacy rules.
+- `LOCAL_RUN_AND_DATASET_GUIDE_CN.md` — practical dataset selection, manifest examples, and local run commands.
 - `EXPERIMENT_PROTOCOL_CN.md` — exact experiments, metrics, ablations, reporting.
 - `CODEX_MASTER_PROMPT.md` — reusable prompt to paste into Codex tasks.
 - `CODEX_TASKS.md` — staged Codex task list with ready-to-use prompts.
