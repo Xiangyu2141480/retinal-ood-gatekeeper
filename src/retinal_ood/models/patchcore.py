@@ -1,8 +1,7 @@
-"""PatchCore-style feature memory bank.
+"""PatchCore-style feature memory bank and scoring.
 
-PatchCore learns a bank of local CNN patch features from ID/normal images only. Later
-inference compares incoming patch features against this bank; this task implements the
-training-side memory construction without adding scoring logic yet.
+PatchCore learns a bank of local CNN patch features from ID/normal images only. Inference
+scores incoming images by the distance between their patch features and that normal memory.
 """
 
 from __future__ import annotations
@@ -94,8 +93,43 @@ class PatchCoreDetector:
         if self.memory_bank.size == 0:
             raise ValueError("PatchCore memory bank is empty after coreset selection")
 
-    def predict_scores(self, *_: Any, **__: Any) -> np.ndarray:
-        raise NotImplementedError("PatchCoreDetector.predict_scores is implemented in Task 6.")
+    def predict_scores(
+        self,
+        dataloader: DataLoader,
+        *,
+        return_patch_maps: bool = False,
+    ) -> np.ndarray | tuple[np.ndarray, list[np.ndarray]]:
+        """Score images by nearest-neighbor distance to the fitted memory bank.
+
+        Higher scores mean the image is farther from the ID feature memory and therefore more
+        anomalous. The image score is the maximum patch anomaly score. Optional patch maps are
+        returned at the first selected feature layer's spatial resolution; image-size overlays
+        are handled by the visualization task.
+        """
+        self._ensure_ready_for_inference()
+        image_scores: list[float] = []
+        patch_maps: list[np.ndarray] = []
+        with torch.no_grad():
+            for batch in dataloader:
+                images, _ = _split_batch(batch)
+                images = images.to(device=self.device, dtype=torch.float32)
+                features = self.feature_extractor(images)
+                embeddings, grid_shape = patch_embeddings_and_grid(features, self.config.layers)
+                patch_scores = nearest_neighbor_patch_scores(
+                    embeddings.detach().cpu().numpy().astype(np.float32),
+                    self.memory_bank,
+                    nearest_neighbors=self.config.nearest_neighbors,
+                )
+                batch_size, height, width = grid_shape
+                maps = patch_scores.reshape(batch_size, height, width)
+                image_scores.extend(maps.reshape(batch_size, -1).max(axis=1).astype(float).tolist())
+                if return_patch_maps:
+                    patch_maps.extend(maps.astype(np.float32))
+
+        scores = np.asarray(image_scores, dtype=float)
+        if return_patch_maps:
+            return scores, patch_maps
+        return scores
 
     def save(self, path: str | Path) -> None:
         if self.memory_bank is None:
@@ -117,7 +151,13 @@ class PatchCoreDetector:
         )
 
     @classmethod
-    def load(cls, path: str | Path) -> "PatchCoreDetector":
+    def load(
+        cls,
+        path: str | Path,
+        *,
+        feature_extractor: nn.Module | None = None,
+        build_feature_extractor: bool = True,
+    ) -> "PatchCoreDetector":
         data = np.load(path, allow_pickle=False)
         layers = tuple(str(x) for x in data["layers"].tolist())
         max_train_patches = int(data["max_train_patches"]) if "max_train_patches" in data else -1
@@ -131,15 +171,31 @@ class PatchCoreDetector:
             pretrained=bool(data["pretrained"]) if "pretrained" in data else True,
             feature_backend=str(data["feature_backend"]) if "feature_backend" in data else "torchvision",
         )
-        detector = object.__new__(cls)
-        detector.config = config
-        detector.feature_extractor = None
-        detector.device = torch.device(config.device)
+        if build_feature_extractor:
+            detector = cls(config, feature_extractor=feature_extractor)
+        else:
+            detector = object.__new__(cls)
+            detector.config = config
+            detector.feature_extractor = feature_extractor
+            detector.device = torch.device(config.device)
+            if detector.feature_extractor is not None:
+                detector.feature_extractor.to(detector.device)
+                detector.feature_extractor.eval()
         detector.memory_bank = data["memory_bank"]
         detector.feature_dim = int(data["feature_dim"]) if "feature_dim" in data and int(data["feature_dim"]) >= 0 else (
             int(detector.memory_bank.shape[1]) if detector.memory_bank.ndim == 2 else None
         )
         return detector
+
+    def _ensure_ready_for_inference(self) -> None:
+        if self.memory_bank is None:
+            raise ValueError("PatchCoreDetector must be fitted or loaded before predict_scores()")
+        if self.memory_bank.ndim != 2 or self.memory_bank.shape[0] == 0:
+            raise ValueError("PatchCore memory bank must have shape num_patches, feature_dim")
+        if self.feature_extractor is None:
+            raise ValueError("PatchCoreDetector needs a feature_extractor for predict_scores()")
+        if self.config.nearest_neighbors > self.memory_bank.shape[0]:
+            raise ValueError("nearest_neighbors cannot exceed memory bank size")
 
 
 def patch_embeddings_from_feature_maps(
@@ -147,6 +203,15 @@ def patch_embeddings_from_feature_maps(
     layers: tuple[str, ...],
 ) -> torch.Tensor:
     """Convert selected CNN feature maps to concatenated per-patch embeddings."""
+    patches, _ = patch_embeddings_and_grid(features, layers)
+    return patches
+
+
+def patch_embeddings_and_grid(
+    features: Mapping[str, torch.Tensor],
+    layers: tuple[str, ...],
+) -> tuple[torch.Tensor, tuple[int, int, int]]:
+    """Return patch embeddings and their batch/spatial grid shape."""
     if not layers:
         raise ValueError("At least one feature layer is required")
     missing = [layer for layer in layers if layer not in features]
@@ -171,7 +236,47 @@ def patch_embeddings_from_feature_maps(
 
     concatenated = torch.cat(resized, dim=1)
     patches = concatenated.permute(0, 2, 3, 1).reshape(-1, concatenated.shape[1])
-    return patches.contiguous()
+    batch_size, _, height, width = concatenated.shape
+    return patches.contiguous(), (int(batch_size), int(height), int(width))
+
+
+def nearest_neighbor_patch_scores(
+    patches: np.ndarray,
+    memory_bank: np.ndarray,
+    *,
+    nearest_neighbors: int = 1,
+) -> np.ndarray:
+    """Return per-patch anomaly scores from kNN distance to the memory bank."""
+    patches = np.asarray(patches, dtype=np.float32)
+    memory_bank = np.asarray(memory_bank, dtype=np.float32)
+    if patches.ndim != 2 or memory_bank.ndim != 2:
+        raise ValueError("patches and memory_bank must be 2D arrays")
+    if patches.shape[0] == 0:
+        raise ValueError("patches must not be empty")
+    if memory_bank.shape[0] == 0:
+        raise ValueError("memory_bank must not be empty")
+    if patches.shape[1] != memory_bank.shape[1]:
+        raise ValueError(
+            f"Feature dimension mismatch: patches have {patches.shape[1]}, "
+            f"memory bank has {memory_bank.shape[1]}"
+        )
+    if nearest_neighbors <= 0:
+        raise ValueError("nearest_neighbors must be positive")
+    if nearest_neighbors > memory_bank.shape[0]:
+        raise ValueError("nearest_neighbors cannot exceed memory bank size")
+
+    distances = _pairwise_euclidean_distances(patches, memory_bank)
+    if nearest_neighbors == 1:
+        return distances.min(axis=1).astype(np.float32)
+    nearest = np.partition(distances, kth=nearest_neighbors - 1, axis=1)[:, :nearest_neighbors]
+    return nearest.mean(axis=1).astype(np.float32)
+
+
+def _pairwise_euclidean_distances(left: np.ndarray, right: np.ndarray) -> np.ndarray:
+    left_norm = np.sum(left * left, axis=1, keepdims=True)
+    right_norm = np.sum(right * right, axis=1, keepdims=True).T
+    squared = np.maximum(left_norm + right_norm - 2.0 * left @ right.T, 0.0)
+    return np.sqrt(squared).astype(np.float32)
 
 
 def deterministic_coreset(
