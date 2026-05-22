@@ -138,6 +138,20 @@ ruff check .
 
 如果下载到的是 DICOM、NIfTI、PDF、parquet 或 Hugging Face dataset 格式，先导出成普通图片再写 manifest。
 
+如果你需要生成 watermark/text/annotation/compression 这类 sensory artifact，可以从 held-out valid FAF manifest 生成：
+
+```bash
+python scripts/generate_artifacts.py \
+  --input-manifest data/manifests/val_synthetic_faf.csv \
+  --root-dir data \
+  --out-dir data/images/ood_artifact \
+  --out-manifest data/manifests/test_artifact.csv \
+  --split test \
+  --seed 42
+```
+
+然后把 `test_artifact.csv` 追加或合并到你的 `test_ood.csv`。不要从 train FAF 生成 test artifact，避免数据泄漏。
+
 ### Day 2：创建 manifest 并跑 smoke experiment
 
 先用少量图片确认路径和格式没有问题：
@@ -174,6 +188,17 @@ runs/patchcore_resnet50_layer2_layer3/
     pr_curve.png
     heatmaps/
 ```
+
+同时跑 autoencoder baseline：
+
+```bash
+python scripts/train_autoencoder.py --config configs/autoencoder_baseline.yaml
+python scripts/evaluate_autoencoder.py \
+  --config configs/autoencoder_baseline.yaml \
+  --checkpoint runs/autoencoder_baseline/model.pt
+```
+
+Autoencoder baseline 会生成 `scores.csv`、`metrics.json`、ROC/PR 曲线，但不会生成 PatchCore patch heatmap。
 
 ### Day 3-4：跑 layer ablation
 

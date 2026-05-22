@@ -4,12 +4,15 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 from typing import Any
 
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from retinal_ood.data.dataset import ManifestImageDataset
 from retinal_ood.data.transforms import build_transforms

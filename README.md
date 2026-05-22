@@ -2,7 +2,7 @@
 
 Unsupervised out-of-distribution detection for quality control in retinal imaging.
 
-This repository is a final-year project scaffold for building a **pre-diagnostic quality-control gatekeeper** for Fundus Autofluorescence (FAF) images. The detector is trained only on valid/normal FAF images and rejects invalid clinical inputs before they reach a downstream diagnostic model.
+This repository is a final-year project codebase for building a **pre-diagnostic quality-control gatekeeper** for Fundus Autofluorescence (FAF) images. The detector is trained only on valid/normal FAF images and rejects invalid clinical inputs before they reach a downstream diagnostic model.
 
 ## What this project builds
 
@@ -22,7 +22,7 @@ The project builds a Python/PyTorch pipeline that:
 
 ## Repository status
 
-This is a starter scaffold. It intentionally does **not** include medical image data, model weights, private manifests, or institutional files.
+This repository includes runnable training, evaluation, reporting, and local UI entrypoints. It intentionally does **not** include medical image data, model weights, private manifests, or institutional files.
 
 ## Recommended thesis contribution
 
@@ -64,6 +64,8 @@ Example commands once the implementation is completed:
 ```bash
 python scripts/train_patchcore.py --config configs/patchcore_l23.yaml
 python scripts/evaluate.py --config configs/patchcore_l23.yaml --checkpoint runs/patchcore_resnet50_layer2_layer3/patchcore_memory.npz --save-heatmaps
+python scripts/train_autoencoder.py --config configs/autoencoder_baseline.yaml
+python scripts/evaluate_autoencoder.py --config configs/autoencoder_baseline.yaml --checkpoint runs/autoencoder_baseline/model.pt
 python scripts/serve_gatekeeper_app.py --config configs/patchcore_l23.yaml --checkpoint runs/patchcore_resnet50_layer2_layer3/patchcore_memory.npz
 python scripts/generate_report_tables.py --runs-dir runs/ --out reports/generated/experiment_summary.md
 python scripts/generate_dissertation_figures.py --runs-dir runs/ --out-dir reports/generated/figures/

@@ -262,9 +262,10 @@ python scripts/evaluate.py --config configs/patchcore_l23.yaml --checkpoint runs
 
 ```bash
 python scripts/train_autoencoder.py --config configs/autoencoder_baseline.yaml
+python scripts/evaluate_autoencoder.py --config configs/autoencoder_baseline.yaml --checkpoint runs/autoencoder_baseline/model.pt
 ```
 
-当前 autoencoder 训练和 checkpoint 已实现，但统一 evaluation CLI 目前面向 PatchCore checkpoint。你可以把 autoencoder 结果作为 baseline smoke result 记录在 `training_metrics.json`，或者后续再补一个 autoencoder evaluation CLI。
+Autoencoder evaluation 会写出和 PatchCore 同结构的 `scores.csv`、`metrics.json`、ROC/PR 曲线，并被 `generate_report_tables.py` 自动读入。Autoencoder 不生成 PatchCore patch heatmap。
 
 ## 7. 生成报告表和论文图
 
