@@ -177,11 +177,14 @@ def save_autoencoder_checkpoint(
 def load_autoencoder_checkpoint(
     path: str | Path,
     *,
-    in_channels: int,
+    in_channels: int | None = None,
     map_location: str | torch.device = "cpu",
 ) -> ConvAutoEncoder:
     """Load a saved autoencoder checkpoint for scoring."""
     checkpoint = torch.load(path, map_location=map_location)
+    if in_channels is None:
+        first_weight = checkpoint["model_state_dict"]["encoder.0.weight"]
+        in_channels = int(first_weight.shape[1])
     model = ConvAutoEncoder(in_channels=in_channels)
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()

@@ -14,6 +14,8 @@ import pandas as pd
 from PIL import Image
 
 REQUIRED_COLUMNS = {"image_path", "label", "split", "source", "ood_type"}
+VALID_LABELS = {0, 1}
+VALID_SPLITS = {"train", "val", "test"}
 
 
 @dataclass(frozen=True)
@@ -51,15 +53,53 @@ class ManifestImageDataset:
         self.manifest_path = Path(manifest_path)
         self.root_dir = Path(root_dir) if root_dir is not None else None
         self.transform = transform
-        self.df = pd.read_csv(self.manifest_path)
-        missing = REQUIRED_COLUMNS - set(self.df.columns)
-        if missing:
-            raise ValueError(f"Manifest {self.manifest_path} missing required columns: {sorted(missing)}")
+        self.df = self._read_manifest()
+        self._validate_schema()
         if require_files:
             missing_files = [str(p) for p in self._resolved_paths() if not p.exists()]
             if missing_files:
                 preview = missing_files[:5]
                 raise FileNotFoundError(f"Missing {len(missing_files)} image files, examples: {preview}")
+
+    def _read_manifest(self) -> pd.DataFrame:
+        try:
+            return pd.read_csv(self.manifest_path)
+        except pd.errors.EmptyDataError as exc:
+            raise ValueError(f"Manifest {self.manifest_path} is empty") from exc
+
+    def _validate_schema(self) -> None:
+        missing = REQUIRED_COLUMNS - set(self.df.columns)
+        if missing:
+            raise ValueError(f"Manifest {self.manifest_path} missing required columns: {sorted(missing)}")
+        if self.df.empty:
+            raise ValueError(f"Manifest {self.manifest_path} contains no rows")
+
+        raw_image_paths = self.df["image_path"]
+        image_paths = raw_image_paths.astype(str).str.strip()
+        empty_paths = raw_image_paths.isna() | (image_paths == "")
+        if empty_paths.any():
+            rows = (self.df.index[empty_paths] + 2).tolist()[:5]
+            raise ValueError(f"Manifest {self.manifest_path} has empty image_path values at CSV rows: {rows}")
+        self.df["image_path"] = image_paths
+
+        labels = pd.to_numeric(self.df["label"], errors="coerce")
+        invalid_labels = labels.isna() | ~labels.isin(VALID_LABELS)
+        if invalid_labels.any():
+            examples = self.df.loc[invalid_labels, "label"].head(5).tolist()
+            raise ValueError(
+                f"Manifest {self.manifest_path} has invalid labels; expected 0 or 1, examples: {examples}"
+            )
+        self.df["label"] = labels.astype(int)
+
+        splits = self.df["split"].astype(str).str.strip()
+        invalid_splits = ~splits.isin(VALID_SPLITS)
+        if invalid_splits.any():
+            examples = self.df.loc[invalid_splits, "split"].head(5).tolist()
+            raise ValueError(
+                f"Manifest {self.manifest_path} has invalid splits; expected {sorted(VALID_SPLITS)}, "
+                f"examples: {examples}"
+            )
+        self.df["split"] = splits
 
     def _resolve_path(self, image_path: str | Path) -> Path:
         p = Path(image_path)

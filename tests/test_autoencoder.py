@@ -1,4 +1,5 @@
 import importlib.util
+import json
 from pathlib import Path
 
 import torch
@@ -71,6 +72,9 @@ def test_autoencoder_checkpoint_roundtrip(tmp_path: Path):
     images = torch.rand(1, 1, 32, 32)
     assert loaded(images).shape == images.shape
 
+    loaded_inferred = load_autoencoder_checkpoint(checkpoint_path)
+    assert loaded_inferred(images).shape == images.shape
+
 
 def test_train_autoencoder_script_smoke_test_with_toy_manifest(tmp_path: Path):
     script_path = Path("scripts/train_autoencoder.py")
@@ -124,3 +128,116 @@ def test_train_autoencoder_script_smoke_test_with_toy_manifest(tmp_path: Path):
     assert checkpoint_path.exists()
     assert (run_dir / "resolved_config.json").exists()
     assert (run_dir / "training_metrics.json").exists()
+
+
+def test_evaluate_autoencoder_script_writes_metrics(tmp_path: Path):
+    train_script_path = Path("scripts/train_autoencoder.py")
+    train_spec = importlib.util.spec_from_file_location("train_autoencoder_script", train_script_path)
+    assert train_spec is not None
+    assert train_spec.loader is not None
+    train_script = importlib.util.module_from_spec(train_spec)
+    train_spec.loader.exec_module(train_script)
+
+    eval_script_path = Path("scripts/evaluate_autoencoder.py")
+    eval_spec = importlib.util.spec_from_file_location("evaluate_autoencoder_script", eval_script_path)
+    assert eval_spec is not None
+    assert eval_spec.loader is not None
+    eval_script = importlib.util.module_from_spec(eval_spec)
+    eval_spec.loader.exec_module(eval_script)
+
+    image_dir = tmp_path / "images"
+    image_dir.mkdir()
+    for name, color in {
+        "train_id.png": 40,
+        "val_id.png": 60,
+        "test_id.png": 80,
+        "test_ood.png": 220,
+    }.items():
+        Image.new("RGB", (32, 32), color=(color, color, color)).save(image_dir / name)
+
+    def write_manifest(path: Path, rows: list[dict[str, object]]) -> None:
+        pd.DataFrame(rows).to_csv(path, index=False)
+
+    manifest_dir = tmp_path / "manifests"
+    manifest_dir.mkdir()
+    write_manifest(
+        manifest_dir / "train.csv",
+        [
+            {
+                "image_path": "images/train_id.png",
+                "label": 0,
+                "split": "train",
+                "source": "toy",
+                "ood_type": "id",
+            }
+        ],
+    )
+    write_manifest(
+        manifest_dir / "val.csv",
+        [
+            {
+                "image_path": "images/val_id.png",
+                "label": 0,
+                "split": "val",
+                "source": "toy",
+                "ood_type": "id",
+            }
+        ],
+    )
+    write_manifest(
+        manifest_dir / "test_id.csv",
+        [
+            {
+                "image_path": "images/test_id.png",
+                "label": 0,
+                "split": "test",
+                "source": "toy",
+                "ood_type": "id",
+            }
+        ],
+    )
+    write_manifest(
+        manifest_dir / "test_ood.csv",
+        [
+            {
+                "image_path": "images/test_ood.png",
+                "label": 1,
+                "split": "test",
+                "source": "toy",
+                "ood_type": "semantic_outlier",
+            }
+        ],
+    )
+    config = {
+        "project": {"run_name": "autoencoder_eval_smoke", "seed": 7},
+        "data": {
+            "root_dir": str(tmp_path),
+            "train_manifest": str(manifest_dir / "train.csv"),
+            "val_manifest": str(manifest_dir / "val.csv"),
+            "test_id_manifest": str(manifest_dir / "test_id.csv"),
+            "test_ood_manifest": str(manifest_dir / "test_ood.csv"),
+            "image_size": 32,
+            "grayscale_to_rgb": False,
+            "normalize": "minmax",
+            "batch_size": 1,
+        },
+        "model": {
+            "epochs": 1,
+            "batch_size": 1,
+            "learning_rate": 1e-3,
+            "device": "cpu",
+            "name": "conv_autoencoder",
+        },
+        "evaluation": {"save_plots": False, "save_heatmaps": True},
+        "output": {"runs_dir": str(tmp_path / "runs")},
+    }
+
+    checkpoint = train_script.train_from_config(config)
+    out_dir = eval_script.evaluate_from_config(config, checkpoint)
+
+    assert out_dir == tmp_path / "runs" / "autoencoder_eval_smoke" / "evaluation"
+    assert (out_dir / "scores.csv").exists()
+    metrics = json.loads((out_dir / "metrics.json").read_text(encoding="utf-8"))
+    assert metrics["counts"] == {"total": 2, "id": 1, "ood": 1}
+    assert "semantic_outlier" in metrics["per_ood_type"]
+    assert not (out_dir / "heatmaps").exists()
