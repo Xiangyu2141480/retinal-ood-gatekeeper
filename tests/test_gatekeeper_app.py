@@ -16,6 +16,15 @@ from retinal_ood.inference.gatekeeper import (
 
 
 class FixedDetector:
+    config = type(
+        "FixedConfig",
+        (),
+        {
+            "backbone": "resnet18",
+            "layers": ("layer2",),
+        },
+    )()
+
     def __init__(self, score: float = 0.75) -> None:
         self.score = score
 
@@ -119,3 +128,46 @@ def test_parse_image_upload_from_multipart_body():
 
     assert filename == "sample.png"
     assert payload == image_bytes
+
+
+def test_health_payload_includes_metadata_and_privacy_flags():
+    server_script = _load_server_script()
+    gatekeeper = SingleImageGatekeeper(
+        {
+            "project": {"name": "retinal_faf_ood_gatekeeper", "run_name": "patchcore_demo"},
+            "data": {"image_size": 8, "grayscale_to_rgb": True, "normalize": "none"},
+            "model": {"name": "patchcore", "backbone": "resnet50", "layers": ["layer2", "layer3"]},
+        },
+        FixedDetector(score=0.25),
+        threshold=0.5,
+    )
+
+    payload = server_script._build_health_payload(gatekeeper, 25 * 1024 * 1024)
+
+    assert payload["status"] == "ok"
+    assert payload["threshold"] == 0.5
+    assert payload["threshold_set"] is True
+    assert ".png" in payload["supported_extensions"]
+    assert payload["max_upload_mb"] == 25
+    assert payload["run"]["name"] == "patchcore_demo"
+    assert payload["model"]["backbone"] == "resnet50"
+    assert payload["model"]["layers"] == ["layer2", "layer3"]
+    assert payload["privacy"] == {
+        "uploads_saved": False,
+        "filenames_logged": False,
+        "disease_classifier": False,
+    }
+
+
+def test_app_html_documents_batch_ui_export_and_not_disease_classifier():
+    server_script = _load_server_script()
+
+    html = server_script._HTML
+
+    assert "This is not a disease classifier" in html
+    assert "multiple" in html
+    assert "Export CSV" in html
+    assert "Prediction Results" in html
+    assert "Selected Image Review" in html
+    assert "supportedExtensions" in html
+    assert ".tiff" in html

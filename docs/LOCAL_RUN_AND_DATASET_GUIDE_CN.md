@@ -8,6 +8,8 @@
 
 本项目是 FAF 图像质量控制 / OOD gatekeeper，不是疾病分类器。训练阶段只应使用 `label=0` 的 valid FAF 图像。
 
+如果你想按时间线从公开数据一路跑到结果表、热力图和拖拽 UI，请优先看 `docs/EXPERIMENT_RUNBOOK_CN.md`。本文档保留为数据选择和命令速查。
+
 ## 1. 你应该找怎样的数据集
 
 ### 1.1 最理想的数据组成
@@ -221,6 +223,8 @@ python scripts/serve_gatekeeper_app.py --config configs/patchcore_l23.yaml --che
 - `REJECT: OOD / invalid input`：分数高于或等于 threshold，认为应被拒绝。
 
 它不会输出疾病类别，也不会把 OOD 自动细分成 colour fundus / IR / watermark 等类别；这些类别用于离线评估和 per-category metrics。
+
+新版 UI 支持一次拖入多张图片、点击结果行查看 original/overlay、并导出本次 UI prediction CSV。上传图片只在本地 server 内存中处理，不会被 UI 写入仓库或保存到 `runs/`。
 
 如果你没有先跑 evaluation，也可以手动传 threshold：
 

@@ -103,6 +103,8 @@ python scripts/serve_gatekeeper_app.py --config configs/patchcore_l23.yaml --che
 Open `http://127.0.0.1:7860` and drop a `.png`, `.jpg`, `.jpeg`, `.tif`, `.tiff`, or `.bmp`
 image. The UI returns a binary gatekeeper decision: `ACCEPT: likely valid FAF` or
 `REJECT: OOD / invalid input`. It does not diagnose disease or assign disease classes.
+Multiple files can be scored in one session, reviewed with PatchCore overlays, and exported
+as a local CSV summary.
 
 ## Project documentation
 
@@ -112,6 +114,7 @@ See the `docs/` directory:
 - `PROJECT_SPEC_CN.md` — product and research specification.
 - `DATASET_PLAN_CN.md` — dataset layout, manifests, split strategy, privacy rules.
 - `LOCAL_RUN_AND_DATASET_GUIDE_CN.md` — practical dataset selection, manifest examples, and local run commands.
+- `EXPERIMENT_RUNBOOK_CN.md` — step-by-step public dataset, local, Jackpot, UI, and reporting runbook.
 - `EXPERIMENT_PROTOCOL_CN.md` — exact experiments, metrics, ablations, reporting.
 - `CODEX_MASTER_PROMPT.md` — reusable prompt to paste into Codex tasks.
 - `CODEX_TASKS.md` — staged Codex task list with ready-to-use prompts.
