@@ -8,6 +8,8 @@
 
 本项目是 FAF 图像质量控制 / OOD gatekeeper，不是疾病分类器。训练阶段只应使用 `label=0` 的 valid FAF 图像。
 
+如果你想按时间线从公开数据一路跑到结果表、热力图和拖拽 UI，请优先看 `docs/EXPERIMENT_RUNBOOK_CN.md`。本文档保留为数据选择和命令速查。
+
 ## 1. 你应该找怎样的数据集
 
 ### 1.1 最理想的数据组成
@@ -192,6 +194,49 @@ runs/patchcore_resnet50_layer2_layer3/evaluation/
   heatmaps/
 ```
 
+### 4.3 本地拖拽式 gatekeeper 界面
+
+在完成一次 evaluation 后，`metrics.json` 里会保存 threshold。然后可以启动本地网页：
+
+```bash
+python scripts/serve_gatekeeper_app.py \
+  --config configs/patchcore_l23.yaml \
+  --checkpoint runs/patchcore_resnet50_layer2_layer3/patchcore_memory.npz
+```
+
+Windows PowerShell 也可以写成一行：
+
+```powershell
+python scripts/serve_gatekeeper_app.py --config configs/patchcore_l23.yaml --checkpoint runs/patchcore_resnet50_layer2_layer3/patchcore_memory.npz
+```
+
+打开 `http://127.0.0.1:7860`，把图片拖进去即可。当前支持的输入文件是普通图片：
+
+- `.png`
+- `.jpg` / `.jpeg`
+- `.tif` / `.tiff`
+- `.bmp`
+
+输出是二分类 gatekeeper decision：
+
+- `ACCEPT: likely valid FAF`：分数低于 threshold，认为可以进入下游 FAF 诊断模型。
+- `REJECT: OOD / invalid input`：分数高于或等于 threshold，认为应被拒绝。
+
+它不会输出疾病类别，也不会把 OOD 自动细分成 colour fundus / IR / watermark 等类别；这些类别用于离线评估和 per-category metrics。
+
+新版 UI 支持一次拖入多张图片、点击结果行查看 original/overlay、并导出本次 UI prediction CSV。上传图片只在本地 server 内存中处理，不会被 UI 写入仓库或保存到 `runs/`。
+
+如果你没有先跑 evaluation，也可以手动传 threshold：
+
+```bash
+python scripts/serve_gatekeeper_app.py \
+  --config configs/patchcore_l23.yaml \
+  --checkpoint runs/patchcore_resnet50_layer2_layer3/patchcore_memory.npz \
+  --threshold 12.34
+```
+
+在 Jackpot 上建议仍然默认只绑定本机端口，然后通过 SSH tunnel 访问；如果必须绑定外部地址，再使用 `--host 0.0.0.0`，并确保不要把私有医疗图片暴露到公网。
+
 ## 5. Layer ablation 怎么跑
 
 逐个训练和评估：
@@ -217,9 +262,10 @@ python scripts/evaluate.py --config configs/patchcore_l23.yaml --checkpoint runs
 
 ```bash
 python scripts/train_autoencoder.py --config configs/autoencoder_baseline.yaml
+python scripts/evaluate_autoencoder.py --config configs/autoencoder_baseline.yaml --checkpoint runs/autoencoder_baseline/model.pt
 ```
 
-当前 autoencoder 训练和 checkpoint 已实现，但统一 evaluation CLI 目前面向 PatchCore checkpoint。你可以把 autoencoder 结果作为 baseline smoke result 记录在 `training_metrics.json`，或者后续再补一个 autoencoder evaluation CLI。
+Autoencoder evaluation 会写出和 PatchCore 同结构的 `scores.csv`、`metrics.json`、ROC/PR 曲线，并被 `generate_report_tables.py` 自动读入。Autoencoder 不生成 PatchCore patch heatmap。
 
 ## 7. 生成报告表和论文图
 

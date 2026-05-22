@@ -2,7 +2,7 @@
 
 Unsupervised out-of-distribution detection for quality control in retinal imaging.
 
-This repository is a final-year project scaffold for building a **pre-diagnostic quality-control gatekeeper** for Fundus Autofluorescence (FAF) images. The detector is trained only on valid/normal FAF images and rejects invalid clinical inputs before they reach a downstream diagnostic model.
+This repository is a final-year project codebase for building a **pre-diagnostic quality-control gatekeeper** for Fundus Autofluorescence (FAF) images. The detector is trained only on valid/normal FAF images and rejects invalid clinical inputs before they reach a downstream diagnostic model.
 
 ## What this project builds
 
@@ -22,7 +22,7 @@ The project builds a Python/PyTorch pipeline that:
 
 ## Repository status
 
-This is a starter scaffold. It intentionally does **not** include medical image data, model weights, private manifests, or institutional files.
+This repository includes runnable training, evaluation, reporting, and local UI entrypoints. It intentionally does **not** include medical image data, model weights, private manifests, or institutional files.
 
 ## Recommended thesis contribution
 
@@ -64,6 +64,9 @@ Example commands once the implementation is completed:
 ```bash
 python scripts/train_patchcore.py --config configs/patchcore_l23.yaml
 python scripts/evaluate.py --config configs/patchcore_l23.yaml --checkpoint runs/patchcore_resnet50_layer2_layer3/patchcore_memory.npz --save-heatmaps
+python scripts/train_autoencoder.py --config configs/autoencoder_baseline.yaml
+python scripts/evaluate_autoencoder.py --config configs/autoencoder_baseline.yaml --checkpoint runs/autoencoder_baseline/model.pt
+python scripts/serve_gatekeeper_app.py --config configs/patchcore_l23.yaml --checkpoint runs/patchcore_resnet50_layer2_layer3/patchcore_memory.npz
 python scripts/generate_report_tables.py --runs-dir runs/ --out reports/generated/experiment_summary.md
 python scripts/generate_dissertation_figures.py --runs-dir runs/ --out-dir reports/generated/figures/
 ```
@@ -91,6 +94,20 @@ OOD types:
 - `scanner_shift`
 - `unknown`
 
+## Local drag-drop gatekeeper
+
+After training PatchCore and running evaluation once to set a threshold, launch the local UI:
+
+```bash
+python scripts/serve_gatekeeper_app.py --config configs/patchcore_l23.yaml --checkpoint runs/patchcore_resnet50_layer2_layer3/patchcore_memory.npz
+```
+
+Open `http://127.0.0.1:7860` and drop a `.png`, `.jpg`, `.jpeg`, `.tif`, `.tiff`, or `.bmp`
+image. The UI returns a binary gatekeeper decision: `ACCEPT: likely valid FAF` or
+`REJECT: OOD / invalid input`. It does not diagnose disease or assign disease classes.
+Multiple files can be scored in one session, reviewed with PatchCore overlays, and exported
+as a local CSV summary.
+
 ## Project documentation
 
 See the `docs/` directory:
@@ -99,6 +116,7 @@ See the `docs/` directory:
 - `PROJECT_SPEC_CN.md` — product and research specification.
 - `DATASET_PLAN_CN.md` — dataset layout, manifests, split strategy, privacy rules.
 - `LOCAL_RUN_AND_DATASET_GUIDE_CN.md` — practical dataset selection, manifest examples, and local run commands.
+- `EXPERIMENT_RUNBOOK_CN.md` — step-by-step public dataset, local, Jackpot, UI, and reporting runbook.
 - `EXPERIMENT_PROTOCOL_CN.md` — exact experiments, metrics, ablations, reporting.
 - `CODEX_MASTER_PROMPT.md` — reusable prompt to paste into Codex tasks.
 - `CODEX_TASKS.md` — staged Codex task list with ready-to-use prompts.
