@@ -118,6 +118,7 @@ See the `docs/` directory:
 - `LOCAL_RUN_AND_DATASET_GUIDE_CN.md` — practical dataset selection, manifest examples, and local run commands.
 - `EXPERIMENT_RUNBOOK_CN.md` — step-by-step public dataset, local, Jackpot, UI, and reporting runbook.
 - `EXPERIMENT_PROTOCOL_CN.md` — exact experiments, metrics, ablations, reporting.
+- `TEN_WEEK_DISSERTATION_PLAN_CN.md` — ten-week dataset, experiment, writing, and polishing timeline.
 - `CODEX_MASTER_PROMPT.md` — reusable prompt to paste into Codex tasks.
 - `CODEX_TASKS.md` — staged Codex task list with ready-to-use prompts.
 - `GITHUB_WORKFLOW_CN.md` — GitHub branch/issue/PR workflow.
