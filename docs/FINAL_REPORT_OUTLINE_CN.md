@@ -4,6 +4,10 @@
 
 Unsupervised Out-of-Distribution Detection for Quality Control in Retinal Fundus Autofluorescence Imaging
 
+## Writing Timeline
+
+Use `docs/TEN_WEEK_DISSERTATION_PLAN_CN.md` as the week-by-week plan for dataset preparation, coding, evaluation, dissertation drafting, and final polishing.
+
 ## 1. Introduction
 
 - Deep learning in ophthalmology.
