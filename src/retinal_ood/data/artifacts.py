@@ -10,13 +10,16 @@ from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 from retinal_ood.data.dataset import ManifestImageDataset
 
 ArtifactType = Literal[
     "text_watermark",
     "rectangle_annotation",
+    "arrow_annotation",
+    "composite_layout",
+    "blur_artifact",
     "border_crop",
     "gaussian_noise",
     "jpeg_compression",
@@ -25,6 +28,9 @@ ArtifactType = Literal[
 ARTIFACT_TYPES: tuple[ArtifactType, ...] = (
     "text_watermark",
     "rectangle_annotation",
+    "arrow_annotation",
+    "composite_layout",
+    "blur_artifact",
     "border_crop",
     "gaussian_noise",
     "jpeg_compression",
@@ -98,6 +104,12 @@ def apply_artifact(image: Image.Image, artifact_type: ArtifactType, *, rng: np.r
         return _text_watermark(image, rng)
     if artifact_type == "rectangle_annotation":
         return _rectangle_annotation(image, rng)
+    if artifact_type == "arrow_annotation":
+        return _arrow_annotation(image, rng)
+    if artifact_type == "composite_layout":
+        return _composite_layout(image)
+    if artifact_type == "blur_artifact":
+        return _blur_artifact(image, rng)
     if artifact_type == "border_crop":
         return _border_crop(image, rng)
     if artifact_type == "gaussian_noise":
@@ -131,6 +143,55 @@ def _rectangle_annotation(image: Image.Image, rng: np.random.Generator) -> Image
     draw.rectangle((x0, y0, x1, y1), outline=(255, 0, 0), width=line_width)
     draw.line((x0, y0, x1, y1), fill=(255, 255, 255), width=max(1, line_width // 2))
     return out
+
+
+def _arrow_annotation(image: Image.Image, rng: np.random.Generator) -> Image.Image:
+    out = image.copy()
+    draw = ImageDraw.Draw(out)
+    width, height = out.size
+    start = (int(rng.integers(0, max(1, width // 3))), int(rng.integers(0, height)))
+    end = (
+        int(rng.integers(max(1, width // 2), width)),
+        int(rng.integers(0, height)),
+    )
+    line_width = max(2, min(width, height) // 35)
+    draw.line((*start, *end), fill=(255, 255, 255), width=line_width)
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    length = max(1.0, float((dx * dx + dy * dy) ** 0.5))
+    unit = (dx / length, dy / length)
+    normal = (-unit[1], unit[0])
+    head_len = max(6, min(width, height) // 8)
+    head_w = max(4, min(width, height) // 12)
+    base = (end[0] - unit[0] * head_len, end[1] - unit[1] * head_len)
+    points = [
+        end,
+        (base[0] + normal[0] * head_w, base[1] + normal[1] * head_w),
+        (base[0] - normal[0] * head_w, base[1] - normal[1] * head_w),
+    ]
+    draw.polygon(points, fill=(255, 0, 0))
+    return out
+
+
+def _composite_layout(image: Image.Image) -> Image.Image:
+    width, height = image.size
+    out = Image.new("RGB", (width, height), color=(255, 255, 255))
+    tile_w = max(1, (width - 3) // 2)
+    tile_h = max(1, (height - 3) // 2)
+    resized = image.resize((tile_w, tile_h), Image.Resampling.BILINEAR)
+    positions = [(0, 0), (tile_w + 3, 0), (0, tile_h + 3), (tile_w + 3, tile_h + 3)]
+    for idx, position in enumerate(positions):
+        tile = resized.transpose(Image.Transpose.FLIP_LEFT_RIGHT) if idx % 2 else resized
+        out.paste(tile, position)
+    draw = ImageDraw.Draw(out)
+    draw.line((tile_w + 1, 0, tile_w + 1, height), fill=(0, 0, 0), width=2)
+    draw.line((0, tile_h + 1, width, tile_h + 1), fill=(0, 0, 0), width=2)
+    return out
+
+
+def _blur_artifact(image: Image.Image, rng: np.random.Generator) -> Image.Image:
+    radius = float(rng.uniform(1.2, 2.8))
+    return image.filter(ImageFilter.GaussianBlur(radius=radius)).convert("RGB")
 
 
 def _border_crop(image: Image.Image, rng: np.random.Generator) -> Image.Image:

@@ -89,6 +89,29 @@ def test_generate_artifact_dataset_writes_images_and_manifest(tmp_path: Path):
     assert (tmp_path / "images" / "valid_faf" / "id_0.png").exists()
 
 
+def test_generate_artifact_dataset_supports_literature_review_artifacts(tmp_path: Path):
+    manifest = _write_manifest(tmp_path)
+    out_dir = tmp_path / "images" / "ood_artifact"
+    out_manifest = tmp_path / "manifests" / "artifact.csv"
+
+    df = generate_artifact_dataset(
+        manifest,
+        out_dir,
+        out_manifest,
+        root_dir=tmp_path,
+        artifact_types=["arrow_annotation", "composite_layout", "blur_artifact"],
+        seed=13,
+        limit=1,
+    )
+
+    assert len(df) == 3
+    assert set(df["ood_type"]) == {"sensory_artifact"}
+    for relative_path in df["image_path"]:
+        with Image.open(tmp_path / relative_path) as image:
+            assert image.size == (32, 24)
+            assert image.mode == "RGB"
+
+
 def test_generate_artifact_dataset_is_deterministic(tmp_path: Path):
     manifest = _write_manifest(tmp_path)
     out_a = tmp_path / "a"

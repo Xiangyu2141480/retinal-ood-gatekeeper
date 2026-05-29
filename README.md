@@ -59,6 +59,21 @@ data/
   images/   # ignored by git
 ```
 
+Prepare the SynthEye proof-of-concept FAF dataset from a private/local source folder:
+
+```bash
+python scripts/prepare_syntheye_dataset.py --input-dir "<path-to-syntheye_onefold_10class_100perclass>" --out-dir data/images/synthetic_faf --manifest-dir data/manifests --seed 42
+```
+
+Generate held-out sensory-artifact OOD images and build public OOD manifests:
+
+```bash
+python scripts/generate_artifacts.py --input-manifest data/manifests/test_real_id.csv --root-dir data --out-dir data/images/ood_artifact --out-manifest data/manifests/test_artifact.csv --split test --artifacts text_watermark rectangle_annotation arrow_annotation composite_layout blur_artifact border_crop gaussian_noise jpeg_compression
+python scripts/build_ood_manifest.py --root-dir data --out-manifest data/manifests/test_modality.csv --mapping images/ood_modality/colour_fundus=modality_shift --mapping images/ood_modality/infrared=modality_shift --mapping images/ood_modality/oct_screenshot=modality_shift
+python scripts/build_ood_manifest.py --root-dir data --out-manifest data/manifests/test_semantic.csv --mapping images/ood_semantic/natural=semantic_outlier --mapping images/ood_semantic/non_retinal_medical=semantic_outlier
+python scripts/merge_manifests.py --out data/manifests/test_ood.csv data/manifests/test_modality.csv data/manifests/test_semantic.csv data/manifests/test_artifact.csv
+```
+
 Example commands once the implementation is completed:
 
 ```bash
