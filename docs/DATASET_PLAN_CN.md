@@ -40,7 +40,7 @@ data/
 | label | 0=ID, 1=OOD | 0 |
 | split | train/val/test | train |
 | source | synthetic_faf/real_faf/real_ood/public_ood | synthetic_faf |
-| ood_type | id/modality_shift/sensory_artifact/semantic_outlier/scanner_shift | id |
+| ood_type | id/modality_shift/sensory_artifact/semantic_outlier | id |
 | patient_id | 可为空；真实数据建议匿名 hash | anon_001 |
 | scanner | Heidelberg/Topcon/unknown | Heidelberg |
 | notes | 备注 | watermark added |

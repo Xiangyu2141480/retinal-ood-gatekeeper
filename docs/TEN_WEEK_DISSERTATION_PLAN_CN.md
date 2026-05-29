@@ -44,7 +44,7 @@
   - `modality_shift`
   - `sensory_artifact`
   - `semantic_outlier`
-  - `scanner_shift`，如有真实多设备 FAF
+  - 设备差异先作为 `scanner` metadata 和 failure analysis 记录，不单独扩展当前 OOD taxonomy
 - 跑通基础命令：
   - `pytest`
   - `ruff check .`

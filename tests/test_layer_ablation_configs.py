@@ -28,6 +28,7 @@ def test_layer_ablation_configs_parse_and_define_expected_layers():
         assert config["data"]["val_manifest"] == "data/manifests/val_synthetic_faf.csv"
         assert config["data"]["test_id_manifest"] == "data/manifests/test_real_id.csv"
         assert config["data"]["test_ood_manifest"] == "data/manifests/test_ood.csv"
+        assert config["data"]["root_dir"] == "data"
 
 
 def test_layer_ablation_configs_only_differ_by_run_name_and_layers():

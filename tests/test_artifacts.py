@@ -52,6 +52,27 @@ def _write_manifest(tmp_path: Path) -> Path:
     return manifest
 
 
+def _write_train_only_manifest(tmp_path: Path) -> Path:
+    image_dir = tmp_path / "images" / "valid_faf"
+    image_dir.mkdir(parents=True, exist_ok=True)
+    _write_image(image_dir / "patient_123_visit_456.png", 90)
+    manifest = tmp_path / "manifests" / "train_only.csv"
+    manifest.parent.mkdir(exist_ok=True)
+    pd.DataFrame(
+        [
+            {
+                "image_path": "images/valid_faf/patient_123_visit_456.png",
+                "label": 0,
+                "split": "train",
+                "source": "toy",
+                "ood_type": "id",
+                "scanner": "toy_scanner",
+            }
+        ]
+    ).to_csv(manifest, index=False)
+    return manifest
+
+
 def test_apply_artifact_keeps_size_and_does_not_modify_original():
     image = Image.new("RGB", (32, 24), color=(100, 100, 100))
     original_bytes = image.tobytes()
@@ -87,6 +108,61 @@ def test_generate_artifact_dataset_writes_images_and_manifest(tmp_path: Path):
     assert set(df["patient_id"]) == {""}
     assert all((tmp_path / path).exists() for path in df["image_path"])
     assert (tmp_path / "images" / "valid_faf" / "id_0.png").exists()
+
+
+def test_generate_artifact_dataset_does_not_expose_source_stem(tmp_path: Path):
+    manifest = _write_train_only_manifest(tmp_path)
+
+    df = generate_artifact_dataset(
+        manifest,
+        tmp_path / "images" / "ood_artifact",
+        tmp_path / "manifests" / "artifact.csv",
+        root_dir=tmp_path,
+        artifact_types=["text_watermark"],
+        source_splits=["train"],
+    )
+
+    output_path = df.iloc[0]["image_path"]
+    assert "patient" not in output_path
+    assert "visit" not in output_path
+    assert "123" not in output_path
+    assert output_path.startswith("images/ood_artifact/artifact_")
+
+
+def test_generate_artifact_dataset_rejects_train_split_by_default(tmp_path: Path):
+    manifest = _write_train_only_manifest(tmp_path)
+
+    with pytest.raises(ValueError, match="held-out source_splits"):
+        generate_artifact_dataset(
+            manifest,
+            tmp_path / "images" / "ood_artifact",
+            tmp_path / "manifests" / "artifact.csv",
+            root_dir=tmp_path,
+            artifact_types=["text_watermark"],
+        )
+
+
+def test_generate_artifact_dataset_supports_literature_review_artifacts(tmp_path: Path):
+    manifest = _write_manifest(tmp_path)
+    out_dir = tmp_path / "images" / "ood_artifact"
+    out_manifest = tmp_path / "manifests" / "artifact.csv"
+
+    df = generate_artifact_dataset(
+        manifest,
+        out_dir,
+        out_manifest,
+        root_dir=tmp_path,
+        artifact_types=["arrow_annotation", "composite_layout", "blur_artifact"],
+        seed=13,
+        limit=1,
+    )
+
+    assert len(df) == 3
+    assert set(df["ood_type"]) == {"sensory_artifact"}
+    for relative_path in df["image_path"]:
+        with Image.open(tmp_path / relative_path) as image:
+            assert image.size == (32, 24)
+            assert image.mode == "RGB"
 
 
 def test_generate_artifact_dataset_is_deterministic(tmp_path: Path):
