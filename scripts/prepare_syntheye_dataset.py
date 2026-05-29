@@ -18,6 +18,9 @@ def main() -> None:
     parser.add_argument("--out-dir", required=True, help="Ignored image output directory")
     parser.add_argument("--manifest-dir", required=True, help="Directory for generated manifest CSV files")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--expected-classes", type=int, help="Optional expected number of class folders")
+    parser.add_argument("--expected-total", type=int, help="Optional expected total number of images")
+    parser.add_argument("--expected-per-class", type=int, help="Optional expected number of images per class")
     args = parser.parse_args()
 
     result = prepare_syntheye_dataset(
@@ -25,6 +28,9 @@ def main() -> None:
         out_dir=args.out_dir,
         manifest_dir=args.manifest_dir,
         seed=args.seed,
+        expected_classes=args.expected_classes,
+        expected_total=args.expected_total,
+        expected_per_class=args.expected_per_class,
     )
     print(f"Prepared {result.total_images} SynthEye ID images")
     print(f"Class counts: {result.class_counts}")

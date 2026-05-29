@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
+import pytest
 from PIL import Image
 
 from retinal_ood.data.syntheye import prepare_syntheye_dataset
@@ -83,6 +84,28 @@ def test_prepare_syntheye_dataset_is_deterministic(tmp_path: Path):
     second_manifest = pd.read_csv(tmp_path / "second" / "manifests" / "train_synthetic_faf.csv")
     assert first_manifest["notes"].tolist() == second_manifest["notes"].tolist()
     assert first_manifest["image_path"].tolist() == second_manifest["image_path"].tolist()
+
+
+def test_prepare_syntheye_dataset_validates_expected_counts(tmp_path: Path):
+    input_dir = tmp_path / "source"
+    _write_syntheye_tree(input_dir, classes=2, per_class=10)
+
+    prepare_syntheye_dataset(
+        input_dir=input_dir,
+        out_dir=tmp_path / "out" / "images" / "synthetic_faf",
+        manifest_dir=tmp_path / "out" / "manifests",
+        expected_classes=2,
+        expected_total=20,
+        expected_per_class=10,
+    )
+
+    with pytest.raises(ValueError, match="Expected 10 SynthEye class folders"):
+        prepare_syntheye_dataset(
+            input_dir=input_dir,
+            out_dir=tmp_path / "bad" / "images" / "synthetic_faf",
+            manifest_dir=tmp_path / "bad" / "manifests",
+            expected_classes=10,
+        )
 
 
 def test_prepare_syntheye_script_help_loads():

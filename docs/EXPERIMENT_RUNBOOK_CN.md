@@ -146,7 +146,10 @@ python scripts/prepare_syntheye_dataset.py \
   --input-dir "<path-to-syntheye_onefold_10class_100perclass>" \
   --out-dir data/images/synthetic_faf \
   --manifest-dir data/manifests \
-  --seed 42
+  --seed 42 \
+  --expected-classes 10 \
+  --expected-total 1000 \
+  --expected-per-class 100
 ```
 
 如果你需要生成 watermark/text/annotation/composite/blur/compression 这类 sensory artifact，可以从 held-out valid FAF manifest 生成：
@@ -158,6 +161,7 @@ python scripts/generate_artifacts.py \
   --out-dir data/images/ood_artifact \
   --out-manifest data/manifests/test_artifact.csv \
   --split test \
+  --source-splits test \
   --seed 42 \
   --artifacts text_watermark rectangle_annotation arrow_annotation composite_layout blur_artifact border_crop gaussian_noise jpeg_compression
 ```
@@ -190,6 +194,8 @@ python scripts/merge_manifests.py \
 ```
 
 不要从 train FAF 生成 test artifact，避免数据泄漏。
+默认情况下，artifact generator 只会从 `val` / `test` source rows 读取图片；如果是小型 smoke test 需要临时使用 train rows，必须显式传入 `--source-splits train` 并在实验记录中说明。
+生成的 artifact 文件名会被匿名化，不保留原始图片文件名。
 
 ### Day 2：创建 manifest 并跑 smoke experiment
 

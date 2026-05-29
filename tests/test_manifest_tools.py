@@ -57,6 +57,18 @@ def test_build_ood_manifest_rejects_empty_folder(tmp_path: Path):
         )
 
 
+def test_build_ood_manifest_rejects_non_literature_review_category(tmp_path: Path):
+    root_dir = tmp_path / "data"
+    _write_image(root_dir / "images" / "ood_modality" / "colour_fundus" / "a.png")
+
+    with pytest.raises(ValueError, match="Allowed OOD taxonomy"):
+        build_ood_manifest(
+            root_dir=root_dir,
+            mappings=[("images/ood_modality/colour_fundus", "scanner_shift")],
+            out_manifest=root_dir / "manifests" / "test_modality.csv",
+        )
+
+
 def test_merge_manifest_files_preserves_required_columns(tmp_path: Path):
     manifest_a = tmp_path / "a.csv"
     manifest_b = tmp_path / "b.csv"

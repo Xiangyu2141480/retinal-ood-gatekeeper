@@ -11,6 +11,11 @@ OUTPUT_COLUMNS = ["image_path", "label", "split", "source", "ood_type", "patient
 SUPPORTED_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"}
 OODType = Literal["modality_shift", "sensory_artifact", "semantic_outlier"]
 VALID_OOD_TYPES = {"modality_shift", "sensory_artifact", "semantic_outlier"}
+OOD_TAXONOMY_NOTE = (
+    "Allowed OOD taxonomy: modality_shift for wrong imaging modality, "
+    "sensory_artifact for text/watermark/annotation/composite/corruption artifacts, "
+    "semantic_outlier for non-retinal or unrelated images."
+)
 
 
 def build_ood_manifest(
@@ -31,7 +36,7 @@ def build_ood_manifest(
     rows: list[dict[str, str | int]] = []
     for relative_folder, ood_type in mappings:
         if ood_type not in VALID_OOD_TYPES:
-            raise ValueError(f"Invalid ood_type {ood_type!r}; expected one of {sorted(VALID_OOD_TYPES)}")
+            raise ValueError(f"Invalid ood_type {ood_type!r}. {OOD_TAXONOMY_NOTE}")
         folder = root_path / relative_folder
         images = sorted(
             path

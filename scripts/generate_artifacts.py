@@ -19,6 +19,13 @@ def main() -> None:
     parser.add_argument("--out-manifest", required=True, help="CSV manifest to write for generated OOD artifacts")
     parser.add_argument("--root-dir", help="Optional root directory for relative manifest paths")
     parser.add_argument("--split", default="test", choices=["train", "val", "test"])
+    parser.add_argument(
+        "--source-splits",
+        nargs="+",
+        default=["val", "test"],
+        choices=["train", "val", "test"],
+        help="Input manifest splits allowed as artifact sources; default excludes train to avoid leakage",
+    )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--limit", type=int, help="Optional number of ID source images to use")
     parser.add_argument(
@@ -37,6 +44,7 @@ def main() -> None:
         root_dir=args.root_dir,
         artifact_types=args.artifacts,
         split=args.split,
+        source_splits=args.source_splits,
         seed=args.seed,
         limit=args.limit,
     )

@@ -32,6 +32,9 @@ def prepare_syntheye_dataset(
     seed: int = 42,
     train_fraction: float = 0.70,
     val_fraction: float = 0.15,
+    expected_classes: int | None = None,
+    expected_total: int | None = None,
+    expected_per_class: int | None = None,
 ) -> SyntheyePreparationResult:
     """Copy SynthEye class folders into anonymized ID images and split manifests.
 
@@ -43,6 +46,12 @@ def prepare_syntheye_dataset(
     manifests_path = Path(manifest_dir)
     _validate_fractions(train_fraction, val_fraction)
     class_to_images = _discover_class_images(input_path)
+    _validate_expected_counts(
+        class_to_images,
+        expected_classes=expected_classes,
+        expected_total=expected_total,
+        expected_per_class=expected_per_class,
+    )
     output_path.mkdir(parents=True, exist_ok=True)
     manifests_path.mkdir(parents=True, exist_ok=True)
 
@@ -154,3 +163,42 @@ def _validate_fractions(train_fraction: float, val_fraction: float) -> None:
         raise ValueError("train_fraction must be positive and val_fraction must be non-negative")
     if train_fraction + val_fraction >= 1:
         raise ValueError("train_fraction + val_fraction must be less than 1")
+
+
+def _validate_expected_counts(
+    class_to_images: dict[str, list[Path]],
+    *,
+    expected_classes: int | None,
+    expected_total: int | None,
+    expected_per_class: int | None,
+) -> None:
+    if expected_classes is not None and expected_classes <= 0:
+        raise ValueError("expected_classes must be positive when provided")
+    if expected_total is not None and expected_total <= 0:
+        raise ValueError("expected_total must be positive when provided")
+    if expected_per_class is not None and expected_per_class <= 0:
+        raise ValueError("expected_per_class must be positive when provided")
+
+    actual_classes = len(class_to_images)
+    if expected_classes is not None and actual_classes != expected_classes:
+        raise ValueError(
+            f"Expected {expected_classes} SynthEye class folders but found {actual_classes}: "
+            f"{sorted(class_to_images)}"
+        )
+
+    class_counts = {class_name: len(paths) for class_name, paths in class_to_images.items()}
+    actual_total = sum(class_counts.values())
+    if expected_total is not None and actual_total != expected_total:
+        raise ValueError(
+            f"Expected {expected_total} SynthEye images but found {actual_total}; "
+            f"class counts: {class_counts}"
+        )
+
+    if expected_per_class is not None:
+        bad_counts = {
+            class_name: count for class_name, count in class_counts.items() if count != expected_per_class
+        }
+        if bad_counts:
+            raise ValueError(
+                f"Expected {expected_per_class} images per SynthEye class; mismatched counts: {bad_counts}"
+            )
