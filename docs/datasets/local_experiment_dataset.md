@@ -1,0 +1,104 @@
+# Local Experiment Dataset Notes
+
+This repository is a retinal FAF OOD gatekeeper, not a disease classifier. Local images are used
+only through manifest CSV files and YAML configs. Do not commit local image data, generated
+manifests from private runs, model weights, heatmaps, or run outputs.
+
+## Local Data Is Ignored
+
+Image data should stay under ignored local paths such as:
+
+```text
+data/images/
+data/raw/
+data/private/
+data/syntheye*/
+```
+
+The Git repository should contain code, configs, documentation, tests, and small templates only.
+Manifests and configs are the source of truth for experiments; raw images are not part of the
+reviewable code history.
+
+## Current Proof-Of-Concept Dataset
+
+The current local dataset is a proof-of-concept setup. It is not evidence that real clinical FAF
+validation has been completed.
+
+Expected local components:
+
+```text
+data/images/synthetic_faf/                 # label=0, ood_type=id
+data/images/ood_artifact/                  # label=1, ood_type=sensory_artifact
+data/images/ood_semantic/natural/          # label=1, ood_type=semantic_outlier
+data/images/ood_modality/colour_fundus/    # label=1, ood_type=modality_shift
+data/images/ood_modality/oct_screenshot/   # label=1, ood_type=modality_shift
+```
+
+`test_real_id.csv` is currently a synthetic ID fallback when it is generated from SynthEye. Do not
+describe it as real clinical FAF validation unless the manifest source actually contains real,
+anonymized clinical FAF images. The validator warns when a manifest named like `test_real_id.csv`
+contains only synthetic sources.
+
+## Manifest Taxonomy
+
+Use only these `ood_type` values:
+
+```text
+id
+modality_shift
+sensory_artifact
+semantic_outlier
+```
+
+Rules:
+
+- `label=0` means valid FAF / ID and must use `ood_type=id`.
+- `label=1` means invalid/OOD and must not use `ood_type=id`.
+- Training rows must be ID-only: `split=train`, `label=0`, `ood_type=id`.
+- OOD rows are for validation/testing only.
+- Public/non-medical OOD images may have an empty `patient_id`.
+
+## OOD Subtypes
+
+Use `ood_subtype` when possible so result tables can separate visibly different OOD categories.
+Recommended examples:
+
+```text
+colour_fundus
+oct_screenshot
+natural_cifar10
+text_watermark
+rectangle_annotation
+arrow_annotation
+composite_layout
+blur_artifact
+border_crop
+gaussian_noise
+jpeg_compression
+```
+
+Colour fundus and OCT should be reported separately even though both are `modality_shift`. CIFAR
+natural images are semantic-outlier stress tests. Generated artifact images are synthetic
+sensory-artifact stress tests and should be generated only from held-out `val` or `test` ID images,
+not train images.
+
+## Validation Command
+
+Run manifest validation before training or evaluation:
+
+```bash
+python scripts/validate_manifests.py --root-dir data \
+  data/manifests/train_synthetic_faf.csv \
+  data/manifests/val_synthetic_faf.csv \
+  data/manifests/test_ood.csv
+```
+
+Optional JSON audit:
+
+```bash
+python scripts/validate_manifests.py --root-dir data \
+  --write-json reports/generated/dataset_audit.json \
+  data/manifests/train_synthetic_faf.csv \
+  data/manifests/val_synthetic_faf.csv \
+  data/manifests/test_ood.csv
+```

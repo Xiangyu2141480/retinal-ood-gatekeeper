@@ -13,6 +13,8 @@ data/images/
 data/raw/
 data/private/
 data/syntheye*/
+data/manifests/*.csv
+!data/manifests/manifest_template.csv
 *.dcm
 *.nii
 *.nii.gz

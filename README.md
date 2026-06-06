@@ -74,6 +74,12 @@ python scripts/build_ood_manifest.py --root-dir data --out-manifest data/manifes
 python scripts/merge_manifests.py --out data/manifests/test_ood.csv data/manifests/test_modality.csv data/manifests/test_semantic.csv data/manifests/test_artifact.csv
 ```
 
+Validate manifests before training or evaluation:
+
+```bash
+python scripts/validate_manifests.py --root-dir data data/manifests/train_synthetic_faf.csv data/manifests/val_synthetic_faf.csv data/manifests/test_ood.csv
+```
+
 Example commands once the implementation is completed:
 
 ```bash
@@ -133,6 +139,7 @@ See the `docs/` directory:
 - `PROJECT_SPEC_CN.md` — product and research specification.
 - `DATASET_PLAN_CN.md` — dataset layout, manifests, split strategy, privacy rules.
 - `LOCAL_RUN_AND_DATASET_GUIDE_CN.md` — practical dataset selection, manifest examples, and local run commands.
+- `datasets/local_experiment_dataset.md` — local proof-of-concept dataset notes and manifest audit guidance.
 - `EXPERIMENT_RUNBOOK_CN.md` — step-by-step public dataset, local, Jackpot, UI, and reporting runbook.
 - `EXPERIMENT_PROTOCOL_CN.md` — exact experiments, metrics, ablations, reporting.
 - `TEN_WEEK_DISSERTATION_PLAN_CN.md` — ten-week dataset, experiment, writing, and polishing timeline.
