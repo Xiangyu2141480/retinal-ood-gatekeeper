@@ -12,6 +12,7 @@ venv/
 data/images/
 data/raw/
 data/private/
+data/syntheye*/
 *.dcm
 *.nii
 *.nii.gz

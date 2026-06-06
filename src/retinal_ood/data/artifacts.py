@@ -3,20 +3,22 @@
 from __future__ import annotations
 
 import io
-import re
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 from retinal_ood.data.dataset import ManifestImageDataset
 
 ArtifactType = Literal[
     "text_watermark",
     "rectangle_annotation",
+    "arrow_annotation",
+    "composite_layout",
+    "blur_artifact",
     "border_crop",
     "gaussian_noise",
     "jpeg_compression",
@@ -25,12 +27,17 @@ ArtifactType = Literal[
 ARTIFACT_TYPES: tuple[ArtifactType, ...] = (
     "text_watermark",
     "rectangle_annotation",
+    "arrow_annotation",
+    "composite_layout",
+    "blur_artifact",
     "border_crop",
     "gaussian_noise",
     "jpeg_compression",
 )
 
 OUTPUT_COLUMNS = ["image_path", "label", "split", "source", "ood_type", "patient_id", "scanner", "notes"]
+VALID_SPLITS = {"train", "val", "test"}
+DEFAULT_SOURCE_SPLITS = ("val", "test")
 
 
 def generate_artifact_dataset(
@@ -41,18 +48,24 @@ def generate_artifact_dataset(
     root_dir: str | Path | None = None,
     artifact_types: Sequence[ArtifactType] = ARTIFACT_TYPES,
     split: str = "test",
+    source_splits: Sequence[str] = DEFAULT_SOURCE_SPLITS,
     seed: int = 42,
     limit: int | None = None,
 ) -> pd.DataFrame:
     """Create deterministic synthetic sensory artifacts from ID rows in a manifest."""
-    if split not in {"train", "val", "test"}:
+    if split not in VALID_SPLITS:
         raise ValueError("split must be one of train, val, test")
+    selected_source_splits = _validate_source_splits(source_splits)
     if limit is not None and limit <= 0:
         raise ValueError("limit must be positive when provided")
     selected_artifacts = _validate_artifact_types(artifact_types)
     dataset = ManifestImageDataset(input_manifest, root_dir=root_dir, require_files=True).id_subset()
+    dataset.df = dataset.df[dataset.df["split"].isin(selected_source_splits)].reset_index(drop=True)
     if len(dataset) == 0:
-        raise ValueError("input_manifest must contain at least one ID row with label=0")
+        raise ValueError(
+            "input_manifest must contain at least one ID row with label=0 in held-out source_splits "
+            f"{selected_source_splits}; use source_splits explicitly only for controlled smoke tests"
+        )
     if limit is not None:
         dataset.df = dataset.df.head(limit).reset_index(drop=True)
 
@@ -67,10 +80,9 @@ def generate_artifact_dataset(
     for row_idx, row in enumerate(dataset.df.to_dict(orient="records")):
         source_path = dataset._resolve_path(row["image_path"])
         image = Image.open(source_path).convert("RGB")
-        source_stem = _safe_stem(Path(str(row["image_path"])).stem)
-        for artifact_type in selected_artifacts:
+        for artifact_idx, artifact_type in enumerate(selected_artifacts):
             corrupted = apply_artifact(image, artifact_type, rng=rng)
-            filename = f"{row_idx:05d}_{source_stem}_{artifact_type}.png"
+            filename = f"artifact_{row_idx:05d}_{artifact_idx:02d}_{artifact_type}.png"
             output_path = out_dir / filename
             corrupted.save(output_path)
             rows.append(
@@ -98,6 +110,12 @@ def apply_artifact(image: Image.Image, artifact_type: ArtifactType, *, rng: np.r
         return _text_watermark(image, rng)
     if artifact_type == "rectangle_annotation":
         return _rectangle_annotation(image, rng)
+    if artifact_type == "arrow_annotation":
+        return _arrow_annotation(image, rng)
+    if artifact_type == "composite_layout":
+        return _composite_layout(image)
+    if artifact_type == "blur_artifact":
+        return _blur_artifact(image, rng)
     if artifact_type == "border_crop":
         return _border_crop(image, rng)
     if artifact_type == "gaussian_noise":
@@ -131,6 +149,55 @@ def _rectangle_annotation(image: Image.Image, rng: np.random.Generator) -> Image
     draw.rectangle((x0, y0, x1, y1), outline=(255, 0, 0), width=line_width)
     draw.line((x0, y0, x1, y1), fill=(255, 255, 255), width=max(1, line_width // 2))
     return out
+
+
+def _arrow_annotation(image: Image.Image, rng: np.random.Generator) -> Image.Image:
+    out = image.copy()
+    draw = ImageDraw.Draw(out)
+    width, height = out.size
+    start = (int(rng.integers(0, max(1, width // 3))), int(rng.integers(0, height)))
+    end = (
+        int(rng.integers(max(1, width // 2), width)),
+        int(rng.integers(0, height)),
+    )
+    line_width = max(2, min(width, height) // 35)
+    draw.line((*start, *end), fill=(255, 255, 255), width=line_width)
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    length = max(1.0, float((dx * dx + dy * dy) ** 0.5))
+    unit = (dx / length, dy / length)
+    normal = (-unit[1], unit[0])
+    head_len = max(6, min(width, height) // 8)
+    head_w = max(4, min(width, height) // 12)
+    base = (end[0] - unit[0] * head_len, end[1] - unit[1] * head_len)
+    points = [
+        end,
+        (base[0] + normal[0] * head_w, base[1] + normal[1] * head_w),
+        (base[0] - normal[0] * head_w, base[1] - normal[1] * head_w),
+    ]
+    draw.polygon(points, fill=(255, 0, 0))
+    return out
+
+
+def _composite_layout(image: Image.Image) -> Image.Image:
+    width, height = image.size
+    out = Image.new("RGB", (width, height), color=(255, 255, 255))
+    tile_w = max(1, (width - 3) // 2)
+    tile_h = max(1, (height - 3) // 2)
+    resized = image.resize((tile_w, tile_h), Image.Resampling.BILINEAR)
+    positions = [(0, 0), (tile_w + 3, 0), (0, tile_h + 3), (tile_w + 3, tile_h + 3)]
+    for idx, position in enumerate(positions):
+        tile = resized.transpose(Image.Transpose.FLIP_LEFT_RIGHT) if idx % 2 else resized
+        out.paste(tile, position)
+    draw = ImageDraw.Draw(out)
+    draw.line((tile_w + 1, 0, tile_w + 1, height), fill=(0, 0, 0), width=2)
+    draw.line((0, tile_h + 1, width, tile_h + 1), fill=(0, 0, 0), width=2)
+    return out
+
+
+def _blur_artifact(image: Image.Image, rng: np.random.Generator) -> Image.Image:
+    radius = float(rng.uniform(1.2, 2.8))
+    return image.filter(ImageFilter.GaussianBlur(radius=radius)).convert("RGB")
 
 
 def _border_crop(image: Image.Image, rng: np.random.Generator) -> Image.Image:
@@ -168,6 +235,16 @@ def _validate_artifact_types(artifact_types: Sequence[str]) -> list[ArtifactType
     return [artifact_type for artifact_type in artifact_types]  # type: ignore[list-item]
 
 
+def _validate_source_splits(source_splits: Sequence[str]) -> list[str]:
+    if not source_splits:
+        raise ValueError("At least one source split is required")
+    normalized = [str(split).strip() for split in source_splits]
+    invalid = sorted(set(normalized) - VALID_SPLITS)
+    if invalid:
+        raise ValueError(f"Invalid source_splits {invalid}; expected one of {sorted(VALID_SPLITS)}")
+    return normalized
+
+
 def _manifest_image_path(path: Path, root_dir: Path | None) -> str:
     resolved = path.resolve()
     if root_dir is not None:
@@ -176,8 +253,3 @@ def _manifest_image_path(path: Path, root_dir: Path | None) -> str:
         except ValueError:
             pass
     return str(path)
-
-
-def _safe_stem(stem: str) -> str:
-    cleaned = re.sub(r"[^A-Za-z0-9_.-]+", "_", stem.strip())
-    return cleaned or "image"

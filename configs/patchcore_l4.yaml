@@ -4,6 +4,7 @@ project:
   seed: 42
 
 data:
+  root_dir: data
   train_manifest: data/manifests/train_synthetic_faf.csv
   val_manifest: data/manifests/val_synthetic_faf.csv
   test_id_manifest: data/manifests/test_real_id.csv

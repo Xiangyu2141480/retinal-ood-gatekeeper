@@ -130,27 +130,72 @@ ruff check .
 
 ### Day 1-2：下载并整理数据
 
-1. 下载 SynthEye synthetic FAF，解压到 `data/images/synthetic_faf/`。
-2. 下载 APTOS/RFMiD/IRFundusSet colour fundus，选 50-200 张放到 `data/images/ood_colour_fundus/`。
-3. 下载或导出 OLIVES near-IR 图片，放到 `data/images/ood_ir/`。
-4. 选 CIFAR-10/Open Images 小子集，放到 `data/images/ood_natural/`。
-5. 所有图片最好统一成 `.png`、`.jpg`、`.jpeg`、`.tif`、`.tiff` 或 `.bmp`。
+1. 下载 SynthEye synthetic FAF，放在本地或 Jackpot 私有目录，不要提交图片到 GitHub。
+2. 用 `prepare_syntheye_dataset.py` 生成匿名化 ID 图片副本和 train/val/test manifests。
+3. 下载 APTOS/RFMiD/IRFundusSet colour fundus，选 50-200 张放到 `data/images/ood_modality/colour_fundus/`。
+4. 下载或导出 OLIVES near-IR 图片，放到 `data/images/ood_modality/infrared/`。
+5. 选 CIFAR-10/Open Images 小子集，放到 `data/images/ood_semantic/natural/`。
+6. 所有图片最好统一成 `.png`、`.jpg`、`.jpeg`、`.tif`、`.tiff` 或 `.bmp`。
 
 如果下载到的是 DICOM、NIfTI、PDF、parquet 或 Hugging Face dataset 格式，先导出成普通图片再写 manifest。
 
-如果你需要生成 watermark/text/annotation/compression 这类 sensory artifact，可以从 held-out valid FAF manifest 生成：
+SynthEye 的 10 个 class folder 只用于 stratified split/audit，不作为疾病分类标签：
+
+```bash
+python scripts/prepare_syntheye_dataset.py \
+  --input-dir "<path-to-syntheye_onefold_10class_100perclass>" \
+  --out-dir data/images/synthetic_faf \
+  --manifest-dir data/manifests \
+  --seed 42 \
+  --expected-classes 10 \
+  --expected-total 1000 \
+  --expected-per-class 100
+```
+
+如果你需要生成 watermark/text/annotation/composite/blur/compression 这类 sensory artifact，可以从 held-out valid FAF manifest 生成：
 
 ```bash
 python scripts/generate_artifacts.py \
-  --input-manifest data/manifests/val_synthetic_faf.csv \
+  --input-manifest data/manifests/test_real_id.csv \
   --root-dir data \
   --out-dir data/images/ood_artifact \
   --out-manifest data/manifests/test_artifact.csv \
   --split test \
-  --seed 42
+  --source-splits test \
+  --seed 42 \
+  --artifacts text_watermark rectangle_annotation arrow_annotation composite_layout blur_artifact border_crop gaussian_noise jpeg_compression
 ```
 
-然后把 `test_artifact.csv` 追加或合并到你的 `test_ood.csv`。不要从 train FAF 生成 test artifact，避免数据泄漏。
+从文件夹生成 wrong-modality / semantic-outlier manifests：
+
+```bash
+python scripts/build_ood_manifest.py \
+  --root-dir data \
+  --out-manifest data/manifests/test_modality.csv \
+  --mapping images/ood_modality/colour_fundus=modality_shift \
+  --mapping images/ood_modality/infrared=modality_shift \
+  --mapping images/ood_modality/oct_screenshot=modality_shift
+
+python scripts/build_ood_manifest.py \
+  --root-dir data \
+  --out-manifest data/manifests/test_semantic.csv \
+  --mapping images/ood_semantic/natural=semantic_outlier \
+  --mapping images/ood_semantic/non_retinal_medical=semantic_outlier
+```
+
+合并最终 OOD manifest：
+
+```bash
+python scripts/merge_manifests.py \
+  --out data/manifests/test_ood.csv \
+  data/manifests/test_modality.csv \
+  data/manifests/test_semantic.csv \
+  data/manifests/test_artifact.csv
+```
+
+不要从 train FAF 生成 test artifact，避免数据泄漏。
+默认情况下，artifact generator 只会从 `val` / `test` source rows 读取图片；如果是小型 smoke test 需要临时使用 train rows，必须显式传入 `--source-splits train` 并在实验记录中说明。
+生成的 artifact 文件名会被匿名化，不保留原始图片文件名。
 
 ### Day 2：创建 manifest 并跑 smoke experiment
 
