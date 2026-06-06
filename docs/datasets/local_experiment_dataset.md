@@ -102,3 +102,97 @@ python scripts/validate_manifests.py --root-dir data \
   data/manifests/val_synthetic_faf.csv \
   data/manifests/test_ood.csv
 ```
+
+## Reproducibility Commands
+
+Use the grid runner for dissertation comparisons. It validates the manifests, writes a
+`manifest_audit.json`, calls the existing training/evaluation CLIs, and aggregates metrics without
+including raw images, model weights, heatmaps, or per-image private metadata in Git.
+
+Validate the complete manifest set:
+
+```bash
+python scripts/validate_manifests.py --root-dir data \
+  --write-json reports/generated/manifest_audit.json \
+  data/manifests/train_synthetic_faf.csv \
+  data/manifests/val_synthetic_faf.csv \
+  data/manifests/test_real_id.csv \
+  data/manifests/test_ood.csv
+```
+
+Run a small PatchCore L2+L3 smoke test:
+
+```bash
+python scripts/run_experiment_grid.py \
+  --grid-config configs/experiment_grid.yaml \
+  --root-dir data \
+  --out-dir reports/generated/grid_smoke \
+  --only patchcore_layer2_layer3 \
+  --max-train-images 8 \
+  --max-test-images 8 \
+  --device cpu \
+  --seed 42
+```
+
+Run the full dissertation grid:
+
+```bash
+python scripts/run_experiment_grid.py \
+  --grid-config configs/experiment_grid.yaml \
+  --root-dir data \
+  --out-dir reports/generated/grid_full \
+  --device auto \
+  --seed 42 \
+  --skip-existing
+```
+
+Generate report tables from an existing runs directory if you need a separate summary:
+
+```bash
+python scripts/generate_report_tables.py \
+  --runs-dir reports/generated/grid_full/runs \
+  --out reports/generated/grid_full/experiment_summary.md \
+  --csv-out reports/generated/grid_full/experiment_summary.csv \
+  --per-ood-csv-out reports/generated/grid_full/per_ood_type_metrics.csv
+```
+
+Regenerate the dissertation report index after adding heatmaps or extra scores:
+
+```bash
+python scripts/generate_report_index.py \
+  --reports-dir reports/generated/grid_full \
+  --top-k 5
+```
+
+Threshold policy warning:
+
+```text
+research_threshold:
+  computed using test labels for paper evaluation only
+
+deployment_threshold:
+  computed from val ID score quantile only, for UI/demo decision
+```
+
+Do not use the research threshold as the UI/demo operating threshold. It is allowed in the paper
+only because FPR@95%TPR is an evaluation metric that uses test labels. The deployment threshold
+must come from validation ID scores only.
+
+Expected grid outputs:
+
+```text
+reports/generated/grid_full/
+  manifest_audit.json
+  metrics_summary.csv
+  metrics_summary.md
+  index.md
+  per_ood_type_metrics.csv
+  per_ood_subtype_metrics.csv   # only when test_ood.csv includes ood_subtype
+  per_category_metrics.csv
+  layer_ablation_table.csv
+  ae_vs_patchcore_table.csv
+  threshold_policy_table.csv
+  heatmap_index.csv
+  case_selection.csv
+  runs/                         # ignored generated checkpoints and evaluation outputs
+```
