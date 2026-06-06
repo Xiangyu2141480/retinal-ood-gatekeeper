@@ -156,6 +156,28 @@ python scripts/generate_report_tables.py \
   --per-ood-csv-out reports/generated/grid_full/per_ood_type_metrics.csv
 ```
 
+Regenerate the dissertation report index after adding heatmaps or extra scores:
+
+```bash
+python scripts/generate_report_index.py \
+  --reports-dir reports/generated/grid_full \
+  --top-k 5
+```
+
+Threshold policy warning:
+
+```text
+research_threshold:
+  computed using test labels for paper evaluation only
+
+deployment_threshold:
+  computed from val ID score quantile only, for UI/demo decision
+```
+
+Do not use the research threshold as the UI/demo operating threshold. It is allowed in the paper
+only because FPR@95%TPR is an evaluation metric that uses test labels. The deployment threshold
+must come from validation ID scores only.
+
 Expected grid outputs:
 
 ```text
@@ -163,7 +185,14 @@ reports/generated/grid_full/
   manifest_audit.json
   metrics_summary.csv
   metrics_summary.md
+  index.md
   per_ood_type_metrics.csv
   per_ood_subtype_metrics.csv   # only when test_ood.csv includes ood_subtype
+  per_category_metrics.csv
+  layer_ablation_table.csv
+  ae_vs_patchcore_table.csv
+  threshold_policy_table.csv
+  heatmap_index.csv
+  case_selection.csv
   runs/                         # ignored generated checkpoints and evaluation outputs
 ```

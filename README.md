@@ -121,12 +121,25 @@ The grid writes:
 - `per_ood_type_metrics.csv`
 - `per_ood_subtype_metrics.csv` when `ood_subtype` exists in `test_ood.csv`
 - `manifest_audit.json`
+- `index.md` plus report-ready comparison tables for per-category metrics, layer ablation,
+  AE vs PatchCore, threshold policy, heatmaps, and selected TP/FP/FN/borderline cases
 
 You can still regenerate legacy report tables from any run directory:
 
 ```bash
 python scripts/generate_report_tables.py --runs-dir reports/generated/grid_full/runs --out reports/generated/grid_full/experiment_summary.md --csv-out reports/generated/grid_full/experiment_summary.csv --per-ood-csv-out reports/generated/grid_full/per_ood_type_metrics.csv
 ```
+
+Or regenerate the dissertation report index after adding heatmaps or extra runs:
+
+```bash
+python scripts/generate_report_index.py --reports-dir reports/generated/grid_full --top-k 5
+```
+
+Threshold policy:
+
+- `research_threshold`: computed using test labels for paper evaluation only.
+- `deployment_threshold`: computed from validation ID score quantile only, for UI/demo decision.
 
 ## Manifest CSV schema
 

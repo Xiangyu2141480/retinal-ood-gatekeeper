@@ -26,6 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from retinal_ood.data.manifest_audit import audit_manifests
 from retinal_ood.evaluation.metrics import compute_ood_metrics
+from retinal_ood.evaluation.report_index import generate_report_index
 from retinal_ood.evaluation.report_tables import dataframe_to_markdown
 from retinal_ood.utils.io import read_yaml
 
@@ -176,6 +177,7 @@ def run_grid(
             _write_csv(per_subtype, per_ood_subtype_csv)
         else:
             per_ood_subtype_csv = None
+        generate_report_index(output_root)
 
     return GridRunResult(
         commands=planned_commands,

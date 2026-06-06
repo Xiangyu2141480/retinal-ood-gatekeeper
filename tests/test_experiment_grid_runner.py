@@ -256,6 +256,8 @@ def test_run_grid_calls_subprocess_and_writes_aggregate_tables(tmp_path: Path, m
     assert (out_dir / "metrics_summary.md").exists()
     assert (out_dir / "per_ood_type_metrics.csv").exists()
     assert (out_dir / "per_ood_subtype_metrics.csv").exists()
+    assert (out_dir / "index.md").exists()
+    assert (out_dir / "threshold_policy_table.csv").exists()
     summary = pd.read_csv(out_dir / "metrics_summary.csv")
     assert summary.loc[0, "experiment"] == "patchcore_layer2"
     assert summary.loc[0, "auroc"] == 0.9
