@@ -92,6 +92,42 @@ python scripts/generate_report_tables.py --runs-dir runs/ --out reports/generate
 python scripts/generate_dissertation_figures.py --runs-dir runs/ --out-dir reports/generated/figures/
 ```
 
+## Reproducible experiment grid
+
+For dissertation runs, prefer the grid runner so every comparison uses the same manifest audit,
+device override, seed, and output layout. Generated runs and reports stay outside Git history.
+
+Validate manifests first:
+
+```bash
+python scripts/validate_manifests.py --root-dir data --write-json reports/generated/manifest_audit.json data/manifests/train_synthetic_faf.csv data/manifests/val_synthetic_faf.csv data/manifests/test_real_id.csv data/manifests/test_ood.csv
+```
+
+Run a small CPU smoke experiment for the main PatchCore L2+L3 setting:
+
+```bash
+python scripts/run_experiment_grid.py --grid-config configs/experiment_grid.yaml --root-dir data --out-dir reports/generated/grid_smoke --only patchcore_layer2_layer3 --max-train-images 8 --max-test-images 8 --device cpu --seed 42
+```
+
+Run the full comparison grid when the dataset is ready:
+
+```bash
+python scripts/run_experiment_grid.py --grid-config configs/experiment_grid.yaml --root-dir data --out-dir reports/generated/grid_full --device auto --seed 42 --skip-existing
+```
+
+The grid writes:
+
+- `metrics_summary.csv` / `metrics_summary.md`
+- `per_ood_type_metrics.csv`
+- `per_ood_subtype_metrics.csv` when `ood_subtype` exists in `test_ood.csv`
+- `manifest_audit.json`
+
+You can still regenerate legacy report tables from any run directory:
+
+```bash
+python scripts/generate_report_tables.py --runs-dir reports/generated/grid_full/runs --out reports/generated/grid_full/experiment_summary.md --csv-out reports/generated/grid_full/experiment_summary.csv --per-ood-csv-out reports/generated/grid_full/per_ood_type_metrics.csv
+```
+
 ## Manifest CSV schema
 
 Each manifest should contain at least:
