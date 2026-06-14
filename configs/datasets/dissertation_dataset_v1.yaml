@@ -1,0 +1,85 @@
+dataset_contract_id: dissertation_faf_ood_v1
+seed: 42
+task_type: unsupervised_ood_gatekeeper
+target_modality: retinal_faf
+not_a_disease_classifier: true
+synthetic_id_fallback_warning: true
+
+training_policy:
+  id_only: true
+  allowed_label: 0
+  allowed_ood_type: id
+  forbidden_columns:
+    - Eye_ID
+    - disease_label
+    - clinical_label
+    - biomarker_label
+
+canonical_counts:
+  train_id: 700
+  val_id: 150
+  test_id_synthetic_fallback: 150
+  test_artifact: 1200
+  test_modality: 400
+  test_semantic: 500
+  test_ood_full: 2100
+  test_ood_balanced_by_type: 1200
+  test_ood_balanced_by_subtype: 1650
+  test_ood_smoke_per_subtype: 2
+
+subtypes:
+  modality_shift:
+    - colour_fundus
+    - oct_screenshot
+  semantic_outlier:
+    - cifar10_natural
+  sensory_artifact:
+    - text_watermark
+    - rectangle_annotation
+    - arrow_annotation
+    - composite_layout
+    - blur_artifact
+    - border_crop
+    - gaussian_noise
+    - jpeg_compression
+
+targets:
+  surrogate_modality_per_subtype: 200
+  surrogate_semantic: 500
+
+policies:
+  split:
+    train_fraction: 0.70
+    val_fraction: 0.15
+    test_fraction: 0.15
+    stratify_by_syntheye_source_class_when_available: true
+  ood:
+    official_rows_require_explicit_ood_subtype: true
+    sensory_artifacts_from_train_forbidden: true
+    sensory_artifacts_from_test_id_by_default: true
+  privacy:
+    commit_images: false
+    commit_weights: false
+    commit_private_paths: false
+    require_empty_patient_id: true
+    forbid_clinical_labels: true
+  licenses:
+    unverified_public_sources_status: pending_manual_review
+    synthetic_surrogate_status: derived_or_generated_synthetic
+
+sources:
+  id_faf:
+    name: UCL SynthEye synthetic FAF
+    role: proof_of_concept_id_faf
+    warning: synthetic fallback only; not real clinical FAF validation
+  modality_shift:
+    colour_fundus:
+      role: wrong_modality_ood
+      license_status: pending_manual_review
+    oct_screenshot:
+      role: wrong_modality_ood
+      license_status: pending_manual_review
+  semantic_outlier:
+    cifar10_natural:
+      role: non_retinal_natural_image_ood
+      license_status: pending_manual_review
