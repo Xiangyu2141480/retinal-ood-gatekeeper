@@ -9,6 +9,7 @@ from retinal_ood.data.dissertation_dataset import (
     create_dissertation_image_archive,
     unpack_dissertation_image_archive,
     verify_dissertation_checksums,
+    verify_dissertation_image_files,
     write_dissertation_checksums,
 )
 
@@ -77,6 +78,27 @@ def test_image_archive_manifest_has_no_private_paths(tmp_path: Path):
     text = archive.manifest_path.read_text(encoding="utf-8")
     assert str(tmp_path) not in text
     assert "images/dissertation_v1/id/test/id_test_000000.png" in text
+
+
+def test_direct_image_verification_does_not_require_archive(tmp_path: Path):
+    root = tmp_path / "data"
+    image_dir = root / "images" / "dissertation_v1"
+    dataset_dir = tmp_path / "datasets" / "dissertation_v1"
+    _write_png(image_dir / "id" / "train" / "id_train_000000.png", value=90)
+    (dataset_dir / "README.md").parent.mkdir(parents=True)
+    (dataset_dir / "README.md").write_text("direct images through Git LFS\n", encoding="utf-8")
+
+    written = write_dissertation_checksums(
+        dataset_dir=dataset_dir,
+        root_dir=root,
+        image_dir=image_dir,
+    )
+    direct = verify_dissertation_image_files(image_dir=image_dir, root_dir=root)
+    verified = verify_dissertation_checksums(dataset_dir=dataset_dir, root_dir=root)
+
+    assert direct.image_count == 1
+    assert written.checked_files == 2
+    assert verified.checked_files == 2
 
 
 def test_unpack_script_help_loads():

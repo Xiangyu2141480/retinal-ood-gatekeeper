@@ -9,7 +9,9 @@ __pycache__/
 venv/
 
 # Data and model artifacts: never commit medical/private data
-data/images/
+data/images/*
+!data/images/dissertation_v1/
+!data/images/dissertation_v1/**
 data/raw/
 data/private/
 data/syntheye*/

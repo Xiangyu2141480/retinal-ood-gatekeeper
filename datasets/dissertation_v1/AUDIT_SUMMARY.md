@@ -1,7 +1,7 @@
 # Audit Summary
 
-This dataset package contains manifests and metadata only; image files are not committed.
-Individual PNG/JPG/TIFF files are not committed as normal Git blobs; the curated image package is stored as a Git LFS archive.
+This repository includes the actual final dissertation dataset images under `data/images/dissertation_v1/` through Git LFS.
+Individual PNG/JPG/TIFF files are tracked by Git LFS and must not be stored as normal Git blobs.
 
 ## Safe Aggregate Counts
 
@@ -306,6 +306,6 @@ Individual PNG/JPG/TIFF files are not committed as normal Git blobs; the curated
 
 ## Archive
 
-- Git LFS image archive: `lfs/dissertation_v1_images.zip`
+- Git LFS image root: `data/images/dissertation_v1/`
 - Checksum file: `checksums.sha256`
-- Unpack command: `python scripts/unpack_dissertation_dataset.py --dataset-dir datasets/dissertation_v1 --root-dir data --verify-checksums`
+- Primary workflow: `git clone`, `git lfs pull`, then validate/audit manifests.

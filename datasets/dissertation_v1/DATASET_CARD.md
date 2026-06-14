@@ -306,6 +306,6 @@ clinical FAF validation and should be described as a proof-of-concept limitation
 
 ## Privacy
 
-This dataset package contains manifests and metadata only; image files are not committed.
-Individual PNG/JPG/TIFF files are not committed as normal Git blobs; the curated image package is stored as a Git LFS archive.
+This repository includes the actual final dissertation dataset images under `data/images/dissertation_v1/` through Git LFS.
+Individual PNG/JPG/TIFF files are tracked by Git LFS and must not be stored as normal Git blobs.
 Patient identifiers and clinical disease labels are not included.

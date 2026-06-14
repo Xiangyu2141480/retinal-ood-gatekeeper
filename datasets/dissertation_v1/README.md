@@ -3,15 +3,14 @@
 This package defines the dissertation dataset for the retinal FAF OOD gatekeeper.
 It is not a disease-classification dataset.
 
-This dataset package contains manifests and metadata only; image files are not committed.
-Individual PNG/JPG/TIFF files are not committed as normal Git blobs; the curated image package is stored as a Git LFS archive.
+This repository includes the actual final dissertation dataset images under `data/images/dissertation_v1/` through Git LFS.
+Individual PNG/JPG/TIFF files are tracked by Git LFS and must not be stored as normal Git blobs.
 
 Use `scripts/prepare_dissertation_dataset.py` to rebuild local private images and
 manifests from your prepared data folders. The committed CSV files contain only
 relative paths, labels, taxonomy fields, hashes, and safe provenance notes.
 
-The curated image archive is stored through Git LFS at
-`lfs/dissertation_v1_images.zip`.
+The canonical image files are under `data/images/dissertation_v1/`.
 
 ## Manifests
 
@@ -29,5 +28,7 @@ The curated image archive is stored through Git LFS at
 
 ```bash
 git lfs pull
+python scripts/validate_manifests.py --root-dir data datasets/dissertation_v1/manifests/train_id.csv datasets/dissertation_v1/manifests/test_ood_full.csv
+python scripts/audit_dataset_images.py --root-dir data --manifest datasets/dissertation_v1/manifests/train_id.csv --manifest datasets/dissertation_v1/manifests/val_id.csv --manifest datasets/dissertation_v1/manifests/test_id_synthetic_fallback.csv --manifest datasets/dissertation_v1/manifests/test_ood_full.csv --fail-on-corrupt --fail-on-duplicate-content-across-splits
 python scripts/unpack_dissertation_dataset.py --dataset-dir datasets/dissertation_v1 --root-dir data --verify-checksums
 ```

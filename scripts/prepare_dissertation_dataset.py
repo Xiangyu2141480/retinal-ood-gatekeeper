@@ -31,9 +31,9 @@ def main() -> None:
     parser.add_argument("--oct-dir", help="Alias for raw/prepared OCT dir")
     parser.add_argument("--cifar-root", help="Alias for raw/prepared CIFAR/natural dir")
     parser.add_argument("--out-image-dir", required=True, help="Ignored local curated image output dir")
-    parser.add_argument("--local-manifest-dir", required=True, help="Ignored local manifest output dir")
+    parser.add_argument("--local-manifest-dir", help="Ignored local manifest output dir")
     parser.add_argument("--repo-dataset-dir", required=True, help="Commit-safe dataset package dir")
-    parser.add_argument("--audit-dir", required=True, help="Ignored local audit output dir")
+    parser.add_argument("--audit-dir", help="Ignored local audit output dir")
     parser.add_argument(
         "--archive-path",
         help="Optional Git LFS image archive path, usually datasets/dissertation_v1/lfs/dissertation_v1_images.zip",
@@ -59,6 +59,11 @@ def main() -> None:
         action="store_true",
         help="Write metadata-only docs and manifests under --repo-dataset-dir",
     )
+    parser.add_argument(
+        "--commit-individual-lfs-images",
+        action="store_true",
+        help="Write the final direct-image Git LFS dataset package under data/images/dissertation_v1",
+    )
     args = parser.parse_args()
 
     result = prepare_dissertation_dataset(
@@ -81,6 +86,7 @@ def main() -> None:
         allow_synthetic_surrogates=args.allow_synthetic_surrogates,
         allow_val_artifact=args.allow_val_artifact,
         commit_safe_manifest_package=args.commit_safe_manifest_package,
+        commit_individual_lfs_images=args.commit_individual_lfs_images,
     )
     print("Dissertation dataset v1 package prepared")
     print(f"Repo package: {result.repo_dataset_dir}")
@@ -101,6 +107,13 @@ def main() -> None:
         print(f"Image archive: {archive.archive_path}")
         print(f"Image archive manifest: {archive.manifest_path}")
         print(f"Image archive SHA256: {archive.sha256}")
+        checksums = write_dissertation_checksums(
+            dataset_dir=args.repo_dataset_dir,
+            root_dir=args.root_dir,
+            image_dir=args.out_image_dir,
+        )
+        print(f"Checksums: {checksums.checksum_path} ({checksums.checked_files} files)")
+    elif args.commit_individual_lfs_images:
         checksums = write_dissertation_checksums(
             dataset_dir=args.repo_dataset_dir,
             root_dir=args.root_dir,

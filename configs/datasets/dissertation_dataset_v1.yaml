@@ -48,6 +48,11 @@ targets:
   surrogate_semantic: 500
 
 policies:
+  image_storage:
+    storage_mode: individual_git_lfs_files
+    image_root: data/images/dissertation_v1
+    archive_required: false
+    git_lfs_required: true
   split:
     train_fraction: 0.70
     val_fraction: 0.15
@@ -58,11 +63,14 @@ policies:
     sensory_artifacts_from_train_forbidden: true
     sensory_artifacts_from_test_id_by_default: true
   privacy:
-    commit_images: false
-    commit_weights: false
+    commit_curated_images_via_lfs: true
+    commit_raw_download_cache: false
     commit_private_paths: false
     require_empty_patient_id: true
+    forbid_eye_id: true
     forbid_clinical_labels: true
+    forbid_disease_labels_as_targets: true
+    strip_image_metadata: true
   licenses:
     unverified_public_sources_status: pending_manual_review
     synthetic_surrogate_status: derived_or_generated_synthetic

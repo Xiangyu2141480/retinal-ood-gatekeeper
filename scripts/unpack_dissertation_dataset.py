@@ -10,6 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from retinal_ood.data.dissertation_dataset import (
+    verify_dissertation_image_files,
     unpack_dissertation_image_archive,
     verify_dissertation_checksums,
 )
@@ -35,9 +36,19 @@ def main() -> None:
 
     dataset_dir = Path(args.dataset_dir)
     archive = Path(args.archive) if args.archive else dataset_dir / "lfs" / "dissertation_v1_images.zip"
-    unpacked = unpack_dissertation_image_archive(archive_path=archive, root_dir=args.root_dir)
-    print(f"Unpacked {unpacked.image_count} images to {args.root_dir}")
-    print(f"Archive SHA256: {unpacked.sha256}")
+    image_dir = Path(args.root_dir) / "images" / "dissertation_v1"
+    if archive.exists():
+        unpacked = unpack_dissertation_image_archive(archive_path=archive, root_dir=args.root_dir)
+        print(f"Unpacked {unpacked.image_count} images to {args.root_dir}")
+        print(f"Archive SHA256: {unpacked.sha256}")
+    elif image_dir.exists():
+        unpacked = verify_dissertation_image_files(image_dir=image_dir, root_dir=args.root_dir)
+        print(f"Found {unpacked.image_count} direct Git LFS images under {image_dir}")
+    else:
+        parser.error(
+            f"Neither archive {archive} nor direct image directory {image_dir} exists; "
+            "run git lfs pull first"
+        )
     if args.verify_checksums:
         verified = verify_dissertation_checksums(dataset_dir=dataset_dir, root_dir=args.root_dir)
         print(f"Verified {verified.checked_files} checksum entries")

@@ -8,15 +8,15 @@ classification.
 
 - Contract YAML: `configs/datasets/dissertation_dataset_v1.yaml`
 - Package directory: `datasets/dissertation_v1/`
-- Local curated images: `data/images/dissertation_v1/` (ignored)
+- Curated images: `data/images/dissertation_v1/` (tracked through Git LFS)
 - Local generated manifests: `data/manifests/generated/dissertation_v1/` (ignored)
 - Local audit output: `reports/local_audits/dissertation_v1/` (ignored)
-- Git LFS image archive: `datasets/dissertation_v1/lfs/dissertation_v1_images.zip`
 - Checksums: `datasets/dissertation_v1/checksums.sha256`
 
-The committed package contains metadata and CSV manifests only. It must not
-contain medical images, generated images, model weights, private paths, patient
-identifiers, or clinical disease labels.
+The repository includes the final curated dissertation images through Git LFS.
+It must not contain raw download/cache folders, model weights, private paths,
+patient identifiers, Eye_ID values, clinical labels, biomarker labels, API keys,
+or disease labels as prediction targets.
 
 ## Taxonomy
 
@@ -59,32 +59,31 @@ python scripts/prepare_dissertation_dataset.py \
   --prepared-oct-dir data/images/ood_modality/oct_screenshot \
   --prepared-cifar-dir data/images/ood_semantic/natural \
   --out-image-dir data/images/dissertation_v1 \
-  --local-manifest-dir data/manifests/generated/dissertation_v1 \
   --repo-dataset-dir datasets/dissertation_v1 \
-  --audit-dir reports/local_audits/dissertation_v1 \
-  --archive-path datasets/dissertation_v1/lfs/dissertation_v1_images.zip \
   --seed 42 \
-  --commit-safe-manifest-package
+  --commit-individual-lfs-images
 ```
 
 If public OOD folders are unavailable and you need to test the pipeline shape,
 add `--allow-synthetic-surrogates`. Those rows are clearly marked and must not
 be reported as real public OOD evidence.
 
-## School Server Unpack
+## School Server Workflow
 
 After cloning the private repository on the school server:
 
 ```bash
+git lfs install
 git lfs pull
-python scripts/unpack_dissertation_dataset.py \
-  --dataset-dir datasets/dissertation_v1 \
-  --root-dir data \
-  --verify-checksums
+pip install -e ".[dev]"
+python scripts/validate_manifests.py --root-dir data datasets/dissertation_v1/manifests/train_id.csv datasets/dissertation_v1/manifests/test_ood_full.csv
+python scripts/audit_dataset_images.py --root-dir data --manifest datasets/dissertation_v1/manifests/train_id.csv --manifest datasets/dissertation_v1/manifests/val_id.csv --manifest datasets/dissertation_v1/manifests/test_id_synthetic_fallback.csv --manifest datasets/dissertation_v1/manifests/test_ood_full.csv --fail-on-corrupt --fail-on-duplicate-content-across-splits
 ```
 
-The unpack command recreates `data/images/dissertation_v1/`, then verifies both
-package files and unpacked images against `checksums.sha256`.
+No manual copy, external download, or unpack step is required for the primary
+workflow. `scripts/unpack_dissertation_dataset.py --verify-checksums` remains as
+a compatibility verifier and checks the direct Git LFS image files when no
+archive is present.
 
 ## Validation
 
@@ -93,21 +92,28 @@ Run these after rebuilding the package:
 ```bash
 python scripts/validate_manifests.py \
   --root-dir data \
+  --fail-on-duplicates \
   datasets/dissertation_v1/manifests/train_id.csv \
   datasets/dissertation_v1/manifests/val_id.csv \
   datasets/dissertation_v1/manifests/test_id_synthetic_fallback.csv \
-  datasets/dissertation_v1/manifests/test_ood.csv
+  datasets/dissertation_v1/manifests/test_ood_artifact.csv \
+  datasets/dissertation_v1/manifests/test_ood_modality.csv \
+  datasets/dissertation_v1/manifests/test_ood_semantic.csv \
+  datasets/dissertation_v1/manifests/test_ood_full.csv \
+  datasets/dissertation_v1/manifests/test_ood_balanced_by_type.csv \
+  datasets/dissertation_v1/manifests/test_ood_balanced_by_subtype.csv \
+  datasets/dissertation_v1/manifests/test_ood_smoke.csv
 ```
 
 ```bash
 python scripts/audit_dataset_images.py \
   --root-dir data \
+  --manifest datasets/dissertation_v1/manifests/train_id.csv \
+  --manifest datasets/dissertation_v1/manifests/val_id.csv \
+  --manifest datasets/dissertation_v1/manifests/test_id_synthetic_fallback.csv \
+  --manifest datasets/dissertation_v1/manifests/test_ood_full.csv \
   --fail-on-corrupt \
-  --fail-on-duplicate-content-across-splits \
-  datasets/dissertation_v1/manifests/train_id.csv \
-  datasets/dissertation_v1/manifests/val_id.csv \
-  datasets/dissertation_v1/manifests/test_id_synthetic_fallback.csv \
-  datasets/dissertation_v1/manifests/test_ood.csv
+  --fail-on-duplicate-content-across-splits
 ```
 
 Then run:
@@ -122,6 +128,7 @@ Before opening a PR, also verify:
 
 ```bash
 git lfs ls-files
+git lfs ls-files | findstr data/images/dissertation_v1
 git diff --cached --check
 python scripts/unpack_dissertation_dataset.py --dataset-dir datasets/dissertation_v1 --root-dir data --verify-checksums
 ```

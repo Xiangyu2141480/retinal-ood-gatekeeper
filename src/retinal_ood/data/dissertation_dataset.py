@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 import zipfile
 from collections import Counter
 from dataclasses import dataclass
@@ -88,9 +89,9 @@ def prepare_dissertation_dataset(
     root_dir: str | Path,
     prepared_syntheye_dir: str | Path,
     out_image_dir: str | Path,
-    local_manifest_dir: str | Path,
     repo_dataset_dir: str | Path,
-    audit_dir: str | Path,
+    local_manifest_dir: str | Path | None = None,
+    audit_dir: str | Path | None = None,
     prepared_colour_fundus_dir: str | Path | None = None,
     prepared_oct_dir: str | Path | None = None,
     prepared_cifar_dir: str | Path | None = None,
@@ -103,6 +104,7 @@ def prepare_dissertation_dataset(
     allow_synthetic_surrogates: bool = False,
     allow_val_artifact: bool = False,
     commit_safe_manifest_package: bool = False,
+    commit_individual_lfs_images: bool = False,
 ) -> DissertationDatasetBuildResult:
     """Create local curated images plus a commit-safe dissertation manifest package.
 
@@ -124,10 +126,13 @@ def prepare_dissertation_dataset(
 
     root = Path(root_dir)
     out_images = Path(out_image_dir)
-    local_manifests_dir = Path(local_manifest_dir)
+    local_manifests_dir = Path(local_manifest_dir) if local_manifest_dir is not None else root / "manifests" / "generated" / "dissertation_v1"
     repo_dir = Path(repo_dataset_dir)
     repo_manifest_dir = repo_dir / "manifests"
-    local_audit_dir = Path(audit_dir)
+    local_audit_dir = Path(audit_dir) if audit_dir is not None else Path("reports") / "local_audits" / "dissertation_v1"
+    if commit_individual_lfs_images:
+        _reset_direct_image_output_dir(out_images, root)
+
     for directory in [out_images, local_manifests_dir, repo_manifest_dir, local_audit_dir]:
         directory.mkdir(parents=True, exist_ok=True)
 
@@ -217,12 +222,13 @@ def prepare_dissertation_dataset(
         encoding="utf-8",
     )
 
-    if commit_safe_manifest_package:
+    if commit_safe_manifest_package or commit_individual_lfs_images:
         _write_repo_package_docs(
             repo_dir,
             manifest_rows=manifest_rows,
             audit_summary=audit_summary,
             warnings=warnings,
+            individual_lfs_images=commit_individual_lfs_images,
         )
 
     return DissertationDatasetBuildResult(
@@ -334,6 +340,43 @@ def unpack_dissertation_image_archive(
         image_count=image_count,
         total_bytes=total_bytes,
         sha256=_sha256_file(archive),
+    )
+
+
+def verify_dissertation_image_files(
+    *,
+    image_dir: str | Path,
+    root_dir: str | Path,
+) -> DissertationImageArchiveResult:
+    """Verify direct individual image files exist for the primary LFS workflow."""
+
+    source_dir = Path(image_dir)
+    root = Path(root_dir).resolve()
+    if not source_dir.exists():
+        raise DissertationDatasetError(f"Image directory does not exist: {source_dir}")
+    files = [
+        path
+        for path in sorted(source_dir.rglob("*"))
+        if path.is_file() and path.suffix.lower() in SUPPORTED_IMAGE_EXTENSIONS
+    ]
+    if not files:
+        raise DissertationDatasetError(f"Image directory contains no supported images: {source_dir}")
+    total_bytes = 0
+    for path in files:
+        resolved = path.resolve()
+        try:
+            relative = resolved.relative_to(root).as_posix()
+        except ValueError as exc:
+            raise DissertationDatasetError(f"Image file is outside root_dir: {path}") from exc
+        if _is_private_or_absolute_path(relative):
+            raise DissertationDatasetError(f"Image path is unsafe: {relative}")
+        total_bytes += path.stat().st_size
+    return DissertationImageArchiveResult(
+        archive_path=source_dir,
+        manifest_path=source_dir,
+        image_count=len(files),
+        total_bytes=total_bytes,
+        sha256="",
     )
 
 
@@ -562,11 +605,12 @@ def _prepare_id_rows(
         split_paths = _split_paths(shuffled)
         for split_name, source_paths in split_paths.items():
             for source_path in source_paths:
+                output_split_dir = "test_synthetic_fallback" if split_name == "test" else split_name
                 output_path = (
                     out_image_dir
                     / "id"
-                    / split_name
-                    / f"id_{split_name}_{counters[split_name]:06d}.png"
+                    / output_split_dir
+                    / f"id_{output_split_dir}_{counters[split_name]:06d}.png"
                 )
                 _save_as_png(source_path, output_path)
                 source_hash = _sha256_file(source_path)
@@ -949,14 +993,25 @@ def _write_repo_package_docs(
     manifest_rows: dict[str, list[dict[str, Any]]],
     audit_summary: dict[str, Any],
     warnings: list[str],
+    individual_lfs_images: bool = False,
 ) -> None:
     repo_dir.mkdir(parents=True, exist_ok=True)
     counts = audit_summary["counts"]
     statement = "This dataset package contains manifests and metadata only; image files are not committed."
-    lfs_statement = (
-        "Individual PNG/JPG/TIFF files are not committed as normal Git blobs; "
-        "the curated image package is stored as a Git LFS archive."
-    )
+    if individual_lfs_images:
+        statement = (
+            "This repository includes the actual final dissertation dataset images "
+            "under `data/images/dissertation_v1/` through Git LFS."
+        )
+        lfs_statement = (
+            "Individual PNG/JPG/TIFF files are tracked by Git LFS and must not be "
+            "stored as normal Git blobs."
+        )
+    else:
+        lfs_statement = (
+            "Individual PNG/JPG/TIFF files are not committed as normal Git blobs; "
+            "the curated image package is stored as a Git LFS archive."
+        )
     README = f"""# Dissertation Dataset v1
 
 This package defines the dissertation dataset for the retinal FAF OOD gatekeeper.
@@ -969,8 +1024,7 @@ Use `scripts/prepare_dissertation_dataset.py` to rebuild local private images an
 manifests from your prepared data folders. The committed CSV files contain only
 relative paths, labels, taxonomy fields, hashes, and safe provenance notes.
 
-The curated image archive is stored through Git LFS at
-`lfs/dissertation_v1_images.zip`.
+The canonical image files are under `data/images/dissertation_v1/`.
 
 ## Manifests
 
@@ -988,6 +1042,8 @@ The curated image archive is stored through Git LFS at
 
 ```bash
 git lfs pull
+python scripts/validate_manifests.py --root-dir data datasets/dissertation_v1/manifests/train_id.csv datasets/dissertation_v1/manifests/test_ood_full.csv
+python scripts/audit_dataset_images.py --root-dir data --manifest datasets/dissertation_v1/manifests/train_id.csv --manifest datasets/dissertation_v1/manifests/val_id.csv --manifest datasets/dissertation_v1/manifests/test_id_synthetic_fallback.csv --manifest datasets/dissertation_v1/manifests/test_ood_full.csv --fail-on-corrupt --fail-on-duplicate-content-across-splits
 python scripts/unpack_dissertation_dataset.py --dataset-dir datasets/dissertation_v1 --root-dir data --verify-checksums
 ```
 """
@@ -1038,6 +1094,7 @@ Patient identifiers and clinical disease labels are not included.
 git lfs pull
 python scripts/unpack_dissertation_dataset.py --dataset-dir datasets/dissertation_v1 --root-dir data --verify-checksums
 python scripts/validate_manifests.py --root-dir data datasets/dissertation_v1/manifests/train_id.csv datasets/dissertation_v1/manifests/val_id.csv datasets/dissertation_v1/manifests/test_id_synthetic_fallback.csv datasets/dissertation_v1/manifests/test_ood.csv
+python scripts/audit_dataset_images.py --root-dir data --manifest datasets/dissertation_v1/manifests/train_id.csv --manifest datasets/dissertation_v1/manifests/val_id.csv --manifest datasets/dissertation_v1/manifests/test_id_synthetic_fallback.csv --manifest datasets/dissertation_v1/manifests/test_ood_full.csv --fail-on-corrupt --fail-on-duplicate-content-across-splits
 ```
 """
     warning_lines = "\n".join(f"- {warning}" for warning in sorted(set(warnings))) or "- None"
@@ -1058,9 +1115,9 @@ python scripts/validate_manifests.py --root-dir data datasets/dissertation_v1/ma
 
 ## Archive
 
-- Git LFS image archive: `lfs/dissertation_v1_images.zip`
+- Git LFS image root: `data/images/dissertation_v1/`
 - Checksum file: `checksums.sha256`
-- Unpack command: `python scripts/unpack_dissertation_dataset.py --dataset-dir datasets/dissertation_v1 --root-dir data --verify-checksums`
+- Primary workflow: `git clone`, `git lfs pull`, then validate/audit manifests.
 """
     files = {
         "README.md": README,
@@ -1084,6 +1141,24 @@ def _discover_images(directory: Path | None) -> list[Path]:
         for path in directory.rglob("*")
         if path.is_file() and path.suffix.lower() in SUPPORTED_IMAGE_EXTENSIONS
     )
+
+
+def _reset_direct_image_output_dir(out_image_dir: Path, root_dir: Path) -> None:
+    resolved = out_image_dir.resolve()
+    root = root_dir.resolve()
+    try:
+        relative = resolved.relative_to(root)
+    except ValueError as exc:
+        raise DissertationDatasetError(
+            f"Refusing to clean image output outside root_dir: {out_image_dir}"
+        ) from exc
+    if relative.as_posix() != "images/dissertation_v1":
+        raise DissertationDatasetError(
+            "Direct LFS image mode only cleans root_dir/images/dissertation_v1; "
+            f"got {relative.as_posix()}"
+        )
+    if resolved.exists():
+        shutil.rmtree(resolved)
 
 
 def _split_paths(paths: list[Path]) -> dict[str, list[Path]]:

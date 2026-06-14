@@ -96,7 +96,7 @@ def test_builder_creates_safe_dissertation_package(tmp_path: Path):
         repo_dataset_dir=tmp_path / "datasets" / "dissertation_v1",
         audit_dir=tmp_path / "reports" / "local_audits" / "dissertation_v1",
         seed=7,
-        commit_safe_manifest_package=True,
+        commit_individual_lfs_images=True,
     )
 
     repo_manifests = result.repo_manifests
@@ -136,6 +136,7 @@ def test_builder_creates_safe_dissertation_package(tmp_path: Path):
     assert set(val["ood_type"]) == {"id"}
     assert "synthetic fallback only" in " ".join(test_id["notes"])
     assert all(train["image_path"].str.startswith("images/dissertation_v1/id/train/"))
+    assert all(test_id["image_path"].str.startswith("images/dissertation_v1/id/test_synthetic_fallback/"))
     assert not any("source_name_" in path for path in train["image_path"])
 
     assert len(artifact) == len(test_id) * len(ARTIFACT_SUBTYPES)
@@ -179,9 +180,22 @@ def test_builder_creates_safe_dissertation_package(tmp_path: Path):
         for path in result.repo_dataset_dir.rglob("*")
     )
     audit_summary = (result.repo_dataset_dir / "AUDIT_SUMMARY.md").read_text(encoding="utf-8")
-    assert "This dataset package contains manifests and metadata only; image files are not committed." in audit_summary
+    assert "actual final dissertation dataset images" in audit_summary
+    assert "data/images/dissertation_v1/" in audit_summary
     assert any("synthetic fallback" in warning for warning in result.warnings)
     assert any("pending_manual_review" in warning for warning in result.warnings)
+
+
+def test_lfs_and_gitignore_rules_target_only_final_dataset_images():
+    attributes = Path(".gitattributes").read_text(encoding="utf-8")
+    ignore = Path(".gitignore").read_text(encoding="utf-8")
+
+    assert "data/images/dissertation_v1/**/*.png filter=lfs diff=lfs merge=lfs -text" in attributes
+    assert "data/images/dissertation_v1/**/*.tiff filter=lfs diff=lfs merge=lfs -text" in attributes
+    assert "data/images/*" in ignore
+    assert "!data/images/dissertation_v1/" in ignore
+    assert "!data/images/dissertation_v1/**" in ignore
+    assert "data/images/**" not in attributes
 
 
 def test_builder_outputs_are_deterministic(tmp_path: Path):

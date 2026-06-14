@@ -2,10 +2,10 @@
 
 ## Purpose
 
-This dataset card describes a metadata-only package for dissertation experiments
-on an unsupervised OOD gatekeeper for retinal FAF quality control. The package
-is designed to evaluate whether an upstream model should accept a likely-valid
-FAF input or reject an invalid/OOD input.
+This dataset card describes the direct-image Git LFS package for dissertation
+experiments on an unsupervised OOD gatekeeper for retinal FAF quality control.
+The package is designed to evaluate whether an upstream model should accept a
+likely-valid FAF input or reject an invalid/OOD input.
 
 This is not a disease-classification dataset.
 
@@ -49,8 +49,10 @@ Provenance and safety fields:
 - `license_status`
 - `notes`
 
-`patient_id` must be empty. Clinical disease labels, eye IDs, biomarker labels,
-private paths, and raw source filenames must not enter the committed package.
+`patient_id` must be empty. Clinical disease labels, Eye_ID values, biomarker
+labels, private paths, API keys, and raw source filenames must not enter the
+committed package. Source/gene/disease/class metadata is not used as a prediction
+target.
 
 ## Known Limitations
 
@@ -61,5 +63,15 @@ private paths, and raw source filenames must not enter the committed package.
 
 ## Safe Storage
 
-Images remain under ignored local data directories. The repository stores only
-metadata, safe manifests, and documentation.
+The repository includes actual curated final images under
+`data/images/dissertation_v1/`, tracked through Git LFS. Raw download/cache
+folders remain ignored and are not part of the dissertation package.
+
+School-server primary workflow:
+
+```bash
+git lfs install
+git lfs pull
+pip install -e ".[dev]"
+python scripts/validate_manifests.py --root-dir data datasets/dissertation_v1/manifests/train_id.csv datasets/dissertation_v1/manifests/test_ood_full.csv
+```
