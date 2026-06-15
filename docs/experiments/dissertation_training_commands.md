@@ -99,36 +99,75 @@ python scripts/run_experiment_grid.py \
 
 ## Secondary Balanced-by-Type Run
 
+The multi-scheme comparison adds three lightweight ID-only baselines:
+
+- `image_statistics`
+- `global_feature_knn`
+- `mahalanobis_feature`
+
+Primary baseline command:
+
 ```bash
 python scripts/run_experiment_grid.py \
-  --grid-config configs/experiment_grid.yaml \
+  --grid-config configs/multi_scheme_grid.yaml \
   --root-dir data \
-  --out-dir reports/generated/dissertation_runs/secondary_balanced_by_type \
+  --out-dir reports/generated/dissertation_runs/multi_scheme_primary \
   --device cpu \
   --seed 42 \
-  --only autoencoder_baseline,patchcore_layer2,patchcore_layer3,patchcore_layer2_layer3 \
+  --only image_statistics,global_feature_knn,mahalanobis_feature \
   --train-manifest datasets/dissertation_v1/manifests/train_id.csv \
   --val-manifest datasets/dissertation_v1/manifests/val_id.csv \
   --test-id-manifest datasets/dissertation_v1/manifests/test_id_synthetic_fallback.csv \
-  --test-ood-manifest datasets/dissertation_v1/manifests/test_ood_balanced_by_type.csv \
+  --test-ood-manifest datasets/dissertation_v1/manifests/test_ood_balanced_by_subtype.csv
+```
+
+PatchCore L4 was completed separately for the primary layer ablation:
+
+```bash
+python scripts/run_experiment_grid.py \
+  --grid-config configs/multi_scheme_grid.yaml \
+  --root-dir data \
+  --out-dir reports/generated/dissertation_runs/patchcore_l4_primary \
+  --device cpu \
+  --seed 42 \
+  --only patchcore_layer4 \
+  --train-manifest datasets/dissertation_v1/manifests/train_id.csv \
+  --val-manifest datasets/dissertation_v1/manifests/val_id.csv \
+  --test-id-manifest datasets/dissertation_v1/manifests/test_id_synthetic_fallback.csv \
+  --test-ood-manifest datasets/dissertation_v1/manifests/test_ood_balanced_by_subtype.csv \
   --patchcore-max-train-patches 10000
+```
+
+PatchCore L1 is listed as runtime-limited in the result package rather than imputed.
+
+```bash
+python scripts/run_experiment_grid.py \
+  --grid-config configs/multi_scheme_grid.yaml \
+  --root-dir data \
+  --out-dir reports/generated/dissertation_runs/multi_scheme_secondary \
+  --device cpu \
+  --seed 42 \
+  --only image_statistics,global_feature_knn,mahalanobis_feature \
+  --train-manifest datasets/dissertation_v1/manifests/train_id.csv \
+  --val-manifest datasets/dissertation_v1/manifests/val_id.csv \
+  --test-id-manifest datasets/dissertation_v1/manifests/test_id_synthetic_fallback.csv \
+  --test-ood-manifest datasets/dissertation_v1/manifests/test_ood_balanced_by_type.csv
 ```
 
 ## Full OOD Stress Run
 
 ```bash
 python scripts/run_experiment_grid.py \
-  --grid-config configs/experiment_grid.yaml \
+  --grid-config configs/multi_scheme_grid.yaml \
   --root-dir data \
-  --out-dir reports/generated/dissertation_runs/stress_full_ood \
+  --out-dir reports/generated/dissertation_runs/multi_scheme_stress \
   --device cpu \
   --seed 42 \
-  --only autoencoder_baseline,patchcore_layer2,patchcore_layer3,patchcore_layer2_layer3 \
+  --only image_statistics,global_feature_knn,mahalanobis_feature \
   --train-manifest datasets/dissertation_v1/manifests/train_id.csv \
   --val-manifest datasets/dissertation_v1/manifests/val_id.csv \
   --test-id-manifest datasets/dissertation_v1/manifests/test_id_synthetic_fallback.csv \
-  --test-ood-manifest datasets/dissertation_v1/manifests/test_ood_full.csv \
-  --patchcore-max-train-patches 10000
+  --test-ood-manifest datasets/dissertation_v1/manifests/test_ood_full.csv
 ```
 
 ## Curated Figure Suite
@@ -154,6 +193,26 @@ python scripts/generate_dissertation_figure_suite.py \
   --out-dir reports/dissertation_figures \
   --dpi 300
 ```
+
+Build the multi-scheme comparison package from compact generated evaluation outputs:
+
+```bash
+python scripts/generate_multi_scheme_comparison_package.py \
+  --run-root balanced_by_subtype=reports/generated/dissertation_runs/primary_balanced_by_subtype_10k \
+  --run-root balanced_by_subtype=reports/generated/dissertation_runs/multi_scheme_primary \
+  --run-root balanced_by_subtype=reports/generated/dissertation_runs/patchcore_l4_primary \
+  --run-root balanced_by_type=reports/generated/dissertation_runs/multi_scheme_secondary \
+  --run-root balanced_by_type=reports/generated/dissertation_runs/selected_secondary \
+  --run-root full_ood_stress=reports/generated/dissertation_runs/multi_scheme_stress \
+  --run-root full_ood_stress=reports/generated/dissertation_runs/selected_stress \
+  --results-dir reports/dissertation_results/multi_scheme_comparison \
+  --figures-dir reports/dissertation_figures \
+  --dpi 300
+```
+
+The selected secondary/stress folders are checkpoint-only evaluations for Autoencoder,
+PatchCore L3, and PatchCore L2+L3 using the primary trained checkpoints. They keep the
+evaluation matrix broad without retraining those models for every OOD split.
 
 ## Final Validation Before PR
 

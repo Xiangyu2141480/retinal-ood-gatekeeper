@@ -333,7 +333,7 @@ def _prepare_experiment(
     )
 
     kind = spec.kind or _infer_experiment_kind(config)
-    if kind not in {"patchcore", "autoencoder"}:
+    if kind not in {"patchcore", "autoencoder", "baseline"}:
         raise ValueError(f"Experiment {spec.name} has unsupported type/model: {kind}")
     spec = ExperimentSpec(spec.name, kind, spec.config_path, spec.layers)
     if spec.kind == "patchcore" and patchcore_max_train_patches is not None:
@@ -365,6 +365,8 @@ def _infer_experiment_kind(config: dict[str, Any]) -> str:
         return "patchcore"
     if "autoencoder" in model_name:
         return "autoencoder"
+    if model_name in {"image_statistics", "global_feature_knn", "mahalanobis_feature"}:
+        return "baseline"
     return model_name
 
 
@@ -456,6 +458,8 @@ def _checkpoint_path(kind: str, run_dir: Path) -> Path:
         return run_dir / "patchcore_memory.npz"
     if kind == "autoencoder":
         return run_dir / "model.pt"
+    if kind == "baseline":
+        return run_dir / "baseline_model.npz"
     raise ValueError(f"Unsupported experiment type: {kind}")
 
 
@@ -480,6 +484,18 @@ def _build_commands(kind: str, config_path: Path, checkpoint_path: Path) -> list
             [
                 sys.executable,
                 str(script_dir / "evaluate_autoencoder.py"),
+                "--config",
+                str(config_path),
+                "--checkpoint",
+                str(checkpoint_path),
+            ],
+        ]
+    if kind == "baseline":
+        return [
+            [sys.executable, str(script_dir / "train_baseline.py"), "--config", str(config_path)],
+            [
+                sys.executable,
+                str(script_dir / "evaluate_baseline.py"),
                 "--config",
                 str(config_path),
                 "--checkpoint",

@@ -1,0 +1,221 @@
+eval_set,scheme,scheme_label,run_name,ood_type,ood_subtype,auroc,auprc,fpr_at_95_tpr,id_count,ood_count
+balanced_by_subtype,image_statistics,Image statistics,image_statistics,modality_shift,colour_fundus,0.8364444444444444,0.7732720731799679,0.44666666666666666,150,150
+balanced_by_subtype,image_statistics,Image statistics,image_statistics,modality_shift,oct_screenshot,0.9709777777777777,0.9201362167752315,0.07333333333333333,150,150
+balanced_by_subtype,image_statistics,Image statistics,image_statistics,sensory_artifact,text_watermark,0.5129333333333332,0.527093134175086,0.9533333333333334,150,150
+balanced_by_subtype,image_statistics,Image statistics,image_statistics,sensory_artifact,rectangle_annotation,0.7348888888888889,0.6786061820814557,0.6133333333333333,150,150
+balanced_by_subtype,image_statistics,Image statistics,image_statistics,sensory_artifact,arrow_annotation,0.7120444444444445,0.6706971622971154,0.66,150,150
+balanced_by_subtype,image_statistics,Image statistics,image_statistics,sensory_artifact,composite_layout,0.9537777777777778,0.9118862258129428,0.07333333333333333,150,150
+balanced_by_subtype,image_statistics,Image statistics,image_statistics,sensory_artifact,blur_artifact,0.6532888888888888,0.6384747220554661,0.78,150,150
+balanced_by_subtype,image_statistics,Image statistics,image_statistics,sensory_artifact,border_crop,0.6991111111111111,0.6348944035808446,0.6866666666666666,150,150
+balanced_by_subtype,image_statistics,Image statistics,image_statistics,sensory_artifact,gaussian_noise,0.8682666666666666,0.8211464779809733,0.5133333333333333,150,150
+balanced_by_subtype,image_statistics,Image statistics,image_statistics,sensory_artifact,jpeg_compression,0.5104000000000001,0.5218320391411675,0.9466666666666667,150,150
+balanced_by_subtype,image_statistics,Image statistics,image_statistics,semantic_outlier,cifar10_natural,0.9972444444444444,0.9970617824221468,0.013333333333333334,150,150
+balanced_by_subtype,autoencoder,Autoencoder,autoencoder_baseline,modality_shift,colour_fundus,1.0,1.0000000000000002,0.0,150,150
+balanced_by_subtype,autoencoder,Autoencoder,autoencoder_baseline,modality_shift,oct_screenshot,0.9853777777777778,0.9778355563858399,0.02666666666666667,150,150
+balanced_by_subtype,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,text_watermark,0.5294666666666666,0.5292201814878171,0.9066666666666666,150,150
+balanced_by_subtype,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,rectangle_annotation,1.0,1.0000000000000002,0.0,150,150
+balanced_by_subtype,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,arrow_annotation,1.0,1.0000000000000002,0.0,150,150
+balanced_by_subtype,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,composite_layout,0.9931555555555556,0.9826888744276053,0.013333333333333334,150,150
+balanced_by_subtype,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,blur_artifact,0.11155555555555556,0.325318262221688,1.0,150,150
+balanced_by_subtype,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,border_crop,0.4336,0.45495034307911275,0.96,150,150
+balanced_by_subtype,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,gaussian_noise,0.8739555555555556,0.8621720399041729,0.5066666666666667,150,150
+balanced_by_subtype,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,jpeg_compression,0.505688888888889,0.5137057370084033,0.96,150,150
+balanced_by_subtype,autoencoder,Autoencoder,autoencoder_baseline,semantic_outlier,cifar10_natural,0.9809333333333333,0.985359623519774,0.08666666666666667,150,150
+balanced_by_subtype,global_feature_knn,Global feature kNN,global_feature_knn,modality_shift,colour_fundus,1.0,1.0000000000000002,0.0,150,150
+balanced_by_subtype,global_feature_knn,Global feature kNN,global_feature_knn,modality_shift,oct_screenshot,1.0,1.0000000000000002,0.0,150,150
+balanced_by_subtype,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,text_watermark,0.5699555555555555,0.5508817480488142,0.82,150,150
+balanced_by_subtype,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,rectangle_annotation,0.9988,0.9988001898507559,0.013333333333333334,150,150
+balanced_by_subtype,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,arrow_annotation,0.9584,0.9516510000378624,0.18,150,150
+balanced_by_subtype,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,composite_layout,1.0,1.0000000000000002,0.0,150,150
+balanced_by_subtype,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,blur_artifact,0.9853777777777778,0.9847381228615708,0.07333333333333333,150,150
+balanced_by_subtype,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,border_crop,0.9618666666666666,0.958895298406031,0.18,150,150
+balanced_by_subtype,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,gaussian_noise,0.9548888888888889,0.9493213089832457,0.18,150,150
+balanced_by_subtype,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,jpeg_compression,0.9745333333333333,0.9761483910549724,0.11333333333333333,150,150
+balanced_by_subtype,global_feature_knn,Global feature kNN,global_feature_knn,semantic_outlier,cifar10_natural,1.0,1.0000000000000002,0.0,150,150
+balanced_by_subtype,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,modality_shift,colour_fundus,1.0,1.0000000000000002,0.0,150,150
+balanced_by_subtype,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,modality_shift,oct_screenshot,1.0,1.0000000000000002,0.0,150,150
+balanced_by_subtype,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,text_watermark,0.7361333333333333,0.6876402485209893,0.6466666666666666,150,150
+balanced_by_subtype,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,rectangle_annotation,1.0,1.0000000000000002,0.0,150,150
+balanced_by_subtype,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,arrow_annotation,0.9968,0.9964769906392702,0.013333333333333334,150,150
+balanced_by_subtype,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,composite_layout,1.0,1.0000000000000002,0.0,150,150
+balanced_by_subtype,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,blur_artifact,0.9964444444444445,0.9961821943627334,0.013333333333333334,150,150
+balanced_by_subtype,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,border_crop,0.9946222222222223,0.9934529949840682,0.013333333333333334,150,150
+balanced_by_subtype,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,gaussian_noise,0.9817777777777777,0.9684632333060784,0.06666666666666667,150,150
+balanced_by_subtype,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,jpeg_compression,0.9910222222222222,0.991242994788827,0.04666666666666667,150,150
+balanced_by_subtype,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,semantic_outlier,cifar10_natural,1.0,1.0000000000000002,0.0,150,150
+balanced_by_subtype,patchcore_l2,PatchCore L2,patchcore_layer2,modality_shift,colour_fundus,0.9936,0.993255467377947,0.04,150,150
+balanced_by_subtype,patchcore_l2,PatchCore L2,patchcore_layer2,modality_shift,oct_screenshot,1.0,1.0,0.0,150,150
+balanced_by_subtype,patchcore_l2,PatchCore L2,patchcore_layer2,sensory_artifact,text_watermark,0.9491777777777778,0.9485436103143411,0.22666666666666666,150,150
+balanced_by_subtype,patchcore_l2,PatchCore L2,patchcore_layer2,sensory_artifact,rectangle_annotation,1.0,1.0000000000000002,0.0,150,150
+balanced_by_subtype,patchcore_l2,PatchCore L2,patchcore_layer2,sensory_artifact,arrow_annotation,0.9999111111111111,0.9999122807017546,0.0,150,150
+balanced_by_subtype,patchcore_l2,PatchCore L2,patchcore_layer2,sensory_artifact,composite_layout,1.0,1.0000000000000002,0.0,150,150
+balanced_by_subtype,patchcore_l2,PatchCore L2,patchcore_layer2,sensory_artifact,blur_artifact,0.49266666666666664,0.48131577428047273,0.9066666666666666,150,150
+balanced_by_subtype,patchcore_l2,PatchCore L2,patchcore_layer2,sensory_artifact,border_crop,0.7491555555555556,0.7766329459417964,0.78,150,150
+balanced_by_subtype,patchcore_l2,PatchCore L2,patchcore_layer2,sensory_artifact,gaussian_noise,0.4256444444444445,0.4481430105120431,0.9466666666666667,150,150
+balanced_by_subtype,patchcore_l2,PatchCore L2,patchcore_layer2,sensory_artifact,jpeg_compression,0.5585333333333333,0.5206599375100067,0.8533333333333334,150,150
+balanced_by_subtype,patchcore_l2,PatchCore L2,patchcore_layer2,semantic_outlier,cifar10_natural,0.9391555555555555,0.9201251460138142,0.2,150,150
+balanced_by_subtype,patchcore_l3,PatchCore L3,patchcore_layer3,modality_shift,colour_fundus,0.9695555555555555,0.9336088857592543,0.06666666666666667,150,150
+balanced_by_subtype,patchcore_l3,PatchCore L3,patchcore_layer3,modality_shift,oct_screenshot,0.9948,0.9935499200725619,0.013333333333333334,150,150
+balanced_by_subtype,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,text_watermark,0.9571777777777778,0.9467487372308432,0.2,150,150
+balanced_by_subtype,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,rectangle_annotation,0.9929333333333333,0.9910144397913629,0.02,150,150
+balanced_by_subtype,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,arrow_annotation,0.9983555555555557,0.9982874393613443,0.013333333333333334,150,150
+balanced_by_subtype,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,composite_layout,0.9930666666666667,0.9903636976443859,0.013333333333333334,150,150
+balanced_by_subtype,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,blur_artifact,0.5776444444444444,0.5519147287832522,0.9,150,150
+balanced_by_subtype,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,border_crop,0.8779111111111112,0.8682272072736572,0.44666666666666666,150,150
+balanced_by_subtype,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,gaussian_noise,0.7501333333333333,0.749046849386708,0.74,150,150
+balanced_by_subtype,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,jpeg_compression,0.5979111111111112,0.5539325269244321,0.82,150,150
+balanced_by_subtype,patchcore_l3,PatchCore L3,patchcore_layer3,semantic_outlier,cifar10_natural,0.9917777777777778,0.9902814562249431,0.04,150,150
+balanced_by_subtype,patchcore_l4,PatchCore L4,patchcore_layer4,modality_shift,colour_fundus,0.8424444444444444,0.801613689681921,0.52,150,150
+balanced_by_subtype,patchcore_l4,PatchCore L4,patchcore_layer4,modality_shift,oct_screenshot,0.9457333333333333,0.8987384981905281,0.15333333333333332,150,150
+balanced_by_subtype,patchcore_l4,PatchCore L4,patchcore_layer4,sensory_artifact,text_watermark,0.6405777777777778,0.6238531306441476,0.8933333333333333,150,150
+balanced_by_subtype,patchcore_l4,PatchCore L4,patchcore_layer4,sensory_artifact,rectangle_annotation,0.9764888888888889,0.9416169291600395,0.05333333333333334,150,150
+balanced_by_subtype,patchcore_l4,PatchCore L4,patchcore_layer4,sensory_artifact,arrow_annotation,0.9852888888888889,0.9741246579988018,0.03333333333333333,150,150
+balanced_by_subtype,patchcore_l4,PatchCore L4,patchcore_layer4,sensory_artifact,composite_layout,0.4401777777777778,0.4410416784943005,0.94,150,150
+balanced_by_subtype,patchcore_l4,PatchCore L4,patchcore_layer4,sensory_artifact,blur_artifact,0.5908888888888889,0.5801972729066251,0.8933333333333333,150,150
+balanced_by_subtype,patchcore_l4,PatchCore L4,patchcore_layer4,sensory_artifact,border_crop,0.7415555555555556,0.7076346243863729,0.6266666666666667,150,150
+balanced_by_subtype,patchcore_l4,PatchCore L4,patchcore_layer4,sensory_artifact,gaussian_noise,0.5817777777777777,0.5813160407599138,0.9133333333333333,150,150
+balanced_by_subtype,patchcore_l4,PatchCore L4,patchcore_layer4,sensory_artifact,jpeg_compression,0.5458666666666667,0.5422127916935604,0.8933333333333333,150,150
+balanced_by_subtype,patchcore_l4,PatchCore L4,patchcore_layer4,semantic_outlier,cifar10_natural,0.9614222222222222,0.9361149984800041,0.12,150,150
+balanced_by_subtype,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,modality_shift,colour_fundus,0.9837333333333333,0.972526679467023,0.07333333333333333,150,150
+balanced_by_subtype,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,modality_shift,oct_screenshot,1.0,1.0000000000000002,0.0,150,150
+balanced_by_subtype,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,text_watermark,0.9593777777777778,0.9517018561599362,0.14,150,150
+balanced_by_subtype,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,rectangle_annotation,0.9998666666666666,0.999866662715874,0.0,150,150
+balanced_by_subtype,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,arrow_annotation,0.9994222222222222,0.9994062928258649,0.006666666666666667,150,150
+balanced_by_subtype,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,composite_layout,1.0,1.0000000000000002,0.0,150,150
+balanced_by_subtype,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,blur_artifact,0.5531111111111111,0.5293518902618621,0.84,150,150
+balanced_by_subtype,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,border_crop,0.8884,0.8945660289313083,0.5266666666666666,150,150
+balanced_by_subtype,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,gaussian_noise,0.6432444444444445,0.6495745096835372,0.8,150,150
+balanced_by_subtype,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,jpeg_compression,0.5755555555555556,0.5411425653022996,0.8666666666666667,150,150
+balanced_by_subtype,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,semantic_outlier,cifar10_natural,0.9912000000000001,0.9899102056057901,0.02666666666666667,150,150
+balanced_by_type,image_statistics,Image statistics,image_statistics,modality_shift,colour_fundus,0.8406333333333333,0.819804558952959,0.43333333333333335,150,200
+balanced_by_type,image_statistics,Image statistics,image_statistics,modality_shift,oct_screenshot,0.9692999999999999,0.9350170384977514,0.07333333333333333,150,200
+balanced_by_type,image_statistics,Image statistics,image_statistics,sensory_artifact,text_watermark,0.48000000000000004,0.2336703992936227,0.98,150,43
+balanced_by_type,image_statistics,Image statistics,image_statistics,sensory_artifact,rectangle_annotation,0.7511538461538462,0.4604604361342684,0.6133333333333333,150,52
+balanced_by_type,image_statistics,Image statistics,image_statistics,sensory_artifact,arrow_annotation,0.7274509803921568,0.45372467156571616,0.66,150,51
+balanced_by_type,image_statistics,Image statistics,image_statistics,sensory_artifact,composite_layout,0.9550724637681159,0.7887184664890668,0.07333333333333333,150,46
+balanced_by_type,image_statistics,Image statistics,image_statistics,sensory_artifact,blur_artifact,0.6443537414965986,0.378996548670106,0.72,150,49
+balanced_by_type,image_statistics,Image statistics,image_statistics,sensory_artifact,border_crop,0.6540229885057471,0.37347215521127736,0.7533333333333333,150,58
+balanced_by_type,image_statistics,Image statistics,image_statistics,sensory_artifact,gaussian_noise,0.8590849673202614,0.6291830393865708,0.5666666666666667,150,51
+balanced_by_type,image_statistics,Image statistics,image_statistics,sensory_artifact,jpeg_compression,0.5350666666666666,0.29370303289808253,0.9466666666666667,150,50
+balanced_by_type,image_statistics,Image statistics,image_statistics,semantic_outlier,cifar10_natural,0.99705,0.9988265838796302,0.013333333333333334,150,400
+balanced_by_type,autoencoder,Autoencoder,autoencoder_baseline,modality_shift,colour_fundus,1.0,1.0,0.0,150,200
+balanced_by_type,autoencoder,Autoencoder,autoencoder_baseline,modality_shift,oct_screenshot,0.9854666666666667,0.9833050819436646,0.02666666666666667,150,200
+balanced_by_type,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,text_watermark,0.5452713178294574,0.24898700877141872,0.9066666666666666,150,43
+balanced_by_type,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,rectangle_annotation,1.0,1.0,0.0,150,52
+balanced_by_type,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,arrow_annotation,1.0,1.0,0.0,150,51
+balanced_by_type,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,composite_layout,0.9930434782608696,0.946499856907835,0.013333333333333334,150,46
+balanced_by_type,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,blur_artifact,0.11142857142857145,0.14636252383682935,1.0,150,49
+balanced_by_type,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,border_crop,0.4637931034482759,0.26613459401995465,0.9533333333333334,150,58
+balanced_by_type,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,gaussian_noise,0.873202614379085,0.6980127866377691,0.4866666666666667,150,51
+balanced_by_type,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,jpeg_compression,0.46199999999999997,0.2345789420922552,1.0,150,50
+balanced_by_type,autoencoder,Autoencoder,autoencoder_baseline,semantic_outlier,cifar10_natural,0.9754666666666666,0.9919049669380529,0.11333333333333333,150,400
+balanced_by_type,global_feature_knn,Global feature kNN,global_feature_knn,modality_shift,colour_fundus,1.0,1.0,0.0,150,200
+balanced_by_type,global_feature_knn,Global feature kNN,global_feature_knn,modality_shift,oct_screenshot,1.0,1.0,0.0,150,200
+balanced_by_type,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,text_watermark,0.5666666666666667,0.2692739528480132,0.86,150,43
+balanced_by_type,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,rectangle_annotation,0.9992307692307693,0.9979006842214391,0.0,150,52
+balanced_by_type,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,arrow_annotation,0.9589542483660131,0.8812810693052199,0.18,150,51
+balanced_by_type,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,composite_layout,1.0,0.9999999999999999,0.0,150,46
+balanced_by_type,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,blur_artifact,0.9885714285714285,0.96500333298732,0.04666666666666667,150,49
+balanced_by_type,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,border_crop,0.955287356321839,0.8907543589920088,0.25333333333333335,150,58
+balanced_by_type,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,gaussian_noise,0.9471895424836602,0.8590926447714611,0.18666666666666668,150,51
+balanced_by_type,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,jpeg_compression,0.9818666666666667,0.9597678197189419,0.1,150,50
+balanced_by_type,global_feature_knn,Global feature kNN,global_feature_knn,semantic_outlier,cifar10_natural,1.0,1.0,0.0,150,400
+balanced_by_type,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,modality_shift,colour_fundus,1.0,1.0,0.0,150,200
+balanced_by_type,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,modality_shift,oct_screenshot,1.0,1.0,0.0,150,200
+balanced_by_type,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,text_watermark,0.7231007751937985,0.38343062458338206,0.6466666666666666,150,43
+balanced_by_type,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,rectangle_annotation,1.0,1.0,0.0,150,52
+balanced_by_type,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,arrow_annotation,0.9968627450980393,0.9900053258616223,0.013333333333333334,150,51
+balanced_by_type,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,composite_layout,1.0,0.9999999999999999,0.0,150,46
+balanced_by_type,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,blur_artifact,0.9970068027210884,0.9900920855376771,0.013333333333333334,150,49
+balanced_by_type,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,border_crop,0.9940229885057471,0.9805145059328528,0.013333333333333334,150,58
+balanced_by_type,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,gaussian_noise,0.982483660130719,0.9246263018784742,0.05333333333333334,150,51
+balanced_by_type,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,jpeg_compression,0.9914666666666667,0.9792906800419496,0.03333333333333333,150,50
+balanced_by_type,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,semantic_outlier,cifar10_natural,1.0,1.0,0.0,150,400
+balanced_by_type,patchcore_l3,PatchCore L3,patchcore_layer3,modality_shift,colour_fundus,0.9694666666666667,0.9473233676351562,0.06666666666666667,150,200
+balanced_by_type,patchcore_l3,PatchCore L3,patchcore_layer3,modality_shift,oct_screenshot,0.9949333333333333,0.9952929138075539,0.013333333333333334,150,200
+balanced_by_type,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,text_watermark,0.9576744186046511,0.8581577698864598,0.2,150,43
+balanced_by_type,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,rectangle_annotation,0.9921794871794871,0.9718299333353885,0.013333333333333334,150,52
+balanced_by_type,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,arrow_annotation,0.9984313725490196,0.9953353712354917,0.013333333333333334,150,51
+balanced_by_type,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,composite_layout,0.9927536231884058,0.9685536682296255,0.013333333333333334,150,46
+balanced_by_type,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,blur_artifact,0.5827210884353742,0.30012110931937597,0.82,150,49
+balanced_by_type,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,border_crop,0.8881609195402298,0.7477431839426926,0.44666666666666666,150,58
+balanced_by_type,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,gaussian_noise,0.7901960784313725,0.575083435740303,0.6,150,51
+balanced_by_type,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,jpeg_compression,0.6437333333333334,0.339760660539979,0.7133333333333334,150,50
+balanced_by_type,patchcore_l3,PatchCore L3,patchcore_layer3,semantic_outlier,cifar10_natural,0.99195,0.9963295577103355,0.02666666666666667,150,400
+balanced_by_type,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,modality_shift,colour_fundus,0.9838666666666667,0.978772207081771,0.06,150,200
+balanced_by_type,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,modality_shift,oct_screenshot,1.0,1.0,0.0,150,200
+balanced_by_type,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,text_watermark,0.951937984496124,0.8432764443641798,0.16,150,43
+balanced_by_type,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,rectangle_annotation,0.9997435897435897,0.9992673328123256,0.0,150,52
+balanced_by_type,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,arrow_annotation,0.9993464052287582,0.9980832969517811,0.006666666666666667,150,51
+balanced_by_type,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,composite_layout,1.0,0.9999999999999999,0.0,150,46
+balanced_by_type,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,blur_artifact,0.5965986394557823,0.2971190137197163,0.84,150,49
+balanced_by_type,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,border_crop,0.8896551724137931,0.8007576683734835,0.56,150,58
+balanced_by_type,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,gaussian_noise,0.6951633986928104,0.440858834686119,0.8,150,51
+balanced_by_type,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,jpeg_compression,0.6122666666666667,0.32088519647127556,0.8133333333333334,150,50
+balanced_by_type,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,semantic_outlier,cifar10_natural,0.9905666666666667,0.9958239479787911,0.04,150,400
+full_ood_stress,image_statistics,Image statistics,image_statistics,modality_shift,colour_fundus,0.8406333333333333,0.819804558952959,0.43333333333333335,150,200
+full_ood_stress,image_statistics,Image statistics,image_statistics,modality_shift,oct_screenshot,0.9692999999999999,0.9350170384977514,0.07333333333333333,150,200
+full_ood_stress,image_statistics,Image statistics,image_statistics,sensory_artifact,text_watermark,0.5129333333333332,0.527093134175086,0.9533333333333334,150,150
+full_ood_stress,image_statistics,Image statistics,image_statistics,sensory_artifact,rectangle_annotation,0.7348888888888889,0.6786061820814557,0.6133333333333333,150,150
+full_ood_stress,image_statistics,Image statistics,image_statistics,sensory_artifact,arrow_annotation,0.7120444444444445,0.6706971622971154,0.66,150,150
+full_ood_stress,image_statistics,Image statistics,image_statistics,sensory_artifact,composite_layout,0.9537777777777778,0.9118862258129428,0.07333333333333333,150,150
+full_ood_stress,image_statistics,Image statistics,image_statistics,sensory_artifact,blur_artifact,0.6532888888888888,0.6384747220554661,0.78,150,150
+full_ood_stress,image_statistics,Image statistics,image_statistics,sensory_artifact,border_crop,0.6991111111111111,0.6348944035808446,0.6866666666666666,150,150
+full_ood_stress,image_statistics,Image statistics,image_statistics,sensory_artifact,gaussian_noise,0.8682666666666666,0.8211464779809733,0.5133333333333333,150,150
+full_ood_stress,image_statistics,Image statistics,image_statistics,sensory_artifact,jpeg_compression,0.5104000000000001,0.5218320391411675,0.9466666666666667,150,150
+full_ood_stress,image_statistics,Image statistics,image_statistics,semantic_outlier,cifar10_natural,0.9971066666666667,0.9990764219781284,0.013333333333333334,150,500
+full_ood_stress,autoencoder,Autoencoder,autoencoder_baseline,modality_shift,colour_fundus,1.0,1.0,0.0,150,200
+full_ood_stress,autoencoder,Autoencoder,autoencoder_baseline,modality_shift,oct_screenshot,0.9854666666666667,0.9833050819436646,0.02666666666666667,150,200
+full_ood_stress,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,text_watermark,0.5294666666666666,0.5292201814878171,0.9066666666666666,150,150
+full_ood_stress,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,rectangle_annotation,1.0,1.0000000000000002,0.0,150,150
+full_ood_stress,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,arrow_annotation,1.0,1.0000000000000002,0.0,150,150
+full_ood_stress,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,composite_layout,0.9931555555555556,0.9826888744276053,0.013333333333333334,150,150
+full_ood_stress,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,blur_artifact,0.11155555555555556,0.325318262221688,1.0,150,150
+full_ood_stress,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,border_crop,0.4336,0.45495034307911275,0.96,150,150
+full_ood_stress,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,gaussian_noise,0.8739555555555556,0.8621720399041729,0.5066666666666667,150,150
+full_ood_stress,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,jpeg_compression,0.505688888888889,0.5137057370084033,0.96,150,150
+full_ood_stress,autoencoder,Autoencoder,autoencoder_baseline,semantic_outlier,cifar10_natural,0.9734266666666668,0.9928439185924665,0.14,150,500
+full_ood_stress,global_feature_knn,Global feature kNN,global_feature_knn,modality_shift,colour_fundus,1.0,1.0,0.0,150,200
+full_ood_stress,global_feature_knn,Global feature kNN,global_feature_knn,modality_shift,oct_screenshot,1.0,1.0,0.0,150,200
+full_ood_stress,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,text_watermark,0.5699555555555555,0.5508817480488142,0.82,150,150
+full_ood_stress,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,rectangle_annotation,0.9988,0.9988001898507559,0.013333333333333334,150,150
+full_ood_stress,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,arrow_annotation,0.9584,0.9516510000378624,0.18,150,150
+full_ood_stress,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,composite_layout,1.0,1.0000000000000002,0.0,150,150
+full_ood_stress,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,blur_artifact,0.9853777777777778,0.9847381228615708,0.07333333333333333,150,150
+full_ood_stress,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,border_crop,0.9618666666666666,0.958895298406031,0.18,150,150
+full_ood_stress,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,gaussian_noise,0.9548888888888889,0.9493213089832457,0.18,150,150
+full_ood_stress,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,jpeg_compression,0.9745333333333333,0.9761483910549724,0.11333333333333333,150,150
+full_ood_stress,global_feature_knn,Global feature kNN,global_feature_knn,semantic_outlier,cifar10_natural,1.0,1.0,0.0,150,500
+full_ood_stress,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,modality_shift,colour_fundus,1.0,1.0,0.0,150,200
+full_ood_stress,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,modality_shift,oct_screenshot,1.0,1.0,0.0,150,200
+full_ood_stress,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,text_watermark,0.7361333333333333,0.6876402485209893,0.6466666666666666,150,150
+full_ood_stress,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,rectangle_annotation,1.0,1.0000000000000002,0.0,150,150
+full_ood_stress,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,arrow_annotation,0.9968,0.9964769906392702,0.013333333333333334,150,150
+full_ood_stress,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,composite_layout,1.0,1.0000000000000002,0.0,150,150
+full_ood_stress,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,blur_artifact,0.9964444444444445,0.9961821943627334,0.013333333333333334,150,150
+full_ood_stress,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,border_crop,0.9946222222222223,0.9934529949840682,0.013333333333333334,150,150
+full_ood_stress,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,gaussian_noise,0.9817777777777777,0.9684632333060784,0.06666666666666667,150,150
+full_ood_stress,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,jpeg_compression,0.9910222222222222,0.991242994788827,0.04666666666666667,150,150
+full_ood_stress,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,semantic_outlier,cifar10_natural,1.0,1.0,0.0,150,500
+full_ood_stress,patchcore_l3,PatchCore L3,patchcore_layer3,modality_shift,colour_fundus,0.9694666666666667,0.9473233676351562,0.06666666666666667,150,200
+full_ood_stress,patchcore_l3,PatchCore L3,patchcore_layer3,modality_shift,oct_screenshot,0.9949333333333333,0.9952929138075539,0.013333333333333334,150,200
+full_ood_stress,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,text_watermark,0.9571777777777778,0.9467487372308432,0.2,150,150
+full_ood_stress,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,rectangle_annotation,0.9929333333333333,0.9910144397913629,0.02,150,150
+full_ood_stress,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,arrow_annotation,0.9983555555555557,0.9982874393613443,0.013333333333333334,150,150
+full_ood_stress,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,composite_layout,0.9930666666666667,0.9903636976443859,0.013333333333333334,150,150
+full_ood_stress,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,blur_artifact,0.5776444444444444,0.5519147287832522,0.9,150,150
+full_ood_stress,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,border_crop,0.8779111111111112,0.8682272072736572,0.44666666666666666,150,150
+full_ood_stress,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,gaussian_noise,0.7501333333333333,0.749046849386708,0.74,150,150
+full_ood_stress,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,jpeg_compression,0.5979111111111112,0.5539325269244321,0.82,150,150
+full_ood_stress,patchcore_l3,PatchCore L3,patchcore_layer3,semantic_outlier,cifar10_natural,0.9924266666666667,0.9972389594020399,0.02666666666666667,150,500
+full_ood_stress,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,modality_shift,colour_fundus,0.9838666666666667,0.978772207081771,0.06,150,200
+full_ood_stress,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,modality_shift,oct_screenshot,1.0,1.0,0.0,150,200
+full_ood_stress,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,text_watermark,0.9593777777777778,0.9517018561599362,0.14,150,150
+full_ood_stress,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,rectangle_annotation,0.9998666666666666,0.999866662715874,0.0,150,150
+full_ood_stress,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,arrow_annotation,0.9994222222222222,0.9994062928258649,0.006666666666666667,150,150
+full_ood_stress,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,composite_layout,1.0,1.0000000000000002,0.0,150,150
+full_ood_stress,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,blur_artifact,0.5531111111111111,0.5293518902618621,0.84,150,150
+full_ood_stress,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,border_crop,0.8884,0.8945660289313083,0.5266666666666666,150,150
+full_ood_stress,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,gaussian_noise,0.6432444444444445,0.6495745096835372,0.8,150,150
+full_ood_stress,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,jpeg_compression,0.5755555555555556,0.5411425653022996,0.8666666666666667,150,150
+full_ood_stress,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,semantic_outlier,cifar10_natural,0.9907333333333334,0.9967101426928543,0.04,150,500

@@ -229,6 +229,50 @@ def test_dry_run_applies_patchcore_max_train_patches_override(tmp_path: Path, mo
     assert resolved["model"]["max_train_patches"] == 8192
 
 
+def test_dry_run_builds_baseline_commands(tmp_path: Path, monkeypatch):
+    module = _load_runner_module()
+    _write_manifests(tmp_path)
+    baseline_config = _write_base_config(
+        tmp_path / "configs" / "image_statistics.yaml",
+        model_name="image_statistics",
+        run_name="image_statistics",
+    )
+    grid_config = tmp_path / "grid.yaml"
+    grid_config.write_text(
+        yaml.safe_dump(
+            {
+                "experiments": {
+                    "image_statistics": {
+                        "type": "baseline",
+                        "config": baseline_config.as_posix(),
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    calls: list[list[str]] = []
+
+    def fake_run(cmd, **kwargs):  # noqa: ANN001
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0)
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    result = module.run_grid(
+        grid_config=grid_config,
+        root_dir=tmp_path / "data",
+        out_dir=tmp_path / "reports" / "grid",
+        dry_run=True,
+    )
+
+    assert calls == []
+    assert len(result.commands) == 2
+    assert result.commands[0][1].endswith("train_baseline.py")
+    assert result.commands[1][1].endswith("evaluate_baseline.py")
+    assert result.commands[1][-1].endswith("baseline_model.npz")
+
+
 def test_run_grid_calls_subprocess_and_writes_aggregate_tables(tmp_path: Path, monkeypatch):
     module = _load_runner_module()
     train, val, test_id, test_ood = _write_manifests(tmp_path)

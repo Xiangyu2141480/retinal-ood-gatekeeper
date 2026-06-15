@@ -1,0 +1,15 @@
+# Scheme Overview
+
+Generated from compact evaluation metrics and score CSVs. Training remained ID-only; OOD labels were used only for evaluation grouping.
+
+| scheme | scheme_label | method family | training data | score type | expected strength | expected weakness | dissertation role | completion_status | completion_note |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| image_statistics | Image statistics | low-level image statistics | train_id only | distance in handcrafted feature space | Catches simple intensity, border, and semantic shifts | Weak for local artifacts and feature-level distribution shifts | negative_control / sanity_baseline | completed |  |
+| autoencoder | Autoencoder | pixel reconstruction | train_id only | reconstruction error | Simple reconstruction baseline aligned with literature | Can reconstruct or smooth over local OOD artifacts | reconstruction_baseline | completed |  |
+| global_feature_knn | Global feature kNN | global feature distance | train_id only | nearest-neighbor distance | Compact feature-space baseline | Global pooling can hide small localized corruptions | feature_baseline | completed |  |
+| mahalanobis_feature | Mahalanobis feature | statistical feature distance | train_id only | Mahalanobis distance | Tests Gaussian feature-distance assumption | Covariance estimate can be brittle with limited ID data | statistical_feature_baseline | completed |  |
+| patchcore_l1 | PatchCore L1 | patch-level feature memory bank | train_id only | patch nearest-neighbor distance | Low-level texture sensitivity | Runtime and memory heavy because of dense shallow patch grids | main_method / layer_ablation | not_completed_runtime_limited | Full L1 run was not completed because the shallow layer creates a dense patch grid. |
+| patchcore_l2 | PatchCore L2 | patch-level feature memory bank | train_id only | patch nearest-neighbor distance | Mid-low feature sensitivity | Can overreact to benign local texture variation | main_method / layer_ablation | completed |  |
+| patchcore_l3 | PatchCore L3 | patch-level feature memory bank | train_id only | patch nearest-neighbor distance | Strong mid-level feature-space gatekeeper | Safety threshold still rejects too many ID fallback images | main_method / selected_model | completed |  |
+| patchcore_l4 | PatchCore L4 | patch-level feature memory bank | train_id only | patch nearest-neighbor distance | High-level semantic shift sensitivity | Coarse grid can miss local artifacts | main_method / layer_ablation | completed |  |
+| patchcore_l2_l3 | PatchCore L2+L3 | patch-level feature memory bank | train_id only | patch nearest-neighbor distance | Combines local and mid-level feature cues | Larger memory bank and slower scoring | main_method / layer_ablation | completed |  |
