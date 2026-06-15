@@ -1,0 +1,7 @@
+scheme,scheme_label,artifact_size_mb,scoring_time_seconds,scoring_images,scoring_ms_per_image,fit_time_seconds,fit_time_note,localization_support,implementation_complexity,primary_auroc,primary_fpr_at_95_tpr
+image_statistics,Image statistics,0.0013399124145507812,0.25454649998573586,22,11.570295453897085,,not remeasured; existing PR #21 training artifacts reused,none,very low,0.7681252525252524,0.7466666666666667
+autoencoder,Autoencoder,0.25533580780029297,0.24187379999784753,22,10.994263636265798,,not remeasured; existing PR #21 training artifacts reused,weak reconstruction,low,0.7648848484848485,0.9466666666666667
+global_feature_knn,Global feature kNN,2.5020761489868164,0.828860400011763,22,37.67547272780741,,not remeasured; existing PR #21 training artifacts reused,none,medium,0.9458020202020203,0.38
+mahalanobis_feature,Mahalanobis feature,6.206137657165527,0.8659879999759141,22,39.363090907996096,,not remeasured; existing PR #21 training artifacts reused,none,medium,0.9724363636363637,0.2
+patchcore_l3,PatchCore L3,16.048861503601074,1.2289876000140794,22,55.8630727279127,,not remeasured; existing PR #21 training artifacts reused,patch heatmap,high,0.8819333333333335,0.6333333333333333
+patchcore_l2_l3,PatchCore L2+L3,31.329371452331543,1.264236399991205,22,57.46529090869114,,not remeasured; existing PR #21 training artifacts reused,patch heatmap,very high,0.8721737373737374,0.6866666666666666
