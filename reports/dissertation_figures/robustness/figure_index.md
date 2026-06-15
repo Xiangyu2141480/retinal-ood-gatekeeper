@@ -1,5 +1,12 @@
 # Robustness Figure Index
 
+This index covers the robustness/failure-analysis figures added in PR #22. For the final short thesis set, use
+`top_figures_for_thesis.md` alongside the main PR #21 figures. The final QA pass supports this narrative:
+Mahalanobis feature distance is the strongest quantitative gatekeeper, PatchCore L3 is most useful as a localizable
+complement, `val_id_quantile_95` is the balanced ID-calibrated prototype threshold, text watermark is the hardest
+Mahalanobis subtype, artifact severity curves are not universally monotonic, and all results remain proof-of-concept
+rather than clinical deployment validation.
+
 | File | Recommended section | Suggested caption |
 | --- | --- | --- |
 | figure_bootstrap_ci_main_metrics.png | Results | Bootstrap AUROC uncertainty. Generated for the unsupervised FAF OOD gatekeeper; training is ID-only and OOD labels are used only for evaluation grouping. The ID test set is synthetic fallback, not real clinical FAF validation. |
