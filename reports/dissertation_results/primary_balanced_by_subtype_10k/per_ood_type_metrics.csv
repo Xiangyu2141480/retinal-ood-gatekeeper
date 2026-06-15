@@ -1,0 +1,13 @@
+experiment,model,backbone,layers,ood_type,auroc,auprc,fpr_at_95_tpr,id_count,ood_count,metrics_file
+patchcore_layer2,patchcore,resnet50,layer2,modality_shift,0.9968,0.9983626448037551,0.013333333333333334,150,300,runs/patchcore_layer2/evaluation/metrics.json
+patchcore_layer2,patchcore,resnet50,layer2,semantic_outlier,0.9391555555555555,0.9201251460138142,0.2,150,150,runs/patchcore_layer2/evaluation/metrics.json
+patchcore_layer2,patchcore,resnet50,layer2,sensory_artifact,0.771886111111111,0.9677216258336263,0.82,150,1200,runs/patchcore_layer2/evaluation/metrics.json
+patchcore_layer3,patchcore,resnet50,layer3,modality_shift,0.9821777777777778,0.9877107943488566,0.06,150,300,runs/patchcore_layer3/evaluation/metrics.json
+patchcore_layer3,patchcore,resnet50,layer3,semantic_outlier,0.9917777777777778,0.9902814562249431,0.04,150,150,runs/patchcore_layer3/evaluation/metrics.json
+patchcore_layer3,patchcore,resnet50,layer3,sensory_artifact,0.8431416666666666,0.9777476150831852,0.7,150,1200,runs/patchcore_layer3/evaluation/metrics.json
+patchcore_layer2_layer3,patchcore,resnet50,layer2+layer3,modality_shift,0.9918666666666667,0.9953862432698889,0.05333333333333334,150,300,runs/patchcore_layer2_layer3/evaluation/metrics.json
+patchcore_layer2_layer3,patchcore,resnet50,layer2+layer3,semantic_outlier,0.9912000000000001,0.9899102056057901,0.02666666666666667,150,150,runs/patchcore_layer2_layer3/evaluation/metrics.json
+patchcore_layer2_layer3,patchcore,resnet50,layer2+layer3,sensory_artifact,0.8273722222222223,0.9760457051356057,0.74,150,1200,runs/patchcore_layer2_layer3/evaluation/metrics.json
+autoencoder_baseline,conv_autoencoder,,,modality_shift,0.9926888888888888,0.9957330029555463,0.02666666666666667,150,300,runs/autoencoder_baseline/evaluation/metrics.json
+autoencoder_baseline,conv_autoencoder,,,semantic_outlier,0.9809333333333333,0.985359623519774,0.08666666666666667,150,150,runs/autoencoder_baseline/evaluation/metrics.json
+autoencoder_baseline,conv_autoencoder,,,sensory_artifact,0.6809277777777778,0.953706502333562,0.96,150,1200,runs/autoencoder_baseline/evaluation/metrics.json

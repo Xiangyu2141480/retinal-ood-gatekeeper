@@ -273,7 +273,7 @@ def _build_heatmap_index(reports_dir: Path) -> tuple[pd.DataFrame, str]:
 
 def _is_heatmap_manifest(path: Path) -> bool:
     parts = [part.lower() for part in path.parts]
-    return "heatmaps" in parts and path.name == "heatmap_manifest.csv"
+    return bool({"heatmaps", "selected_heatmaps"} & set(parts)) and path.name == "heatmap_manifest.csv"
 
 
 def _build_case_selection(reports_dir: Path, *, top_k: int) -> pd.DataFrame:

@@ -119,12 +119,18 @@ def run_grid(
     max_test_images: int | None = None,
     device: str = "auto",
     seed: int | None = None,
+    train_manifest: str | Path | None = None,
+    val_manifest: str | Path | None = None,
+    test_id_manifest: str | Path | None = None,
+    test_ood_manifest: str | Path | None = None,
+    patchcore_max_train_patches: int | None = None,
 ) -> GridRunResult:
     """Run or dry-run a configured experiment grid and aggregate report tables."""
     if device not in {"auto", "cpu", "cuda"}:
         raise ValueError("--device must be one of: auto, cpu, cuda")
     _validate_positive_optional("max_train_images", max_train_images)
     _validate_positive_optional("max_test_images", max_test_images)
+    _validate_positive_optional("patchcore_max_train_patches", patchcore_max_train_patches)
 
     grid_path = Path(grid_config).resolve()
     data_root = Path(root_dir).resolve()
@@ -132,6 +138,12 @@ def run_grid(
     output_root.mkdir(parents=True, exist_ok=True)
 
     specs = _load_experiment_specs(grid_path, only=only)
+    manifest_overrides = _manifest_overrides(
+        train_manifest=train_manifest,
+        val_manifest=val_manifest,
+        test_id_manifest=test_id_manifest,
+        test_ood_manifest=test_ood_manifest,
+    )
     prepared = [
         _prepare_experiment(
             spec,
@@ -141,6 +153,8 @@ def run_grid(
             seed=seed,
             max_train_images=max_train_images,
             max_test_images=max_test_images,
+            manifest_overrides=manifest_overrides,
+            patchcore_max_train_patches=patchcore_max_train_patches,
         )
         for spec in specs
     ]
@@ -250,6 +264,22 @@ def _normalize_only(only: Sequence[str] | None) -> set[str]:
     return selected
 
 
+def _manifest_overrides(
+    *,
+    train_manifest: str | Path | None,
+    val_manifest: str | Path | None,
+    test_id_manifest: str | Path | None,
+    test_ood_manifest: str | Path | None,
+) -> dict[str, str]:
+    raw = {
+        "train_manifest": train_manifest,
+        "val_manifest": val_manifest,
+        "test_id_manifest": test_id_manifest,
+        "test_ood_manifest": test_ood_manifest,
+    }
+    return {key: str(value) for key, value in raw.items() if value is not None}
+
+
 def _resolve_config_path(raw_path: Path, grid_path: Path) -> Path:
     if raw_path.is_absolute():
         return raw_path.resolve()
@@ -272,6 +302,8 @@ def _prepare_experiment(
     seed: int | None,
     max_train_images: int | None,
     max_test_images: int | None,
+    manifest_overrides: dict[str, str],
+    patchcore_max_train_patches: int | None,
 ) -> PreparedExperiment:
     config = copy.deepcopy(read_yaml(spec.config_path))
     config.setdefault("project", {})
@@ -284,6 +316,7 @@ def _prepare_experiment(
     if seed is not None:
         config["project"]["seed"] = int(seed)
     config["data"]["root_dir"] = root_dir.as_posix()
+    config["data"].update(manifest_overrides)
     config["model"]["device"] = device
     config["output"]["runs_dir"] = (out_dir / "runs").as_posix()
     config["output"]["save_heatmaps"] = False
@@ -303,6 +336,8 @@ def _prepare_experiment(
     if kind not in {"patchcore", "autoencoder"}:
         raise ValueError(f"Experiment {spec.name} has unsupported type/model: {kind}")
     spec = ExperimentSpec(spec.name, kind, spec.config_path, spec.layers)
+    if spec.kind == "patchcore" and patchcore_max_train_patches is not None:
+        config["model"]["max_train_patches"] = int(patchcore_max_train_patches)
 
     resolved_config_path = out_dir / "configs" / f"{spec.name}.yaml"
     resolved_config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -741,6 +776,15 @@ def main() -> None:
     )
     parser.add_argument("--device", default="auto", choices=["auto", "cpu", "cuda"])
     parser.add_argument("--seed", type=int, help="Override project.seed in every resolved config")
+    parser.add_argument("--train-manifest", help="Override data.train_manifest in every experiment")
+    parser.add_argument("--val-manifest", help="Override data.val_manifest in every experiment")
+    parser.add_argument("--test-id-manifest", help="Override data.test_id_manifest in every experiment")
+    parser.add_argument("--test-ood-manifest", help="Override data.test_ood_manifest in every experiment")
+    parser.add_argument(
+        "--patchcore-max-train-patches",
+        type=int,
+        help="Override model.max_train_patches for PatchCore experiments",
+    )
     args = parser.parse_args()
 
     result = run_grid(
@@ -754,6 +798,11 @@ def main() -> None:
         max_test_images=args.max_test_images,
         device=args.device,
         seed=args.seed,
+        train_manifest=args.train_manifest,
+        val_manifest=args.val_manifest,
+        test_id_manifest=args.test_id_manifest,
+        test_ood_manifest=args.test_ood_manifest,
+        patchcore_max_train_patches=args.patchcore_max_train_patches,
     )
     if args.dry_run:
         for command in result.commands:

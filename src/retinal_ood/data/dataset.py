@@ -12,6 +12,8 @@ from typing import Any, Callable
 
 import pandas as pd
 from PIL import Image
+import torch
+from torch.utils.data._utils.collate import default_collate
 
 REQUIRED_COLUMNS = {"image_path", "label", "split", "source", "ood_type"}
 VALID_LABELS = {0, 1}
@@ -132,3 +134,14 @@ class ManifestImageDataset:
         clone.transform = self.transform
         clone.df = self.df[self.df["label"] == 0].reset_index(drop=True)
         return clone
+
+
+def collate_manifest_batch(batch: list[tuple[Any, int, dict[str, Any]]]) -> tuple[Any, torch.Tensor, list[dict[str, Any]]]:
+    """Collate image tensors and labels while keeping manifest metadata as records.
+
+    Pandas represents empty optional string fields as ``NaN`` floats. PyTorch's default
+    dictionary collation can fail when one metadata column mixes floats and strings across a
+    batch, so metadata is intentionally left as a list of row dictionaries.
+    """
+    images, labels, metadata = zip(*batch)
+    return default_collate(images), torch.as_tensor(labels, dtype=torch.long), list(metadata)
