@@ -1,0 +1,3 @@
+method,experiment,model,backbone,layers,auroc,auprc,fpr_at_95_tpr,threshold_at_95_tpr,threshold,threshold_source,id_false_rejection_rate,id_count,ood_count
+Autoencoder,autoencoder_baseline,conv_autoencoder,,,0.7648848484848485,0.9763007249116952,0.9466666666666668,0.0001624995929887,0.0017387918487656,validation_id_quantile,0.0266666666666666,150,1650
+PatchCore,patchcore_layer2_layer3,patchcore,resnet50,layer2+layer3,0.8721737373737374,0.9874269752286322,0.6866666666666666,35.765132904052734,44.27885704040525,validation_id_quantile,0.0733333333333333,150,1650

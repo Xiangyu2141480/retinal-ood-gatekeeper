@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from retinal_ood.data.dataset import ManifestImageDataset
+from retinal_ood.data.dataset import ManifestImageDataset, collate_manifest_batch
 from retinal_ood.data.transforms import build_transforms
 from retinal_ood.models.patchcore import PatchCoreConfig, PatchCoreDetector
 from retinal_ood.utils.io import read_yaml, write_json
@@ -78,6 +78,7 @@ def _build_dataloader(config: dict[str, Any], dataset: ManifestImageDataset) -> 
         batch_size=int(data_cfg.get("batch_size", model_cfg.get("batch_size", 32))),
         shuffle=False,
         num_workers=int(data_cfg.get("num_workers", 0)),
+        collate_fn=collate_manifest_batch,
     )
 
 

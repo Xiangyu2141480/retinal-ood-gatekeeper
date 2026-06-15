@@ -1,0 +1,126 @@
+{
+  "root_dir": "C:\\Users\\cuixi\\Documents\\Codex\\2026-06-15\\goal-github-superpowers-goal-train-the\\work\\retinal-ood-gatekeeper\\data",
+  "manifests": [
+    {
+      "path": "C:\\Users\\cuixi\\Documents\\Codex\\2026-06-15\\goal-github-superpowers-goal-train-the\\work\\retinal-ood-gatekeeper\\datasets\\dissertation_v1\\manifests\\train_id.csv",
+      "rows": 700,
+      "counts": {
+        "label": {
+          "0": 700
+        },
+        "split": {
+          "train": 700
+        },
+        "source": {
+          "synthetic_faf": 700
+        },
+        "ood_type": {
+          "id": 700
+        },
+        "ood_subtype": {
+          "id": 700
+        }
+      },
+      "missing_files": 0,
+      "duplicate_image_paths": 0,
+      "non_empty_patient_id": 0,
+      "recommended_missing_columns": []
+    },
+    {
+      "path": "C:\\Users\\cuixi\\Documents\\Codex\\2026-06-15\\goal-github-superpowers-goal-train-the\\work\\retinal-ood-gatekeeper\\datasets\\dissertation_v1\\manifests\\val_id.csv",
+      "rows": 150,
+      "counts": {
+        "label": {
+          "0": 150
+        },
+        "split": {
+          "val": 150
+        },
+        "source": {
+          "synthetic_faf": 150
+        },
+        "ood_type": {
+          "id": 150
+        },
+        "ood_subtype": {
+          "id": 150
+        }
+      },
+      "missing_files": 0,
+      "duplicate_image_paths": 0,
+      "non_empty_patient_id": 0,
+      "recommended_missing_columns": []
+    },
+    {
+      "path": "C:\\Users\\cuixi\\Documents\\Codex\\2026-06-15\\goal-github-superpowers-goal-train-the\\work\\retinal-ood-gatekeeper\\datasets\\dissertation_v1\\manifests\\test_id_synthetic_fallback.csv",
+      "rows": 150,
+      "counts": {
+        "label": {
+          "0": 150
+        },
+        "split": {
+          "test": 150
+        },
+        "source": {
+          "synthetic_faf": 150
+        },
+        "ood_type": {
+          "id": 150
+        },
+        "ood_subtype": {
+          "id": 150
+        }
+      },
+      "missing_files": 0,
+      "duplicate_image_paths": 0,
+      "non_empty_patient_id": 0,
+      "recommended_missing_columns": []
+    },
+    {
+      "path": "C:\\Users\\cuixi\\Documents\\Codex\\2026-06-15\\goal-github-superpowers-goal-train-the\\work\\retinal-ood-gatekeeper\\datasets\\dissertation_v1\\manifests\\test_ood_balanced_by_subtype.csv",
+      "rows": 1650,
+      "counts": {
+        "label": {
+          "1": 1650
+        },
+        "split": {
+          "test": 1650
+        },
+        "source": {
+          "public_modality_shift": 300,
+          "public_semantic_outlier": 150,
+          "synthetic_artifact": 1200
+        },
+        "ood_type": {
+          "modality_shift": 300,
+          "semantic_outlier": 150,
+          "sensory_artifact": 1200
+        },
+        "ood_subtype": {
+          "arrow_annotation": 150,
+          "blur_artifact": 150,
+          "border_crop": 150,
+          "cifar10_natural": 150,
+          "colour_fundus": 150,
+          "composite_layout": 150,
+          "gaussian_noise": 150,
+          "jpeg_compression": 150,
+          "oct_screenshot": 150,
+          "rectangle_annotation": 150,
+          "text_watermark": 150
+        }
+      },
+      "missing_files": 0,
+      "duplicate_image_paths": 0,
+      "non_empty_patient_id": 0,
+      "recommended_missing_columns": []
+    }
+  ],
+  "totals": {
+    "rows": 2650,
+    "missing_files": 0,
+    "duplicate_image_paths": 0,
+    "non_empty_patient_id": 0
+  },
+  "warnings": []
+}

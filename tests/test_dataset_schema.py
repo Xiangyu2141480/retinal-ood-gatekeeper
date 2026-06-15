@@ -2,7 +2,9 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+import torch
 from PIL import Image
+from torch.utils.data import DataLoader
 
 from retinal_ood.data.dataset import ManifestImageDataset
 
@@ -76,3 +78,37 @@ def test_manifest_dataset_rejects_missing_files(tmp_path: Path):
 
     with pytest.raises(FileNotFoundError, match="Missing 1 image files"):
         ManifestImageDataset(manifest, root_dir=tmp_path)
+
+
+def test_manifest_collate_keeps_mixed_metadata_as_records(tmp_path: Path):
+    from retinal_ood.data.dataset import collate_manifest_batch
+
+    for name in ["id.png", "ood.png"]:
+        Image.new("RGB", (8, 8), color=(100, 100, 100)).save(tmp_path / name)
+    manifest = tmp_path / "mixed.csv"
+    pd.DataFrame(
+        [
+            _manifest_row("id.png", split="test", semantic_class=float("nan")),
+            _manifest_row(
+                "ood.png",
+                label=1,
+                split="test",
+                source="public_ood",
+                ood_type="semantic_outlier",
+                semantic_class="cifar10_natural",
+            ),
+        ]
+    ).to_csv(manifest, index=False)
+    dataset = ManifestImageDataset(
+        manifest,
+        root_dir=tmp_path,
+        transform=lambda _image: torch.zeros((3, 8, 8)),
+    )
+    loader = DataLoader(dataset, batch_size=2, collate_fn=collate_manifest_batch)
+
+    images, labels, metadata = next(iter(loader))
+
+    assert tuple(images.shape) == (2, 3, 8, 8)
+    assert labels.tolist() == [0, 1]
+    assert isinstance(metadata, list)
+    assert metadata[1]["semantic_class"] == "cifar10_natural"

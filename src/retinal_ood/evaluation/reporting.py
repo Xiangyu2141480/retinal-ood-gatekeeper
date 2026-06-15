@@ -38,18 +38,20 @@ def build_score_rows(
     if len(metadata_rows) != labels.shape[0] or labels.shape[0] != scores.shape[0]:
         raise ValueError("metadata_rows, labels, and scores must have the same length")
 
+    include_ood_subtype = any("ood_subtype" in metadata for metadata in metadata_rows)
     rows: list[dict[str, Any]] = []
     for metadata, label, score in zip(metadata_rows, labels, scores):
-        rows.append(
-            {
-                "image_path": metadata.get("image_path", ""),
-                "label": int(label),
-                "ood_type": metadata.get("ood_type", metadata.get("category", "unknown")),
-                "score": float(score),
-                "prediction": int(score >= threshold),
-                "threshold": float(threshold),
-            }
-        )
+        row = {
+            "image_path": metadata.get("image_path", ""),
+            "label": int(label),
+            "ood_type": metadata.get("ood_type", metadata.get("category", "unknown")),
+            "score": float(score),
+            "prediction": int(score >= threshold),
+            "threshold": float(threshold),
+        }
+        if include_ood_subtype:
+            row["ood_subtype"] = metadata.get("ood_subtype", "")
+        rows.append(row)
     return pd.DataFrame(rows)
 
 

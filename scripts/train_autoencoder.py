@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from retinal_ood.data.dataset import ManifestImageDataset
+from retinal_ood.data.dataset import ManifestImageDataset, collate_manifest_batch
 from retinal_ood.data.transforms import build_transforms
 from retinal_ood.models.autoencoder import (
     ConvAutoEncoder,
@@ -77,6 +77,7 @@ def train_from_config(config: dict[str, Any]) -> Path:
         batch_size=batch_size,
         shuffle=True,
         num_workers=int(data_cfg.get("num_workers", 0)),
+        collate_fn=collate_manifest_batch,
     )
 
     in_channels = int(model_cfg.get("in_channels", _infer_in_channels(dataset)))

@@ -185,7 +185,7 @@ def _write_run_outputs(reports_dir: Path, run_name: str) -> None:
             "threshold": {"value": 0.5, "source": "validation_id_quantile"},
         },
     )
-    heatmap_dir = eval_dir / "heatmaps"
+    heatmap_dir = eval_dir / "selected_heatmaps"
     heatmap_dir.mkdir()
     pd.DataFrame(
         [

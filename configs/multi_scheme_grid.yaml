@@ -1,0 +1,41 @@
+experiments:
+  image_statistics:
+    type: baseline
+    config: configs/image_statistics_baseline.yaml
+
+  global_feature_knn:
+    type: baseline
+    config: configs/global_feature_knn.yaml
+
+  mahalanobis_feature:
+    type: baseline
+    config: configs/mahalanobis_feature.yaml
+
+  autoencoder_baseline:
+    type: autoencoder
+    config: configs/autoencoder_baseline.yaml
+
+  patchcore_layer1:
+    type: patchcore
+    config: configs/patchcore_l1.yaml
+    layers: [layer1]
+
+  patchcore_layer2:
+    type: patchcore
+    config: configs/patchcore_l2.yaml
+    layers: [layer2]
+
+  patchcore_layer3:
+    type: patchcore
+    config: configs/patchcore_l3.yaml
+    layers: [layer3]
+
+  patchcore_layer4:
+    type: patchcore
+    config: configs/patchcore_l4.yaml
+    layers: [layer4]
+
+  patchcore_layer2_layer3:
+    type: patchcore
+    config: configs/patchcore_l23.yaml
+    layers: [layer2, layer3]

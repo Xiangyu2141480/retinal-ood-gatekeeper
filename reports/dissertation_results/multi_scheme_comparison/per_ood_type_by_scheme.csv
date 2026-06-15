@@ -1,0 +1,61 @@
+eval_set,scheme,scheme_label,run_name,ood_type,auroc,auprc,fpr_at_95_tpr,id_count,ood_count
+balanced_by_subtype,image_statistics,Image statistics,image_statistics,modality_shift,0.9037111111111112,0.9188824630062892,0.36666666666666664,150,300
+balanced_by_subtype,image_statistics,Image statistics,image_statistics,sensory_artifact,0.7055888888888889,0.9439863328168241,0.82,150,1200
+balanced_by_subtype,image_statistics,Image statistics,image_statistics,semantic_outlier,0.9972444444444444,0.9970617824221468,0.013333333333333334,150,150
+balanced_by_subtype,autoencoder,Autoencoder,autoencoder_baseline,modality_shift,0.9926888888888888,0.9957330029555463,0.02666666666666667,150,300
+balanced_by_subtype,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,0.6809277777777778,0.953706502333562,0.96,150,1200
+balanced_by_subtype,autoencoder,Autoencoder,autoencoder_baseline,semantic_outlier,0.9809333333333333,0.985359623519774,0.08666666666666667,150,150
+balanced_by_subtype,global_feature_knn,Global feature kNN,global_feature_knn,modality_shift,1.0,1.0,0.0,150,300
+balanced_by_subtype,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,0.9254777777777778,0.9902505123502621,0.5066666666666667,150,1200
+balanced_by_subtype,global_feature_knn,Global feature kNN,global_feature_knn,semantic_outlier,1.0,1.0000000000000002,0.0,150,150
+balanced_by_subtype,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,modality_shift,1.0,1.0,0.0,150,300
+balanced_by_subtype,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,0.9621,0.9951602339293335,0.3,150,1200
+balanced_by_subtype,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,semantic_outlier,1.0,1.0000000000000002,0.0,150,150
+balanced_by_subtype,patchcore_l2,PatchCore L2,patchcore_layer2,modality_shift,0.9968,0.9983626448037551,0.013333333333333334,150,300
+balanced_by_subtype,patchcore_l2,PatchCore L2,patchcore_layer2,sensory_artifact,0.771886111111111,0.9677216258336263,0.82,150,1200
+balanced_by_subtype,patchcore_l2,PatchCore L2,patchcore_layer2,semantic_outlier,0.9391555555555555,0.9201251460138142,0.2,150,150
+balanced_by_subtype,patchcore_l3,PatchCore L3,patchcore_layer3,modality_shift,0.9821777777777778,0.9877107943488566,0.06,150,300
+balanced_by_subtype,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,0.8431416666666666,0.9777476150831852,0.7,150,1200
+balanced_by_subtype,patchcore_l3,PatchCore L3,patchcore_layer3,semantic_outlier,0.9917777777777778,0.9902814562249431,0.04,150,150
+balanced_by_subtype,patchcore_l4,PatchCore L4,patchcore_layer4,modality_shift,0.8940888888888888,0.9168845911711692,0.36666666666666664,150,300
+balanced_by_subtype,patchcore_l4,PatchCore L4,patchcore_layer4,sensory_artifact,0.6878277777777778,0.9468458245522453,0.86,150,1200
+balanced_by_subtype,patchcore_l4,PatchCore L4,patchcore_layer4,semantic_outlier,0.9614222222222222,0.9361149984800041,0.12,150,150
+balanced_by_subtype,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,modality_shift,0.9918666666666667,0.9953862432698889,0.05333333333333334,150,300
+balanced_by_subtype,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,0.8273722222222223,0.9760457051356057,0.74,150,1200
+balanced_by_subtype,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,semantic_outlier,0.9912000000000001,0.9899102056057901,0.02666666666666667,150,150
+balanced_by_type,image_statistics,Image statistics,image_statistics,modality_shift,0.9049666666666667,0.9365113186635259,0.36,150,400
+balanced_by_type,image_statistics,Image statistics,image_statistics,sensory_artifact,0.7020166666666666,0.8524196766410008,0.7933333333333333,150,400
+balanced_by_type,image_statistics,Image statistics,image_statistics,semantic_outlier,0.99705,0.9988265838796302,0.013333333333333334,150,400
+balanced_by_type,autoencoder,Autoencoder,autoencoder_baseline,modality_shift,0.9927333333333334,0.9968043274554111,0.02666666666666667,150,400
+balanced_by_type,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,0.6802999999999999,0.8815669087498316,0.9533333333333334,150,400
+balanced_by_type,autoencoder,Autoencoder,autoencoder_baseline,semantic_outlier,0.9754666666666666,0.9919049669380529,0.11333333333333333,150,400
+balanced_by_type,global_feature_knn,Global feature kNN,global_feature_knn,modality_shift,1.0,1.0,0.0,150,400
+balanced_by_type,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,0.9311999999999999,0.975437729363124,0.44666666666666666,150,400
+balanced_by_type,global_feature_knn,Global feature kNN,global_feature_knn,semantic_outlier,1.0,1.0,0.0,150,400
+balanced_by_type,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,modality_shift,1.0,1.0,0.0,150,400
+balanced_by_type,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,0.9652999999999999,0.9877978393545134,0.23333333333333334,150,400
+balanced_by_type,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,semantic_outlier,1.0,1.0,0.0,150,400
+balanced_by_type,patchcore_l3,PatchCore L3,patchcore_layer3,modality_shift,0.9822,0.990787637886512,0.06,150,400
+balanced_by_type,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,0.8547833333333335,0.9438413129521057,0.6266666666666667,150,400
+balanced_by_type,patchcore_l3,PatchCore L3,patchcore_layer3,semantic_outlier,0.99195,0.9963295577103355,0.02666666666666667,150,400
+balanced_by_type,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,modality_shift,0.9919333333333333,0.9965382831097296,0.05333333333333334,150,400
+balanced_by_type,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,0.8419666666666668,0.9407582056152364,0.68,150,400
+balanced_by_type,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,semantic_outlier,0.9905666666666667,0.9958239479787911,0.04,150,400
+full_ood_stress,image_statistics,Image statistics,image_statistics,modality_shift,0.9049666666666667,0.9365113186635259,0.36,150,400
+full_ood_stress,image_statistics,Image statistics,image_statistics,sensory_artifact,0.7055888888888889,0.9439863328168241,0.82,150,1200
+full_ood_stress,image_statistics,Image statistics,image_statistics,semantic_outlier,0.9971066666666667,0.9990764219781284,0.013333333333333334,150,500
+full_ood_stress,autoencoder,Autoencoder,autoencoder_baseline,modality_shift,0.9927333333333334,0.9968043274554111,0.02666666666666667,150,400
+full_ood_stress,autoencoder,Autoencoder,autoencoder_baseline,sensory_artifact,0.6809277777777778,0.953706502333562,0.96,150,1200
+full_ood_stress,autoencoder,Autoencoder,autoencoder_baseline,semantic_outlier,0.9734266666666668,0.9928439185924665,0.14,150,500
+full_ood_stress,global_feature_knn,Global feature kNN,global_feature_knn,modality_shift,1.0,1.0,0.0,150,400
+full_ood_stress,global_feature_knn,Global feature kNN,global_feature_knn,sensory_artifact,0.9254777777777778,0.9902505123502621,0.5066666666666667,150,1200
+full_ood_stress,global_feature_knn,Global feature kNN,global_feature_knn,semantic_outlier,1.0,1.0,0.0,150,500
+full_ood_stress,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,modality_shift,1.0,1.0,0.0,150,400
+full_ood_stress,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,sensory_artifact,0.9621,0.9951602339293335,0.3,150,1200
+full_ood_stress,mahalanobis_feature,Mahalanobis feature,mahalanobis_feature,semantic_outlier,1.0,1.0,0.0,150,500
+full_ood_stress,patchcore_l3,PatchCore L3,patchcore_layer3,modality_shift,0.9822,0.990787637886512,0.06,150,400
+full_ood_stress,patchcore_l3,PatchCore L3,patchcore_layer3,sensory_artifact,0.8431416666666666,0.9777476150831852,0.7,150,1200
+full_ood_stress,patchcore_l3,PatchCore L3,patchcore_layer3,semantic_outlier,0.9924266666666667,0.9972389594020399,0.02666666666666667,150,500
+full_ood_stress,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,modality_shift,0.9919333333333333,0.9965382831097296,0.05333333333333334,150,400
+full_ood_stress,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,sensory_artifact,0.8273722222222223,0.9760457051356057,0.74,150,1200
+full_ood_stress,patchcore_l2_l3,PatchCore L2+L3,patchcore_layer2_layer3,semantic_outlier,0.9907333333333334,0.9967101426928543,0.04,150,500

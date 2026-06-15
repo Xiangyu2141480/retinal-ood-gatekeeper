@@ -167,6 +167,112 @@ def test_dry_run_builds_commands_without_subprocess(tmp_path: Path, monkeypatch)
     assert result.commands[1][1].endswith("evaluate.py")
 
 
+def test_dry_run_applies_manifest_overrides_to_resolved_config(tmp_path: Path, monkeypatch):
+    module = _load_runner_module()
+    _write_manifests(tmp_path)
+    patchcore_config = _write_base_config(tmp_path / "configs" / "patchcore.yaml")
+    grid_config = _write_grid_config(tmp_path / "grid.yaml", patchcore_config)
+    calls: list[list[str]] = []
+
+    def fake_run(cmd, **kwargs):  # noqa: ANN001
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0)
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    out_dir = tmp_path / "reports" / "grid"
+    result = module.run_grid(
+        grid_config=grid_config,
+        root_dir=tmp_path / "data",
+        out_dir=out_dir,
+        dry_run=True,
+        train_manifest=tmp_path / "data" / "manifests" / "train.csv",
+        val_manifest=tmp_path / "data" / "manifests" / "val.csv",
+        test_id_manifest=tmp_path / "data" / "manifests" / "test_real_id.csv",
+        test_ood_manifest=tmp_path / "data" / "manifests" / "test_ood.csv",
+    )
+
+    resolved = yaml.safe_load((out_dir / "configs" / "patchcore_layer2.yaml").read_text())
+    assert calls == []
+    assert len(result.commands) == 2
+    assert resolved["data"]["train_manifest"].endswith("data/manifests/train.csv")
+    assert resolved["data"]["val_manifest"].endswith("data/manifests/val.csv")
+    assert resolved["data"]["test_id_manifest"].endswith("data/manifests/test_real_id.csv")
+    assert resolved["data"]["test_ood_manifest"].endswith("data/manifests/test_ood.csv")
+
+
+def test_dry_run_applies_patchcore_max_train_patches_override(tmp_path: Path, monkeypatch):
+    module = _load_runner_module()
+    _write_manifests(tmp_path)
+    patchcore_config = _write_base_config(tmp_path / "configs" / "patchcore.yaml")
+    grid_config = _write_grid_config(tmp_path / "grid.yaml", patchcore_config)
+    calls: list[list[str]] = []
+
+    def fake_run(cmd, **kwargs):  # noqa: ANN001
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0)
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    out_dir = tmp_path / "reports" / "grid"
+    result = module.run_grid(
+        grid_config=grid_config,
+        root_dir=tmp_path / "data",
+        out_dir=out_dir,
+        dry_run=True,
+        patchcore_max_train_patches=8192,
+    )
+
+    resolved = yaml.safe_load((out_dir / "configs" / "patchcore_layer2.yaml").read_text())
+    assert calls == []
+    assert len(result.commands) == 2
+    assert resolved["model"]["max_train_patches"] == 8192
+
+
+def test_dry_run_builds_baseline_commands(tmp_path: Path, monkeypatch):
+    module = _load_runner_module()
+    _write_manifests(tmp_path)
+    baseline_config = _write_base_config(
+        tmp_path / "configs" / "image_statistics.yaml",
+        model_name="image_statistics",
+        run_name="image_statistics",
+    )
+    grid_config = tmp_path / "grid.yaml"
+    grid_config.write_text(
+        yaml.safe_dump(
+            {
+                "experiments": {
+                    "image_statistics": {
+                        "type": "baseline",
+                        "config": baseline_config.as_posix(),
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    calls: list[list[str]] = []
+
+    def fake_run(cmd, **kwargs):  # noqa: ANN001
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0)
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    result = module.run_grid(
+        grid_config=grid_config,
+        root_dir=tmp_path / "data",
+        out_dir=tmp_path / "reports" / "grid",
+        dry_run=True,
+    )
+
+    assert calls == []
+    assert len(result.commands) == 2
+    assert result.commands[0][1].endswith("train_baseline.py")
+    assert result.commands[1][1].endswith("evaluate_baseline.py")
+    assert result.commands[1][-1].endswith("baseline_model.npz")
+
+
 def test_run_grid_calls_subprocess_and_writes_aggregate_tables(tmp_path: Path, monkeypatch):
     module = _load_runner_module()
     train, val, test_id, test_ood = _write_manifests(tmp_path)
