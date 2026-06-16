@@ -184,6 +184,11 @@ as a local CSV summary.
 
 See the `docs/` directory:
 
+- `dissertation/README.md` - final dissertation handoff entry point for examiners.
+- `dissertation/final_evidence_index.md` - central claim-to-evidence map.
+- `dissertation/reproducibility_runbook.md` - one-command-oriented verification and reproduction guide.
+- `dissertation/school_server_runbook.md` - school-server / Jackpot reproduction guide.
+- `dissertation/claims_and_limitations_matrix.md` - safe thesis wording and limitations matrix.
 - `LITERATURE_REVIEW_ANALYSIS_CN.md` — Chinese explanation of what the literature review means for implementation.
 - `PROJECT_SPEC_CN.md` — product and research specification.
 - `DATASET_PLAN_CN.md` — dataset layout, manifests, split strategy, privacy rules.
@@ -202,6 +207,8 @@ See the `docs/` directory:
 - `RESULTS_INTERPRETATION_TEMPLATE_CN.md` — templates for interpreting metrics, layer ablations, heatmaps, limitations, and future work.
 
 ## Privacy and safety
+
+This repository is a proof-of-concept research project, not a clinical device and not clinical deployment validation. The gatekeeper is not a disease classifier: it only returns `ACCEPT: valid FAF` or `REJECT: OOD / invalid input`.
 
 Never commit:
 
