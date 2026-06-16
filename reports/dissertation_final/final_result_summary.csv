@@ -1,0 +1,12 @@
+item,value,evidence
+packaged_dataset_images,3100,data/images/dissertation_v1/
+dataset_manifest_rows,4750,datasets/dissertation_v1/manifests/*.csv
+dataset_categories,"id, modality_shift, semantic_outlier, sensory_artifact",datasets/dissertation_v1/manifests/test_ood_full.csv
+number_of_schemes,8,reports/dissertation_results/multi_scheme_comparison/metrics_by_scheme.csv
+completed_model_configurations,8,reports/dissertation_results/multi_scheme_comparison/scheme_overview.csv
+best_quantitative_model,"Mahalanobis feature (AUROC 0.9724, AUPRC 0.9975, FPR@95%TPR 0.2000)",reports/dissertation_results/multi_scheme_comparison/metrics_by_scheme.csv
+best_localization_model,PatchCore L3,reports/dissertation_results/primary_balanced_by_subtype_10k/metrics_summary.csv
+safety_threshold_result,"Mahalanobis val_id_quantile_95: ID false rejection 0.0467, OOD recall 0.9079",reports/dissertation_results/robustness_analysis/threshold_policy_sweep.csv
+hardest_subtype,text_watermark (AUROC 0.7361),reports/dissertation_results/robustness_analysis/subtype_influence.csv
+key_robustness_result,Mahalanobis remains strongest under bootstrap AUROC/AUPRC; FPR intervals overlap.,reports/dissertation_results/robustness_analysis/bootstrap_ci.csv
+key_failure_analysis_result,Text watermark dominates Mahalanobis false negatives; PatchCore L3 catches many misses.,reports/dissertation_results/robustness_analysis/method_disagreement_cases.md
