@@ -1,0 +1,89 @@
+scheme,scheme_label,ood_subtype,analysis,auroc,auprc,fpr_at_95_tpr,id_count,ood_count
+mahalanobis_feature,Mahalanobis feature,arrow_annotation,only_subtype,0.9968,0.9964769906392702,0.013333333333333334,150,150
+mahalanobis_feature,Mahalanobis feature,arrow_annotation,removed_subtype,0.97,0.9969658060417157,0.22666666666666666,150,1500
+mahalanobis_feature,Mahalanobis feature,blur_artifact,only_subtype,0.9964444444444445,0.9961821943627334,0.013333333333333334,150,150
+mahalanobis_feature,Mahalanobis feature,blur_artifact,removed_subtype,0.9700355555555555,0.9969694768494728,0.22666666666666666,150,1500
+mahalanobis_feature,Mahalanobis feature,border_crop,only_subtype,0.9946222222222223,0.9934529949840682,0.013333333333333334,150,150
+mahalanobis_feature,Mahalanobis feature,border_crop,removed_subtype,0.9702177777777777,0.9969950447820952,0.22666666666666666,150,1500
+mahalanobis_feature,Mahalanobis feature,cifar10_natural,only_subtype,1.0,1.0000000000000002,0.0,150,150
+mahalanobis_feature,Mahalanobis feature,cifar10_natural,removed_subtype,0.96968,0.9969219426781525,0.22666666666666666,150,1500
+mahalanobis_feature,Mahalanobis feature,colour_fundus,only_subtype,1.0,1.0000000000000002,0.0,150,150
+mahalanobis_feature,Mahalanobis feature,colour_fundus,removed_subtype,0.96968,0.9969219426781525,0.22666666666666666,150,1500
+mahalanobis_feature,Mahalanobis feature,composite_layout,only_subtype,1.0,1.0000000000000002,0.0,150,150
+mahalanobis_feature,Mahalanobis feature,composite_layout,removed_subtype,0.96968,0.9969219426781525,0.22666666666666666,150,1500
+mahalanobis_feature,Mahalanobis feature,gaussian_noise,only_subtype,0.9817777777777777,0.9684632333060784,0.06666666666666667,150,150
+mahalanobis_feature,Mahalanobis feature,gaussian_noise,removed_subtype,0.9715022222222224,0.9971492830423119,0.22666666666666666,150,1500
+mahalanobis_feature,Mahalanobis feature,jpeg_compression,only_subtype,0.9910222222222222,0.991242994788827,0.04666666666666667,150,150
+mahalanobis_feature,Mahalanobis feature,jpeg_compression,removed_subtype,0.9705777777777778,0.9970293746382848,0.22,150,1500
+mahalanobis_feature,Mahalanobis feature,oct_screenshot,only_subtype,1.0,1.0000000000000002,0.0,150,150
+mahalanobis_feature,Mahalanobis feature,oct_screenshot,removed_subtype,0.96968,0.9969219426781525,0.22666666666666666,150,1500
+mahalanobis_feature,Mahalanobis feature,rectangle_annotation,only_subtype,1.0,1.0000000000000002,0.0,150,150
+mahalanobis_feature,Mahalanobis feature,rectangle_annotation,removed_subtype,0.96968,0.9969219426781525,0.22666666666666666,150,1500
+mahalanobis_feature,Mahalanobis feature,text_watermark,only_subtype,0.7361333333333333,0.6876402485209893,0.6466666666666666,150,150
+mahalanobis_feature,Mahalanobis feature,text_watermark,removed_subtype,0.9960666666666667,0.9995787373285486,0.013333333333333334,150,1500
+patchcore_l3,PatchCore L3,arrow_annotation,only_subtype,0.9983555555555557,0.9982874393613443,0.013333333333333334,150,150
+patchcore_l3,PatchCore L3,arrow_annotation,removed_subtype,0.8702911111111111,0.9852759621757883,0.6333333333333333,150,1500
+patchcore_l3,PatchCore L3,blur_artifact,only_subtype,0.5776444444444444,0.5519147287832522,0.9,150,150
+patchcore_l3,PatchCore L3,blur_artifact,removed_subtype,0.9123622222222223,0.9903442449469997,0.5133333333333333,150,1500
+patchcore_l3,PatchCore L3,border_crop,only_subtype,0.8779111111111112,0.8682272072736572,0.44666666666666666,150,150
+patchcore_l3,PatchCore L3,border_crop,removed_subtype,0.8823355555555557,0.9870692496218445,0.6333333333333333,150,1500
+patchcore_l3,PatchCore L3,cifar10_natural,only_subtype,0.9917777777777778,0.9902814562249431,0.04,150,150
+patchcore_l3,PatchCore L3,cifar10_natural,removed_subtype,0.870948888888889,0.9854665812274691,0.6333333333333333,150,1500
+patchcore_l3,PatchCore L3,colour_fundus,only_subtype,0.9695555555555555,0.9336088857592543,0.06666666666666667,150,150
+patchcore_l3,PatchCore L3,colour_fundus,removed_subtype,0.8731711111111111,0.9859423976721551,0.6333333333333333,150,1500
+patchcore_l3,PatchCore L3,composite_layout,only_subtype,0.9930666666666667,0.9903636976443859,0.013333333333333334,150,150
+patchcore_l3,PatchCore L3,composite_layout,removed_subtype,0.87082,0.9854643060409275,0.6333333333333333,150,1500
+patchcore_l3,PatchCore L3,gaussian_noise,only_subtype,0.7501333333333333,0.749046849386708,0.74,150,150
+patchcore_l3,PatchCore L3,gaussian_noise,removed_subtype,0.8951133333333332,0.9885130483668536,0.62,150,1500
+patchcore_l3,PatchCore L3,jpeg_compression,only_subtype,0.5979111111111112,0.5539325269244321,0.82,150,150
+patchcore_l3,PatchCore L3,jpeg_compression,removed_subtype,0.9103355555555556,0.9901750122762367,0.5333333333333333,150,1500
+patchcore_l3,PatchCore L3,oct_screenshot,only_subtype,0.9948,0.9935499200725619,0.013333333333333334,150,150
+patchcore_l3,PatchCore L3,oct_screenshot,removed_subtype,0.8706466666666667,0.9854055418238131,0.6333333333333333,150,1500
+patchcore_l3,PatchCore L3,rectangle_annotation,only_subtype,0.9929333333333333,0.9910144397913629,0.02,150,150
+patchcore_l3,PatchCore L3,rectangle_annotation,removed_subtype,0.8708333333333333,0.985455110576511,0.6333333333333333,150,1500
+patchcore_l3,PatchCore L3,text_watermark,only_subtype,0.9571777777777778,0.9467487372308432,0.2,150,150
+patchcore_l3,PatchCore L3,text_watermark,removed_subtype,0.8744088888888888,0.986059535992273,0.6333333333333333,150,1500
+autoencoder,Autoencoder,arrow_annotation,only_subtype,1.0,1.0000000000000002,0.0,150,150
+autoencoder,Autoencoder,arrow_annotation,removed_subtype,0.7413733333333333,0.970903542894658,0.9533333333333334,150,1500
+autoencoder,Autoencoder,blur_artifact,only_subtype,0.11155555555555556,0.325318262221688,1.0,150,150
+autoencoder,Autoencoder,blur_artifact,removed_subtype,0.8302177777777777,0.9816764099173196,0.8333333333333334,150,1500
+autoencoder,Autoencoder,border_crop,only_subtype,0.4336,0.45495034307911275,0.96,150,150
+autoencoder,Autoencoder,border_crop,removed_subtype,0.7980133333333334,0.9783671351742,0.94,150,1500
+autoencoder,Autoencoder,cifar10_natural,only_subtype,0.9809333333333333,0.985359623519774,0.08666666666666667,150,150
+autoencoder,Autoencoder,cifar10_natural,removed_subtype,0.7432799999999999,0.9712248049709724,0.9533333333333334,150,1500
+autoencoder,Autoencoder,colour_fundus,only_subtype,1.0,1.0000000000000002,0.0,150,150
+autoencoder,Autoencoder,colour_fundus,removed_subtype,0.7413733333333333,0.970903542894658,0.9533333333333334,150,1500
+autoencoder,Autoencoder,composite_layout,only_subtype,0.9931555555555556,0.9826888744276053,0.013333333333333334,150,150
+autoencoder,Autoencoder,composite_layout,removed_subtype,0.7420577777777778,0.971093765713317,0.9533333333333334,150,1500
+autoencoder,Autoencoder,gaussian_noise,only_subtype,0.8739555555555556,0.8621720399041729,0.5066666666666667,150,150
+autoencoder,Autoencoder,gaussian_noise,removed_subtype,0.7539777777777776,0.9729345685849158,0.9533333333333334,150,1500
+autoencoder,Autoencoder,jpeg_compression,only_subtype,0.505688888888889,0.5137057370084033,0.96,150,150
+autoencoder,Autoencoder,jpeg_compression,removed_subtype,0.7908044444444445,0.9775334745961133,0.94,150,1500
+autoencoder,Autoencoder,oct_screenshot,only_subtype,0.9853777777777778,0.9778355563858399,0.02666666666666667,150,150
+autoencoder,Autoencoder,oct_screenshot,removed_subtype,0.7428355555555556,0.971244042919664,0.9533333333333334,150,1500
+autoencoder,Autoencoder,rectangle_annotation,only_subtype,1.0,1.0000000000000002,0.0,150,150
+autoencoder,Autoencoder,rectangle_annotation,removed_subtype,0.7413733333333333,0.970903542894658,0.9533333333333334,150,1500
+autoencoder,Autoencoder,text_watermark,only_subtype,0.5294666666666666,0.5292201814878171,0.9066666666666666,150,150
+autoencoder,Autoencoder,text_watermark,removed_subtype,0.7884266666666666,0.9772831461710837,0.9533333333333334,150,1500
+image_statistics,Image statistics,arrow_annotation,only_subtype,0.7120444444444445,0.6706971622971154,0.66,150,150
+image_statistics,Image statistics,arrow_annotation,removed_subtype,0.7737333333333334,0.970188879399335,0.76,150,1500
+image_statistics,Image statistics,blur_artifact,only_subtype,0.6532888888888888,0.6384747220554661,0.78,150,150
+image_statistics,Image statistics,blur_artifact,removed_subtype,0.7796088888888889,0.9708799405022641,0.7466666666666667,150,1500
+image_statistics,Image statistics,border_crop,only_subtype,0.6991111111111111,0.6348944035808446,0.6866666666666666,150,150
+image_statistics,Image statistics,border_crop,removed_subtype,0.7750266666666668,0.9704653675914754,0.76,150,1500
+image_statistics,Image statistics,cifar10_natural,only_subtype,0.9972444444444444,0.9970617824221468,0.013333333333333334,150,150
+image_statistics,Image statistics,cifar10_natural,removed_subtype,0.7452133333333334,0.9615305935489692,0.76,150,1500
+image_statistics,Image statistics,colour_fundus,only_subtype,0.8364444444444444,0.7732720731799679,0.44666666666666666,150,150
+image_statistics,Image statistics,colour_fundus,removed_subtype,0.7612933333333334,0.9684817809636772,0.76,150,1500
+image_statistics,Image statistics,composite_layout,only_subtype,0.9537777777777778,0.9118862258129428,0.07333333333333333,150,150
+image_statistics,Image statistics,composite_layout,removed_subtype,0.74956,0.9662093546752342,0.76,150,1500
+image_statistics,Image statistics,gaussian_noise,only_subtype,0.8682666666666666,0.8211464779809733,0.5133333333333333,150,150
+image_statistics,Image statistics,gaussian_noise,removed_subtype,0.758111111111111,0.9678579043217972,0.76,150,1500
+image_statistics,Image statistics,jpeg_compression,only_subtype,0.5104000000000001,0.5218320391411675,0.9466666666666667,150,150
+image_statistics,Image statistics,jpeg_compression,removed_subtype,0.7938977777777778,0.9725714582524471,0.6866666666666666,150,1500
+image_statistics,Image statistics,oct_screenshot,only_subtype,0.9709777777777777,0.9201362167752315,0.07333333333333333,150,150
+image_statistics,Image statistics,oct_screenshot,removed_subtype,0.7478400000000001,0.9656293508270327,0.76,150,1500
+image_statistics,Image statistics,rectangle_annotation,only_subtype,0.7348888888888889,0.6786061820814557,0.6133333333333333,150,150
+image_statistics,Image statistics,rectangle_annotation,removed_subtype,0.7714488888888889,0.9699554207988206,0.76,150,1500
+image_statistics,Image statistics,text_watermark,only_subtype,0.5129333333333332,0.527093134175086,0.9533333333333334,150,150
+image_statistics,Image statistics,text_watermark,removed_subtype,0.7936444444444444,0.9725301806975482,0.6866666666666666,150,1500
