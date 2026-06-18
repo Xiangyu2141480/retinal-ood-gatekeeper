@@ -1,0 +1,2 @@
+metric,value,notes
+end_to_end_reason_accuracy,,Stage 2 was evaluated as a post-hoc module on ground-truth OOD rows. Full end-to-end explanation accuracy requires Stage 1 prediction files.

@@ -1,0 +1,22 @@
+section,label,count,notes
+split,test,420,reason attribution split
+split,train,1260,reason attribution split
+split,val,420,reason attribution split
+ood_type,modality_shift,400,Stage 2 target family
+ood_type,semantic_outlier,500,Stage 2 target family
+ood_type,sensory_artifact,1200,Stage 2 target family
+ood_subtype,arrow_annotation,150,Stage 2 optional subtype target
+ood_subtype,blur_artifact,150,Stage 2 optional subtype target
+ood_subtype,border_crop,150,Stage 2 optional subtype target
+ood_subtype,cifar10_natural,500,Stage 2 optional subtype target
+ood_subtype,colour_fundus,200,Stage 2 optional subtype target
+ood_subtype,composite_layout,150,Stage 2 optional subtype target
+ood_subtype,gaussian_noise,150,Stage 2 optional subtype target
+ood_subtype,jpeg_compression,150,Stage 2 optional subtype target
+ood_subtype,oct_screenshot,200,Stage 2 optional subtype target
+ood_subtype,rectangle_annotation,150,Stage 2 optional subtype target
+ood_subtype,text_watermark,150,Stage 2 optional subtype target
+safety,missing_subtype_count,0,must be zero
+safety,non_empty_patient_identifier_count,0,must be zero; forbidden columns are not written to reason manifests
+safety,private_path_count,0,must be zero
+safety,stage_boundary,2100,Stage 2 explanation only; Stage 1 remains ID-only and unchanged
