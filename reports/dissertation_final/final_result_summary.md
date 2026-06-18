@@ -4,6 +4,15 @@ This is a thesis-ready summary of existing merged outputs. It does not rerun tra
 
 The project remains an unsupervised binary FAF OOD gatekeeper, not a disease classifier. Training is ID-only and OOD data is evaluation/stress-test only. `test_id_synthetic_fallback.csv` is synthetic ID fallback, not real clinical FAF validation.
 
+The completed system contains:
+
+1. Stage 1 ID-only OOD gatekeeper.
+2. Multi-scheme OOD model comparison.
+3. Robustness and failure analysis.
+4. Optional Stage 2 rejected-input reason attribution.
+5. Reproducible dataset and Git LFS package.
+6. Dissertation-ready figures and evidence index.
+
 ## Dataset Manifests
 
 | split_or_manifest | rows | label_counts | ood_type_counts |
@@ -29,3 +38,9 @@ The project remains an unsupervised binary FAF OOD gatekeeper, not a disease cla
 | hardest_subtype | text_watermark (AUROC 0.7361) | reports/dissertation_results/robustness_analysis/subtype_influence.csv |
 | key_robustness_result | Mahalanobis remains strongest under bootstrap AUROC/AUPRC; FPR intervals overlap. | reports/dissertation_results/robustness_analysis/bootstrap_ci.csv |
 | key_failure_analysis_result | Text watermark dominates Mahalanobis false negatives; PatchCore L3 catches many misses. | reports/dissertation_results/robustness_analysis/method_disagreement_cases.md |
+| optional_stage2_scope | Optional post-rejection reason attribution; Stage 1 remains ID-only and unsupervised. | reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md |
+| best_reason_family_method | linear_svm: test accuracy 0.9881, test macro-F1 0.9901, +0.0954 macro-F1 versus PR #24 baseline. | reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md |
+| best_reason_subtype_method | non-oracle hierarchical_classifier: subtype accuracy 0.9238, subtype macro-F1 0.9059, +0.2335 macro-F1 versus PR #24 baseline. | reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md |
+| hardest_reason_family | semantic_outlier | reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md |
+| hardest_reason_subtype | rectangle_annotation | reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md |
+| reason_attribution_limitation | Reason labels are likely explanations, not clinical diagnoses; reason splits are image-path disjoint but not parent-image-hash disjoint. | reports/dissertation_results/reason_attribution_method_comparison/leakage_sanity_check.md |

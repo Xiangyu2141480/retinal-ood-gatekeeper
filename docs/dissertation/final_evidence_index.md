@@ -10,6 +10,15 @@ The project builds an unsupervised binary OOD gatekeeper for retinal Fundus Auto
 
 The system is not a disease classifier. It does not assign disease classes, gene labels, patient labels, clinical labels, or biomarkers.
 
+The completed system contains:
+
+1. Stage 1 ID-only OOD gatekeeper.
+2. Multi-scheme OOD model comparison.
+3. Robustness and failure analysis.
+4. Optional Stage 2 rejected-input reason attribution.
+5. Reproducible dataset and Git LFS package.
+6. Dissertation-ready figures and evidence index.
+
 ## 2. Dataset Package
 
 Dataset v1 is packaged under `datasets/dissertation_v1/` with metadata, checksums, manifests, and Git LFS-tracked image files under `data/images/dissertation_v1/`.
@@ -21,10 +30,15 @@ Key manifests:
 - `datasets/dissertation_v1/manifests/test_id_synthetic_fallback.csv`: 150 synthetic fallback ID rows, not real clinical FAF validation.
 - `datasets/dissertation_v1/manifests/test_ood_full.csv`: 2100 OOD rows across modality shift, sensory artifact, and semantic outlier groups.
 - `datasets/dissertation_v1/manifests/test_ood_balanced_by_subtype.csv`: 1650 balanced OOD rows used in the main comparison and robustness package.
+- `datasets/dissertation_v1/manifests/reason_train.csv`: 1260 OOD-only Stage 2 reason-attribution training rows.
+- `datasets/dissertation_v1/manifests/reason_val.csv`: 420 OOD-only Stage 2 validation rows.
+- `datasets/dissertation_v1/manifests/reason_test.csv`: 420 OOD-only Stage 2 test rows.
 
 ## 3. Model Families Evaluated
 
 The completed comparison includes image statistics, autoencoder, global feature kNN, Mahalanobis feature distance, and PatchCore layer variants. All methods are unsupervised OOD gatekeepers trained on ID data only.
+
+The Phase 2 reason-attribution comparison is separate and optional. It is invoked only after the Stage 1 gatekeeper rejects an input. OOD labels are used only as Stage 2 explanation targets, not for Stage 1 fitting/training.
 
 ## 4. Main Result
 
@@ -55,28 +69,40 @@ Text watermark is the hardest Mahalanobis subtype. It has only-subtype AUROC 0.7
 
 Main evidence: `reports/dissertation_results/robustness_analysis/method_disagreement_cases.md` and `reports/dissertation_figures/robustness/figure_false_negative_ood_examples.png`.
 
-## 8. Feature-Space Interpretation
+## 8. Optional Stage 2 Reason Attribution Result
+
+Phase 2 adds optional post-rejection reason attribution. It explains likely rejection causes after Stage 1 has already decided `REJECT`; it does not change the Stage 1 ID-only unsupervised OOD gatekeeper.
+
+The best reason-family method is `linear_svm`, with held-out family test accuracy 0.9881 and family test macro-F1 0.9901. This improves over the PR #24 family baseline by +0.0954 macro-F1. The hardest reason family is `semantic_outlier`.
+
+The best subtype method is the non-oracle `hierarchical_classifier`, with subtype accuracy 0.9238 and subtype macro-F1 0.9059. This improves over the PR #24 subtype baseline by +0.2335 macro-F1. The hardest subtype is `rectangle_annotation`.
+
+Main evidence: `reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md`, `reports/dissertation_results/reason_attribution_method_comparison/leakage_sanity_check.md`, and `docs/experiments/reason_attribution_method_comparison.md`.
+
+## 9. Feature-Space Interpretation
 
 Feature-space PCA shows semantic outliers and several modality shifts moving far from ID, explaining Mahalanobis strength on global feature shifts. Text watermark remains close to ID, explaining its failure-mode behavior.
 
 Main evidence: `reports/dissertation_figures/robustness/figure_feature_space_pca_by_ood_type.png`.
 
-## 9. Runtime/Resource Result
+## 10. Runtime/Resource Result
 
 Runtime values are local smoke scoring estimates, not hardware-independent deployment benchmarks. Mahalanobis gives the best performance/resource trade-off; PatchCore L3 costs more but adds heatmap/localization support.
 
 Main evidence: `reports/dissertation_results/robustness_analysis/runtime_resource_summary.md`.
 
-## 10. Limitations
+## 11. Limitations
 
 - `test_id_synthetic_fallback.csv` is synthetic FAF fallback, not real clinical FAF validation.
 - OOD sets are curated stress-test/evaluation sets, not clinical prevalence estimates.
 - The results are proof-of-concept and not clinical deployment validation.
 - Mahalanobis may perform strongly because many OOD groups introduce global feature shifts.
 - Subtle local artifacts, especially text watermark, remain challenging.
+- Stage 2 reason labels are likely explanations for rejected inputs, not clinical diagnoses.
+- Stage 2 reason-attribution splits are disjoint by image path but have `parent_image_hash` overlap for generated sensory-artifact variants, so high Stage 2 scores may be optimistic for parent-independent generalization.
 - Real clinical FAF validation and prospective threshold calibration are future work.
 
-## 11. Future Work
+## 12. Future Work
 
 Recommended future work:
 
@@ -84,9 +110,10 @@ Recommended future work:
 - Calibrate thresholds prospectively using validation ID data and operational cost targets.
 - Expand subtle/local artifact coverage.
 - Study hybrid Mahalanobis decision plus PatchCore explanation workflows.
+- Regenerate Stage 2 reason-attribution splits grouped by `parent_image_hash` before claiming parent-independent reason-attribution robustness.
 - Measure runtime/resource behavior on target school-server and deployment hardware.
 
-## 12. Where To Find Every Figure/Table/Script
+## 13. Where To Find Every Figure/Table/Script
 
 - Final result summary: `reports/dissertation_final/final_result_summary.md`
 - Final figure index: `reports/dissertation_final/final_figure_index.md`
@@ -96,6 +123,8 @@ Recommended future work:
 - Full table shortlist: `docs/dissertation/final_table_shortlist.md`
 - Reproducibility runbook: `docs/dissertation/reproducibility_runbook.md`
 - School-server runbook: `docs/dissertation/school_server_runbook.md`
+- Phase 2 reason-attribution findings: `reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md`
+- Phase 2 leakage sanity check: `reports/dissertation_results/reason_attribution_method_comparison/leakage_sanity_check.md`
 - Final audit: `scripts/final_repository_audit.py`
 - Final bundle builder: `scripts/build_dissertation_delivery_bundle.py`
 
@@ -112,3 +141,6 @@ Recommended future work:
 | Autoencoder is a weaker reconstruction baseline. | `reports/dissertation_results/multi_scheme_comparison/metrics_by_scheme.csv` | `scripts/train_autoencoder.py`; `scripts/evaluate_autoencoder.py` | `figure_metrics_by_scheme.png` | Demonstrates reconstruction-baseline limitations. |
 | FPR@95%TPR is critical for safety interpretation. | `reports/dissertation_results/robustness_analysis/bootstrap_ci.csv` | `scripts/bootstrap_dissertation_metrics.py` | `figure_bootstrap_ci_fpr95.png` | FPR intervals are wider and overlap. |
 | Results are proof-of-concept due to synthetic ID fallback. | `docs/experiments/dissertation_robustness_key_findings.md` | Final interpretation docs | `claims_and_limitations_matrix.md` | Not real clinical FAF validation or deployment validation. |
+| Phase 2 reason attribution is optional post-rejection explanation. | `docs/experiments/reason_attribution_method_comparison.md`; `reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md` | `scripts/compare_reason_attribution_methods.py` | `figure_two_stage_updated_pipeline.png` | Stage 1 remains ID-only and unsupervised; OOD labels are Stage 2 targets only. |
+| The best Stage 2 family method is `linear_svm`. | `reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md` | `scripts/compare_reason_attribution_methods.py` | `figure_best_reason_family_confusion_matrix.png` | Test accuracy 0.9881 and macro-F1 0.9901; hardest family is `semantic_outlier`. |
+| The best Stage 2 subtype method is the non-oracle `hierarchical_classifier`. | `reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md`; `leakage_sanity_check.md` | `scripts/compare_reason_attribution_methods.py` | `figure_best_subtype_confusion_matrix.png` | Test accuracy 0.9238 and macro-F1 0.9059; hardest subtype is `rectangle_annotation`. |
