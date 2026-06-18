@@ -1,0 +1,9 @@
+scheme,scheme_label,auroc,auprc,fpr_at_95_tpr,ood_recall_at_threshold,recommended_use
+mahalanobis_feature,Mahalanobis feature,0.9724,0.9975,0.2,0.9079,Primary quantitative gatekeeper
+global_feature_knn,Global feature kNN,0.9458,0.9949,0.38,0.8024,Strong feature-distance baseline
+patchcore_l3,PatchCore L3,0.8819,0.988,0.6333,0.7097,Comparison model
+patchcore_l2_l3,PatchCore L2+L3,0.8722,0.9874,0.6867,0.6933,Comparison model
+patchcore_l2,PatchCore L2,0.828,0.9828,0.7867,0.62,Comparison model
+image_statistics,Image statistics,0.7681,0.9717,0.7467,0.2994,Low-level statistics baseline
+autoencoder,Autoencoder,0.7649,0.9763,0.9467,0.5588,Reconstruction baseline
+patchcore_l4,PatchCore L4,0.7502,0.9692,0.8467,0.3527,Comparison model

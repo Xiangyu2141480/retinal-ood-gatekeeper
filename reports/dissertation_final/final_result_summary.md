@@ -44,3 +44,21 @@ The completed system contains:
 | hardest_reason_family | semantic_outlier | reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md |
 | hardest_reason_subtype | rectangle_annotation | reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md |
 | reason_attribution_limitation | Reason labels are likely explanations, not clinical diagnoses; reason splits are image-path disjoint but not parent-image-hash disjoint. | reports/dissertation_results/reason_attribution_method_comparison/leakage_sanity_check.md |
+
+## Polished Results Narrative
+
+The final dissertation result should be presented as a staged quality-control system. Stage 1 is the
+primary ID-only unsupervised OOD gatekeeper. Within Stage 1, Mahalanobis feature distance is the
+recommended quantitative method because it gives the strongest overall AUROC/AUPRC trade-off and the
+lowest FPR@95%TPR among the evaluated schemes. PatchCore L3 should be discussed as the
+localization-oriented companion because it provides heatmap evidence and helps interpret selected
+failure cases, even though it is not the strongest quantitative model.
+
+Stage 2 is optional and runs only after rejection. It should be reported as post-hoc reason
+attribution rather than OOD detection. The selected family method is `linear_svm`; the selected
+subtype method is the non-oracle `hierarchical_classifier`. These labels are likely explanations,
+not clinical diagnoses.
+
+The main limitations to retain are synthetic ID fallback, proof-of-concept stress-test evaluation,
+no clinical deployment validation, supervised post-hoc Stage 2 explanation, and parent-image-hash
+overlap in the generated-artifact Stage 2 reason splits.

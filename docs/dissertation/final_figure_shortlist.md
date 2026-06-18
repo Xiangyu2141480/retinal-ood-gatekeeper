@@ -1,39 +1,38 @@
 # Final Thesis Figure Shortlist
 
-Use this as the practical dissertation figure menu. Keep the main text tight and move backup diagnostics to the appendix.
+Use this as the practical dissertation figure menu. Main-text figures should tell the core story:
+Stage 1 gatekeeper framing, Stage 1 method comparison, threshold/failure interpretation, and the
+optional Stage 2 reason-attribution extension.
 
 ## Main Text Figures
 
-| path | title | recommended thesis chapter | suggested caption | why included | placement | status |
-|---|---|---|---|---|---|---|
-| `reports/dissertation_figures/figure_system_pipeline_overview.png` | System pipeline overview | Methodology | System overview for the unsupervised binary FAF OOD gatekeeper. The model accepts valid FAF images and rejects invalid or OOD inputs; it is not a disease classifier. | Establishes the task framing. | main text | must_include |
-| `reports/dissertation_figures/reason_attribution_method_comparison/figure_two_stage_updated_pipeline.png` | Two-stage pipeline with reason attribution | Methodology | Two-stage overview showing Stage 1 as the ID-only unsupervised gatekeeper and Stage 2 as optional post-rejection reason attribution. | Clarifies that explanation labels are used only after rejection. | main text | must_include |
-| `reports/dissertation_figures/figure_dataset_taxonomy.png` | Dataset taxonomy | Dataset | Dataset taxonomy for ID FAF, modality shift, sensory artifact, and semantic outlier inputs. OOD labels are used for evaluation grouping only. | Makes the four input categories concrete without implying supervised class training. | main text | must_include |
-| `reports/dissertation_figures/figure_roc_overall_model_comparison.png` | Overall ROC comparison | Results | Overall ROC comparison across unsupervised ID-trained OOD gatekeeper models. Mahalanobis feature distance gives the strongest ranking performance. | Main quantitative model-ranking figure. | main text | must_include |
-| `reports/dissertation_figures/figure_pr_overall_model_comparison.png` | Overall PR comparison | Results | Overall precision-recall comparison across candidate gatekeepers on the OOD-heavy evaluation set. | Complements ROC under class imbalance. | main text | must_include |
-| `reports/dissertation_figures/figure_layer_ablation_patchcore.png` | PatchCore layer ablation | Experiments | PatchCore feature-layer ablation showing layer-level trade-offs for the heatmap-capable model family. | Supports method-selection discussion. | main text | optional |
-| `reports/dissertation_figures/figure_per_ood_type_comparison.png` | Per-OOD-type comparison | Results | Per-OOD-type performance comparison for modality shift, sensory artifact, and semantic outlier groups. | Shows where models are strong or weak. | main text | must_include |
-| `reports/dissertation_figures/figure_per_ood_subtype_comparison.png` | Per-OOD-subtype comparison | Results | Per-subtype comparison identifying easy global shifts and hard subtle local artifacts. | Useful if the chapter has space for detailed subtype evidence. | main text | optional |
-| `reports/dissertation_figures/figure_score_distribution_with_threshold.png` | Score distribution with threshold | Threshold Safety | ID and OOD anomaly-score distributions with the selected ID-calibrated threshold. | Makes the binary decision rule visible. | main text | must_include |
-| `reports/dissertation_figures/figure_heatmaps_sensory_artifact_examples.png` | Sensory artifact heatmap examples | Discussion | PatchCore heatmap examples for sensory artifact cases. Heatmaps are qualitative localization evidence, not clinical explanations. | Demonstrates interpretability/localization. | main text | optional |
-| `reports/dissertation_figures/figure_heatmaps_modality_examples.png` | Modality shift heatmap examples | Discussion | PatchCore heatmap examples for modality-shift inputs. | Provides qualitative contrast with sensory artifacts. | main text | optional |
-| `reports/dissertation_figures/robustness/figure_bootstrap_ci_main_metrics.png` | Bootstrap CI main metrics | Robustness Analysis | Bootstrap confidence intervals for main OOD gatekeeper metrics. Mahalanobis remains strongest for AUROC/AUPRC on the current evaluation set. | Adds uncertainty to the main result. | main text | must_include |
-| `reports/dissertation_figures/robustness/figure_threshold_policy_tradeoff.png` | Threshold policy trade-off | Robustness Analysis | Threshold trade-off between synthetic-ID false rejection and OOD recall. Deployment thresholds must be calibrated from validation ID scores only. | Separates research and deployment-style thresholds. | main text | must_include |
-| `reports/dissertation_figures/robustness/figure_feature_space_pca_by_ood_type.png` | Feature-space PCA by OOD type | Discussion | PCA projection of Mahalanobis feature space by OOD type. Global shifts separate clearly while subtle sensory artifacts overlap more with ID. | Explains Mahalanobis strengths and limitations. | main text | must_include |
-| `reports/dissertation_figures/robustness/figure_method_disagreement_examples.png` | Method disagreement examples | Failure Analysis | Representative cases where Mahalanobis and PatchCore L3 disagree. | Shows why a localizable companion remains useful. | main text | must_include |
-| `reports/dissertation_figures/reason_attribution_method_comparison/figure_reason_method_family_macro_f1.png` | Reason attribution method comparison | Phase 2 Results | Stage 2 method comparison for rejected-input reason-family attribution. The selected family method is `linear_svm`. | Adds the optional explanation-layer result without changing Stage 1. | main text | must_include |
-| `reports/dissertation_figures/reason_attribution_method_comparison/figure_best_reason_family_confusion_matrix.png` | Best reason family confusion matrix | Phase 2 Results | Confusion matrix for the selected `linear_svm` reason-family method. | Shows family-level error structure for rejected-input explanations. | main text | must_include |
-| `reports/dissertation_figures/reason_attribution_method_comparison/figure_best_subtype_confusion_matrix.png` | Best subtype confusion matrix | Phase 2 Results | Confusion matrix for the non-oracle `hierarchical_classifier` subtype method. | Shows fine-grained explanation errors, including `rectangle_annotation`. | main text | recommended |
-| `reports/dissertation_figures/reason_attribution/figure_reason_attribution_examples.png` | Reason attribution examples | Discussion | Representative rejected-input reason-attribution examples. These are likely explanations, not clinical diagnoses. | Qualitative support for the optional Stage 2 module. | main text | optional |
+| filename | suggested chapter | placement | one-line message |
+| --- | --- | --- | --- |
+| `reports/dissertation_figures/figure_system_pipeline_overview.png` | Introduction / Methods | main text | The project is an upstream binary FAF OOD gatekeeper, not a disease classifier. |
+| `reports/dissertation_figures/figure_dataset_taxonomy.png` | Dataset | main text | Dataset v1 separates ID FAF training/evaluation rows from OOD stress-test and Stage 2 reason splits. |
+| `reports/dissertation_figures/figure_metrics_by_scheme.png` | Results | main text | Mahalanobis is the strongest Stage 1 quantitative gatekeeper by AUROC/AUPRC. |
+| `reports/dissertation_figures/figure_fpr95_by_scheme.png` | Results / Safety | main text | Mahalanobis also gives the best FPR@95%TPR among the evaluated Stage 1 methods. |
+| `reports/dissertation_figures/figure_layer_ablation_patchcore.png` | Methods / Results | main text | PatchCore L3 is the selected localization-oriented companion. |
+| `reports/dissertation_figures/robustness/figure_threshold_policy_tradeoff.png` | Threshold Safety | main text | The deployment-style threshold trades ID false rejection against OOD recall. |
+| `reports/dissertation_figures/robustness/figure_feature_space_pca_by_ood_type.png` | Discussion | main text | Global modality and semantic shifts separate more clearly than subtle local artifacts. |
+| `reports/dissertation_figures/reason_attribution_method_comparison/figure_two_stage_updated_pipeline.png` | Methods / Phase 2 | main text | Stage 2 is optional post-rejection explanation and does not change Stage 1. |
+| `reports/dissertation_figures/reason_attribution_method_comparison/figure_reason_method_family_macro_f1.png` | Phase 2 Results | main text | `linear_svm` is the selected family attribution method. |
+| `reports/dissertation_figures/reason_attribution_method_comparison/figure_best_reason_family_confusion_matrix.png` | Phase 2 Results | main text | Family-level errors are rare, with `semantic_outlier` remaining hardest. |
+| `reports/dissertation_figures/reason_attribution_method_comparison/figure_best_subtype_confusion_matrix.png` | Phase 2 Results / Appendix | main text or appendix | The non-oracle hierarchical subtype method is strong but leaves `rectangle_annotation` hardest. |
 
 ## Appendix Figures
 
-| path | title | recommended thesis chapter | suggested caption | why included | placement | status |
-|---|---|---|---|---|---|---|
-| `reports/dissertation_figures/robustness/figure_bootstrap_ci_fpr95.png` | Bootstrap FPR@95%TPR CI | Appendix / Robustness | Bootstrap uncertainty for FPR@95%TPR. Intervals are wider and overlap, so safety claims remain cautious. | Supports cautious threshold-safety wording. | appendix | backup |
-| `reports/dissertation_figures/robustness/figure_artifact_severity_reject_rate.png` | Artifact severity reject rate | Appendix / Robustness | Deployment reject rate under generated artifact severity stress tests. Responses are not universally monotonic. | Shows weak and non-monotonic artifact responses. | appendix | optional |
-| `reports/dissertation_figures/robustness/figure_false_negative_ood_examples.png` | False-negative OOD examples | Appendix / Failure Analysis | False-negative OOD examples for Mahalanobis. Text watermark dominates missed OOD cases. | Supports limitations and future work. | appendix | optional |
-| `reports/dissertation_figures/robustness/figure_runtime_vs_performance.png` | Runtime versus performance | Appendix / Practicality | Runtime versus AUROC for candidate gatekeepers using local smoke scoring estimates. | Practical software-prototype evidence. | appendix | optional |
-| `reports/dissertation_figures/reason_attribution_method_comparison/figure_reason_method_per_subtype_f1.png` | Reason subtype F1 heatmap | Appendix / Phase 2 Results | Per-subtype Stage 2 F1 comparison across reason-attribution methods. | Useful for fine-grained error analysis and viva questions. | appendix | backup |
-| `reports/dissertation_figures/reason_attribution_method_comparison/figure_unknown_threshold_tradeoff.png` | Reason unknown-threshold trade-off | Appendix / Discussion | Coverage and accuracy trade-off for the Stage 2 `unknown_ood` threshold. | Supports cautious explanation confidence wording. | appendix | optional |
-| `reports/dissertation_figures/figure_experiment_workflow.png` | Experiment workflow | Appendix / Reproducibility | Workflow from manifests to ID-only fitting, OOD-only evaluation, metrics, figures, and final indexes. | Helps examiners follow reproduction steps. | appendix | backup |
+| filename | suggested chapter | placement | one-line message |
+| --- | --- | --- | --- |
+| `reports/dissertation_figures/figure_roc_overall_model_comparison.png` | Results | appendix | ROC comparison is a supporting view of Stage 1 discrimination. |
+| `reports/dissertation_figures/figure_pr_overall_model_comparison.png` | Results | appendix | Precision-recall comparison complements ROC under the OOD-heavy evaluation setting. |
+| `reports/dissertation_figures/figure_per_ood_type_comparison.png` | Results | appendix | Broad OOD category results show model strengths and weaknesses. |
+| `reports/dissertation_figures/figure_per_ood_subtype_by_scheme.png` | Failure Analysis | appendix | Subtype-level heatmap gives the most detailed Stage 1 failure-mode view. |
+| `reports/dissertation_figures/figure_score_distribution_with_threshold.png` | Threshold Safety | appendix | Score distributions make the ID-calibrated decision threshold visible. |
+| `reports/dissertation_figures/figure_heatmaps_sensory_artifact_examples.png` | Discussion | appendix | PatchCore heatmaps provide qualitative localization evidence for sensory artifacts. |
+| `reports/dissertation_figures/figure_heatmaps_modality_examples.png` | Discussion | appendix | Modality-shift heatmaps provide qualitative contrast to artifact cases. |
+| `reports/dissertation_figures/robustness/figure_bootstrap_ci_main_metrics.png` | Robustness | appendix | Bootstrap confidence intervals support cautious model-ranking claims. |
+| `reports/dissertation_figures/robustness/figure_method_disagreement_examples.png` | Failure Analysis | appendix | Disagreement cases explain why a localizable companion remains useful. |
+| `reports/dissertation_figures/reason_attribution_method_comparison/figure_reason_method_per_subtype_f1.png` | Phase 2 Results | appendix | Fine-grained Stage 2 subtype F1 is useful for viva and limitations discussion. |
+| `reports/dissertation_figures/reason_attribution_method_comparison/figure_unknown_threshold_tradeoff.png` | Discussion | appendix | The `unknown_ood` trade-off supports cautious explanation confidence wording. |
+| `reports/dissertation_figures/figure_experiment_workflow.png` | Reproducibility | appendix | Workflow diagram connects manifests, ID-only fitting, OOD evaluation, and figure generation. |

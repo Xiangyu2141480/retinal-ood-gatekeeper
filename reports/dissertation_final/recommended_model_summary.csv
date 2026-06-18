@@ -1,0 +1,5 @@
+stage,recommendation,role,key_metric,evidence
+Stage 1,Mahalanobis feature,Best quantitative OOD gatekeeper,AUROC 0.9724; AUPRC 0.9975; FPR@95%TPR 0.2000,reports/dissertation_results/multi_scheme_comparison/metrics_by_scheme.csv
+Stage 1,PatchCore L3,Best localization-oriented companion,Layer-ablation winner among PatchCore variants for AUROC,reports/dissertation_results/primary_balanced_by_subtype_10k/layer_ablation_table.csv
+Stage 2,linear_svm,Best reason-family attribution method,Family accuracy 0.9881; macro-F1 0.9901,reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.csv
+Stage 2,hierarchical_classifier,Best reason-subtype attribution method,Subtype accuracy 0.9238; macro-F1 0.9059,reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.csv

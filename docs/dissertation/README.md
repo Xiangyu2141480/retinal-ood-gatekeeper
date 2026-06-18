@@ -19,6 +19,35 @@ The completed system contains:
 5. Reproducible dataset and Git LFS package.
 6. Dissertation-ready figures and evidence index.
 
+## Main Findings
+
+- Stage 1 best quantitative method: Mahalanobis feature distance.
+- Stage 1 best localization-oriented method: PatchCore L3.
+- Stage 2 best family method: `linear_svm`.
+- Stage 2 best subtype method: `hierarchical_classifier`.
+- Stage 2 is optional post-rejection explanation only; reason labels are likely explanations, not clinical diagnoses.
+
+## Repository Map
+
+| area | location |
+| --- | --- |
+| Dataset package | `datasets/dissertation_v1/` |
+| Stage 1 results | `reports/dissertation_results/multi_scheme_comparison/` |
+| Robustness and failure analysis | `reports/dissertation_results/robustness_analysis/` |
+| Stage 2 reason-attribution results | `reports/dissertation_results/reason_attribution_method_comparison/` |
+| Final figures | `reports/dissertation_figures/` |
+| Final polish tables and captions | `reports/dissertation_final/` |
+| Manuscript draft blocks | `docs/dissertation/manuscript_draft/` |
+
+## Recommended Figures And Tables
+
+- Main figure shortlist: `docs/dissertation/final_figure_shortlist.md`
+- Main table shortlist: `docs/dissertation/final_table_shortlist.md`
+- Polished caption suggestions: `reports/dissertation_final/caption_suggestions.md`
+- Figure interpretation notes: `reports/dissertation_final/interpretation_notes.md`
+- Recommended methods: `reports/dissertation_final/recommended_model_summary.md`
+- Claims and evidence: `reports/dissertation_final/claim_evidence_matrix.md`
+
 ## Dataset Summary
 
 Dataset v1 is packaged under `datasets/dissertation_v1/` with Git LFS-tracked images under `data/images/dissertation_v1/`.
@@ -51,6 +80,7 @@ Optional Phase 2 result: `linear_svm` is the selected reason-family method with 
 
 - Main figure shortlist: `docs/dissertation/final_figure_shortlist.md`
 - Generated final figure index: `reports/dissertation_final/final_figure_index.md`
+- Polished figure inventory: `reports/dissertation_final/polished_figure_inventory.md`
 - Existing figure directory: `reports/dissertation_figures/`
 - Phase 2 reason-attribution figures: `reports/dissertation_figures/reason_attribution_method_comparison/`
 
