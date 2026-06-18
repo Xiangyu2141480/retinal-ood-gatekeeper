@@ -4,6 +4,49 @@ Unsupervised out-of-distribution detection for quality control in retinal imagin
 
 This repository is a final-year project codebase for building a **pre-diagnostic quality-control gatekeeper** for Fundus Autofluorescence (FAF) images. The detector is trained only on valid/normal FAF images and rejects invalid clinical inputs before they reach a downstream diagnostic model.
 
+## Concise project overview
+
+The completed dissertation project is a two-stage research prototype:
+
+1. **Stage 1:** an ID-only unsupervised FAF OOD gatekeeper that outputs `ACCEPT` or `REJECT`.
+2. **Stage 2:** an optional post-rejection explanation layer that predicts likely rejection reasons.
+
+The recommended final methods are Mahalanobis feature distance for the Stage 1 quantitative
+gatekeeper, PatchCore L3 for localization-oriented heatmap evidence, `linear_svm` for Stage 2
+reason-family attribution, and `hierarchical_classifier` for Stage 2 subtype attribution.
+
+## Main findings
+
+- Mahalanobis is the best Stage 1 quantitative model: AUROC `0.9724`, AUPRC `0.9975`, FPR@95%TPR `0.2000`.
+- PatchCore L3 is the best Stage 1 localization-oriented companion for heatmaps and failure-case discussion.
+- `linear_svm` is the selected Stage 2 family method: accuracy `0.9881`, macro-F1 `0.9901`.
+- `hierarchical_classifier` is the selected Stage 2 subtype method: accuracy `0.9238`, macro-F1 `0.9059`.
+- The results remain proof-of-concept: synthetic ID fallback, curated OOD stress tests, and Stage 2 parent-image-hash overlap are documented limitations.
+
+## Repository map
+
+| location | purpose |
+| --- | --- |
+| `datasets/dissertation_v1/` | committed dissertation dataset package, manifests, checksums, and metadata |
+| `reports/dissertation_results/multi_scheme_comparison/` | Stage 1 method comparison tables |
+| `reports/dissertation_results/robustness_analysis/` | robustness, threshold, failure-analysis, and provenance tables |
+| `reports/dissertation_results/reason_attribution_method_comparison/` | Stage 2 reason-attribution method comparison tables |
+| `reports/dissertation_figures/` | polished Stage 1, taxonomy, pipeline, and method figures |
+| `reports/dissertation_figures/robustness/` | robustness, threshold, feature-space, and failure-analysis figures |
+| `reports/dissertation_figures/reason_attribution_method_comparison/` | polished Stage 2 method and confusion-matrix figures |
+| `reports/dissertation_final/` | final summary tables, caption suggestions, and interpretation notes |
+| `docs/dissertation/` | final evidence index, figure/table shortlist, runbooks, and manuscript draft blocks |
+
+## Recommended figures and tables
+
+Start with:
+
+- Figures: `docs/dissertation/final_figure_shortlist.md`
+- Tables: `docs/dissertation/final_table_shortlist.md`
+- Captions: `reports/dissertation_final/caption_suggestions.md`
+- Interpretation notes: `reports/dissertation_final/interpretation_notes.md`
+- Final summary tables: `reports/dissertation_final/stage1_method_summary.md`, `stage2_method_summary.md`, `recommended_model_summary.md`, `limitations_summary.md`, and `claim_evidence_matrix.md`
+
 ## What this project builds
 
 The project builds a Python/PyTorch pipeline that:
@@ -189,6 +232,8 @@ See the `docs/` directory:
 
 - `dissertation/README.md` - final dissertation handoff entry point for examiners.
 - `dissertation/final_evidence_index.md` - central claim-to-evidence map.
+- `dissertation/final_figure_shortlist.md` - recommended main-text and appendix figures.
+- `dissertation/final_table_shortlist.md` - recommended main-text and appendix tables.
 - `dissertation/reproducibility_runbook.md` - one-command-oriented verification and reproduction guide.
 - `dissertation/school_server_runbook.md` - school-server / Jackpot reproduction guide.
 - `dissertation/claims_and_limitations_matrix.md` - safe thesis wording and limitations matrix.
