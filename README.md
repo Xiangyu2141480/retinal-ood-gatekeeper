@@ -19,6 +19,9 @@ The project builds a Python/PyTorch pipeline that:
    - non-retinal semantic outliers.
 6. Reports clinical safety metrics: AUROC, AUPRC, FPR@95%TPR, confusion matrix at selected thresholds.
 7. Produces anomaly heatmaps for interpretability.
+8. Optionally explains rejected inputs with a post-rejection Stage 2 reason-attribution module.
+
+Stage 1 remains an ID-only unsupervised OOD gatekeeper. OOD labels are used only for held-out evaluation and, in the optional Stage 2 module, as explanation targets after rejection. The Stage 2 reason labels are likely explanations such as modality shift or sensory artifact, not disease diagnoses.
 
 ## Repository status
 
@@ -189,6 +192,7 @@ See the `docs/` directory:
 - `dissertation/reproducibility_runbook.md` - one-command-oriented verification and reproduction guide.
 - `dissertation/school_server_runbook.md` - school-server / Jackpot reproduction guide.
 - `dissertation/claims_and_limitations_matrix.md` - safe thesis wording and limitations matrix.
+- `experiments/reason_attribution_method_comparison.md` - optional Stage 2 rejected-input reason-attribution comparison.
 - `LITERATURE_REVIEW_ANALYSIS_CN.md` — Chinese explanation of what the literature review means for implementation.
 - `PROJECT_SPEC_CN.md` — product and research specification.
 - `DATASET_PLAN_CN.md` — dataset layout, manifests, split strategy, privacy rules.
@@ -209,6 +213,8 @@ See the `docs/` directory:
 ## Privacy and safety
 
 This repository is a proof-of-concept research project, not a clinical device and not clinical deployment validation. The gatekeeper is not a disease classifier: it only returns `ACCEPT: valid FAF` or `REJECT: OOD / invalid input`.
+
+The optional Stage 2 reason-attribution module is also not a disease classifier. It is invoked only after rejection to describe a likely reason for the rejection.
 
 Never commit:
 

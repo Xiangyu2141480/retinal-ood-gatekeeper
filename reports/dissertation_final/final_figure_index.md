@@ -1,6 +1,7 @@
 | path | title | chapter | placement | status | why |
 | --- | --- | --- | --- | --- | --- |
 | reports/dissertation_figures/figure_system_pipeline_overview.png | System pipeline overview | Methodology | main text | must_include | Defines the binary ACCEPT/REJECT gatekeeper and prevents disease-classifier framing. |
+| reports/dissertation_figures/reason_attribution_method_comparison/figure_two_stage_updated_pipeline.png | Two-stage pipeline with reason attribution | Methodology | main text | must_include | Shows Stage 1 ID-only rejection followed by optional Stage 2 explanation. |
 | reports/dissertation_figures/figure_dataset_taxonomy.png | Dataset taxonomy | Dataset | main text | must_include | Shows ID FAF versus modality-shift, sensory-artifact, and semantic-outlier OOD groups. |
 | reports/dissertation_figures/figure_roc_overall_model_comparison.png | Overall ROC comparison | Results | main text | must_include | Main ranking evidence for the unsupervised gatekeeper schemes. |
 | reports/dissertation_figures/figure_pr_overall_model_comparison.png | Overall PR comparison | Results | main text | must_include | Complements ROC under OOD-heavy evaluation sets. |
@@ -12,3 +13,9 @@
 | reports/dissertation_figures/robustness/figure_threshold_policy_tradeoff.png | Threshold policy trade-off | Robustness Analysis | main text | must_include | Separates research thresholds from deployment-style ID-calibrated thresholds. |
 | reports/dissertation_figures/robustness/figure_feature_space_pca_by_ood_type.png | Feature-space PCA by OOD type | Discussion | main text | must_include | Explains why Mahalanobis works well for global feature shifts. |
 | reports/dissertation_figures/robustness/figure_method_disagreement_examples.png | Method disagreement examples | Failure Analysis | main text | must_include | Shows why PatchCore remains useful as localizable supporting evidence. |
+| reports/dissertation_figures/reason_attribution_method_comparison/figure_reason_method_family_macro_f1.png | Reason attribution method comparison | Phase 2 Results | main text | must_include | Compares Stage 2 family methods and supports selecting `linear_svm`. |
+| reports/dissertation_figures/reason_attribution_method_comparison/figure_best_reason_family_confusion_matrix.png | Best reason family confusion matrix | Phase 2 Results | main text | must_include | Shows held-out family-level errors for the selected reason method. |
+| reports/dissertation_figures/reason_attribution_method_comparison/figure_best_subtype_confusion_matrix.png | Best subtype confusion matrix | Phase 2 Results | main text | recommended | Shows non-oracle hierarchical subtype errors and the hardest subtype. |
+| reports/dissertation_figures/reason_attribution/figure_reason_attribution_examples.png | Reason attribution examples | Discussion | main text | optional | Qualitative examples of likely rejection explanations, not diagnoses. |
+| reports/dissertation_figures/reason_attribution_method_comparison/figure_reason_method_per_subtype_f1.png | Reason subtype F1 heatmap | Appendix | appendix | backup | Detailed fine-grained Stage 2 comparison. |
+| reports/dissertation_figures/reason_attribution_method_comparison/figure_unknown_threshold_tradeoff.png | Reason unknown-threshold trade-off | Appendix | appendix | optional | Supports cautious `unknown_ood` explanation confidence wording. |
