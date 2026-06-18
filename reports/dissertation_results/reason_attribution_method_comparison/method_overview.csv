@@ -1,0 +1,9 @@
+method,status,feature_set,estimator,complexity,description,skip_reason,validation_family_macro_f1,test_family_macro_f1,validation_subtype_macro_f1,test_subtype_macro_f1
+image_statistics_logreg,ok,statistics,logistic_regression,1,Balanced logistic regression on low-level image statistics h(x).,,0.9618880387976086,0.9433457969995406,0.8602909842784477,0.8802331242066385
+global_feature_knn,ok,global,knn,3,K-nearest neighbours on deterministic pooled image features z(x).,,0.9678054568294353,0.9740178031087817,0.47965472363919076,0.4683090097770395
+nearest_centroid,ok,global,nearest_centroid,2,Class prototype baseline in pooled image-feature space.,,0.7948161837692164,0.7664600137472782,0.42530672504605227,0.413719276280399
+logistic_regression,ok,global,logistic_regression,3,Balanced multinomial logistic regression on pooled image features z(x).,,0.9876989267096624,0.990115630837571,0.6042979530038893,0.6302931898814942
+linear_svm,ok,global,linear_svm,4,Balanced linear SVM margin baseline on pooled image features z(x).,,0.990774462414277,0.9900756867155014,0.5499133661990514,0.5894292341889306
+random_forest_or_gradient_boosting,ok,global,random_forest,5,Balanced random forest non-linear classical ML baseline.,,0.989658766413657,0.9911268855368235,0.6523960253187417,0.6785717485274027
+feature_statistics_fusion,ok,fusion,logistic_regression,4,Balanced logistic regression on concatenated z(x) and h(x).,,0.9876989267096624,0.9938696025652548,0.7748328339173921,0.813415011961187
+hierarchical_classifier,ok,fusion,hierarchical_logistic,6,Family-first classifier; subtype prediction is routed by predicted family.,,0.9876989267096624,0.9938696025652548,0.8671040060661988,0.9059435494826286

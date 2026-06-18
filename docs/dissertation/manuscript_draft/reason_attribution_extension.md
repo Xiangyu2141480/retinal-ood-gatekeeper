@@ -29,6 +29,48 @@ With the optional subtype classifier enabled, the subtype results were:
 
 The subtype result is weaker than the family-level result, which is expected because fine-grained artifact categories can share similar low-level visual statistics.
 
+### Multi-method comparison for rejected-input reason attribution
+
+To avoid presenting the Phase 2 explanation layer as a single unchallenged classifier, a systematic
+multi-method comparison was run on the finalized `reason_train`, `reason_val`, and `reason_test`
+splits. The comparison kept the first-stage OOD gatekeeper fixed and unchanged. Stage 1 remains an
+ID-only unsupervised detector that decides whether an input is accepted or rejected; OOD taxonomy
+labels are used only by the optional second-stage explanation module after rejection.
+
+The compared Stage 2 methods included image-statistics logistic regression, k-nearest neighbours,
+nearest centroid, logistic regression, linear SVM, random forest, feature-statistics fusion, and a
+hierarchical family-to-subtype classifier. The committed run used deterministic image-derived
+features only: low-level image statistics `h(x)`, pooled-pixel global features `z(x)`, and their
+concatenation. Metadata fields such as file name, source dataset, notes, `ood_type`, and
+`ood_subtype` were not used as input features; reason labels served only as Stage 2 targets.
+
+The pre-specified selection rule was validation reason-family macro-F1, with simpler methods
+preferred on ties. Under this rule, `linear_svm` was selected as the family-level explanation
+method. It achieved validation family macro-F1 `0.9908` and held-out test family macro-F1 `0.9901`
+with test accuracy `0.9881`, known coverage `0.9952` at `gamma=0.5`, and an `unknown_ood` rate
+of `0.0048`. This improved over the PR #24 family macro-F1 baseline of `0.8947` by `+0.0954`.
+The fused and hierarchical methods had a slightly higher raw test family macro-F1 (`0.9939`), but
+they were not selected as the final family method because model selection was based on validation
+performance rather than post-hoc test-set ranking.
+
+For subtype attribution, the best method was the `hierarchical_classifier`. It achieved validation
+subtype macro-F1 `0.8671` and test subtype macro-F1 `0.9059`, improving over the PR #24 subtype
+baseline of `0.6724` by `+0.2335`. This result suggests that fine-grained reason attribution
+benefits from first separating broad reason families and then routing to a family-specific subtype
+model. The hierarchy is evaluated using the predicted family at test time, not the ground-truth
+family, so it does not rely on oracle family labels during prediction.
+
+The hardest family for the selected `linear_svm` family method was `semantic_outlier`
+(`F1=0.9848`). The hardest subtype for the best hierarchical subtype method was
+`rectangle_annotation` (`F1=0.7241`), consistent with the observation that some visual artifact
+subtypes overlap in simple low-level appearance cues. These subtype predictions should therefore
+be interpreted as likely rejection explanations rather than definitive labels.
+
+This comparison preserves the conceptual boundary of the dissertation. The system remains an
+unsupervised FAF OOD gatekeeper in Stage 1, with an optional post-hoc Stage 2 explanation module.
+It is not a disease classifier, and the reason-attribution experiment should not be described as
+clinical deployment validation.
+
 ## Discussion
 
 The two-stage design preserves the original unsupervised OOD formulation. Stage 1 decides whether the input should be rejected. Stage 2 explains the likely reason for rejection after that decision has already been made. Therefore, OOD taxonomy labels are not used to train the gatekeeper and do not convert the project into a supervised four-class classifier.
