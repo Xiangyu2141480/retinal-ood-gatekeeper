@@ -1,0 +1,14 @@
+[
+  {
+    "image_path": "images/dissertation_v1/ood/sensory_artifact/arrow_annotation/artifact_000003_02_arrow_annotation.png",
+    "stage1_decision": "REJECT",
+    "anomaly_score": null,
+    "note": "Stage 2 is post-hoc explanation only. Stage 1 remains an ID-only unsupervised binary gatekeeper.",
+    "stage2_reason_family": "modality_shift",
+    "reason_confidence": 0.6528877770950471,
+    "unknown_threshold": 0.5,
+    "stage2_subtype": "colour_fundus",
+    "subtype_confidence": 0.29986955005131716,
+    "heatmap_path": null
+  }
+]

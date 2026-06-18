@@ -1,0 +1,15 @@
+metric,class,value
+accuracy,overall,0.8809523809523809
+macro_f1,overall,0.8946552503545262
+precision,modality_shift,0.7422680412371134
+recall,modality_shift,0.9
+f1,modality_shift,0.8135593220338985
+support,modality_shift,80.0
+precision,sensory_artifact,0.957345971563981
+recall,sensory_artifact,0.8416666666666667
+f1,sensory_artifact,0.8957871396895788
+support,sensory_artifact,240.0
+precision,semantic_outlier,0.9896907216494846
+recall,semantic_outlier,0.96
+f1,semantic_outlier,0.9746192893401014
+support,semantic_outlier,100.0
