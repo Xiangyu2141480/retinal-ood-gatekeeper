@@ -1,0 +1,12 @@
+code,ood_subtype,display_label
+S1,colour_fundus,colour fundus
+S2,oct_screenshot,oct screenshot
+S3,text_watermark,text watermark
+S4,rectangle_annotation,rectangle annotation
+S5,arrow_annotation,arrow annotation
+S6,composite_layout,composite layout
+S7,blur_artifact,blur artifact
+S8,border_crop,border crop
+S9,gaussian_noise,gaussian noise
+S10,jpeg_compression,jpeg compression
+S11,cifar10_natural,cifar10 natural

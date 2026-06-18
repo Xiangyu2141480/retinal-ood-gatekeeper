@@ -13,4 +13,5 @@
 | reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md | Best Stage 2 method summary | Stage 2 Results | appendix | must_include | Records selected Stage 2 methods and headline metrics. |
 | reports/dissertation_results/reason_attribution_method_comparison/family_metrics_by_method.md | Stage 2 family metrics by method | Stage 2 Results | appendix | backup | Full family attribution comparison. |
 | reports/dissertation_results/reason_attribution_method_comparison/subtype_metrics_by_method.md | Stage 2 subtype metrics by method | Stage 2 Results | appendix | backup | Full subtype attribution comparison. |
+| reports/dissertation_final/subtype_label_mapping.md | Stage 2 subtype code mapping | Phase 2 Results | appendix | must_include | Defines S1-S11 labels used in compact subtype confusion matrices. |
 | reports/dissertation_results/reason_attribution_method_comparison/leakage_sanity_check.md | Stage 2 leakage sanity check | Limitations | appendix | must_include | Documents feature exclusions, parent-hash overlap, and non-oracle hierarchy. |

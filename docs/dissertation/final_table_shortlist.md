@@ -30,4 +30,5 @@ and leakage checks.
 | `reports/dissertation_results/robustness_analysis/result_provenance.md` | Reproducibility | appendix | Provenance for final result files and ID-only/OOD-only guardrails. |
 | `reports/dissertation_results/reason_attribution_method_comparison/family_metrics_by_method.md` | Stage 2 Results | appendix | Full family-level Stage 2 method comparison. |
 | `reports/dissertation_results/reason_attribution_method_comparison/subtype_metrics_by_method.md` | Stage 2 Results | appendix | Full subtype-level Stage 2 method comparison. |
+| `reports/dissertation_final/subtype_label_mapping.md` | Stage 2 Results | appendix | Mapping for S1-S11 labels used in compact subtype confusion matrices. |
 | `reports/dissertation_results/reason_attribution_method_comparison/leakage_sanity_check.md` | Limitations | appendix | Feature leakage, split disjointness, parent-hash overlap, and non-oracle hierarchy checks. |
