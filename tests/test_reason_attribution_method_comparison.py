@@ -15,6 +15,7 @@ from retinal_ood.reason_attribution.comparison import (
 )
 from retinal_ood.reason_attribution.methods import (
     HierarchicalReasonClassifier,
+    METADATA_EXCLUDED_COLUMNS,
     extract_global_pooled_features_from_manifest,
 )
 
@@ -58,10 +59,15 @@ def _write_reason_manifests(root: Path, *, include_id: bool = False) -> tuple[Pa
                             "image_path": image_path,
                             "label": 1,
                             "split": split,
+                            "filename": f"{split}_{family}_{subtype_index}_{variant}.png",
                             "source": f"source_{split}_{variant}",
                             "source_dataset": f"dataset_{family}",
+                            "source_url": f"https://example.invalid/{split}/{variant}",
+                            "license_status": "public",
                             "ood_type": family,
                             "ood_subtype": subtype,
+                            "synthetic_transform": f"transform_{subtype_index}",
+                            "severity": variant,
                             "notes": f"note with metadata {variant}",
                         }
                     )
@@ -71,10 +77,15 @@ def _write_reason_manifests(root: Path, *, include_id: bool = False) -> tuple[Pa
                 "image_path": rows_by_split["train"][0]["image_path"],
                 "label": 0,
                 "split": "train",
+                "filename": "id.png",
                 "source": "forbidden_id_source",
                 "source_dataset": "id_dataset",
+                "source_url": "https://example.invalid/id",
+                "license_status": "public",
                 "ood_type": "id",
                 "ood_subtype": "",
+                "synthetic_transform": "",
+                "severity": "",
                 "notes": "this ID row must be rejected before Stage 2 training",
             }
         )
@@ -89,10 +100,17 @@ def _write_reason_manifests(root: Path, *, include_id: bool = False) -> tuple[Pa
 def test_global_pooled_features_are_image_only_and_ignore_metadata(tmp_path: Path):
     train_manifest, _, _ = _write_reason_manifests(tmp_path)
     metadata_changed = pd.read_csv(train_manifest)
+    metadata_changed["filename"] = "changed_filename.png"
     metadata_changed["source"] = "changed_source"
     metadata_changed["source_dataset"] = "changed_dataset"
+    metadata_changed["source_url"] = "https://changed.invalid/source"
+    metadata_changed["license_status"] = "changed_license"
+    metadata_changed["label"] = 99
     metadata_changed["notes"] = "changed note text"
     metadata_changed["ood_type"] = metadata_changed["ood_type"].sample(frac=1.0, random_state=3).to_numpy()
+    metadata_changed["ood_subtype"] = metadata_changed["ood_subtype"].sample(frac=1.0, random_state=4).to_numpy()
+    metadata_changed["synthetic_transform"] = "changed_transform"
+    metadata_changed["severity"] = "changed_severity"
     changed_manifest = tmp_path / "reason_train_metadata_changed.csv"
     metadata_changed.to_csv(changed_manifest, index=False)
 
@@ -102,6 +120,25 @@ def test_global_pooled_features_are_image_only_and_ignore_metadata(tmp_path: Pat
     np.testing.assert_allclose(original.features, changed.features, atol=1e-6)
     assert original.metadata["source"].iloc[0] != changed.metadata["source"].iloc[0]
     assert original.feature_names[0].startswith("pooled_pixel_")
+
+
+def test_declared_metadata_exclusion_list_covers_leakage_gate_fields():
+    required_excluded = {
+        "image_path",
+        "filename",
+        "source",
+        "source_dataset",
+        "source_url",
+        "license_status",
+        "notes",
+        "label",
+        "ood_type",
+        "ood_subtype",
+        "synthetic_transform",
+        "severity",
+    }
+
+    assert required_excluded.issubset(set(METADATA_EXCLUDED_COLUMNS))
 
 
 def test_comparison_generates_required_tables_and_uses_same_splits(tmp_path: Path):

@@ -41,10 +41,13 @@ All inputs to the Stage 2 classifiers are image-derived. The script uses:
   features rather than CNN features.
 - `z(x) || h(x)`: feature-statistics fusion.
 
-Manifest metadata is never concatenated into model features. Fields such as `image_path`,
-filename, `source`, `source_dataset`, `ood_type`, `ood_subtype`, and `notes` are used only for
-loading images, targets, grouping, and reporting. The tests include a metadata perturbation check
-to verify that changing metadata fields does not change the feature matrix.
+Manifest metadata is never concatenated into model features. `image_path` is used only to load
+the image pixels. The following fields are explicitly excluded from model input features:
+`image_path`, `filename`, `file_name`, `source`, `source_dataset`, `source_url`,
+`license_status`, `source_split`, `source_image_hash`, `parent_image_hash`, `notes`, `label`,
+`ood_type`, `ood_subtype`, `synthetic_transform`, `severity`, and `split`. The `ood_type` and
+`ood_subtype` columns are targets only. The tests include a metadata perturbation check to verify
+that changing metadata fields does not change the feature matrix.
 
 ## Metrics
 
@@ -101,8 +104,14 @@ labels after rejection. It is not a disease classifier and is not a supervised r
 OOD detection.
 
 The comparison uses the finalized synthetic/public OOD taxonomy manifests. High performance on
-these controlled reason labels should not be interpreted as real clinical FAF validation. The
-pooled-pixel representation is deliberately lightweight and reproducible, but richer frozen
+these controlled reason labels should not be interpreted as real clinical FAF validation.
+The reason splits are disjoint by `image_path`, but a final leakage sanity gate found overlap by
+`parent_image_hash` across train/validation/test for generated sensory-artifact variants. This
+means method-comparison scores may be optimistic for generated artifact subtypes and should be
+reported as split-level rather than parent-independent generalization. A grouped-by-parent split
+is recommended before making stronger claims about artifact-subtype robustness.
+
+The pooled-pixel representation is deliberately lightweight and reproducible, but richer frozen
 visual encoders may be worth testing later if runtime, dependency, and external validation
 constraints are acceptable.
 
