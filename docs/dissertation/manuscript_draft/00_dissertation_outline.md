@@ -25,6 +25,29 @@ The project is not disease classification. It does not infer diagnoses, disease 
 
 Introduce the problem of invalid or out-of-distribution inputs in retinal FAF workflows. Frame the contribution as a pre-diagnostic quality-control gatekeeper rather than a diagnostic model.
 
+#### Research Question and Objectives
+
+The primary research question is:
+
+**How can an ID-only unsupervised out-of-distribution detection system be designed and evaluated
+as an upstream quality-control gatekeeper for retinal fundus autofluorescence imaging, so that
+invalid or unexpected inputs can be rejected before they reach a downstream diagnostic model?**
+
+The primary objective is to design and evaluate Stage 1 as an ID-only unsupervised binary
+gatekeeper. The optional Stage 2 extension runs only after rejection and attributes a likely
+reason family or subtype; it does not change the Stage 1 decision.
+
+Research objectives:
+
+1. Construct and audit a manifest-driven ID/OOD benchmark for FAF input-quality control.
+2. Compare unsupervised Stage 1 method families using aggregate and safety-oriented metrics.
+3. Analyse OOD family/subtype behaviour, threshold policies, robustness, and failure cases.
+4. Assess whether PatchCore provides useful localisation-oriented evidence.
+5. Evaluate optional post-rejection reason attribution while preserving the Stage 1 boundary.
+
+The canonical accessible version of the research question, strategy, results, and limitations is
+`docs/dissertation/project_overview.md`.
+
 ### Chapter 2: Background and Related Work
 
 Cover retinal FAF quality-control needs, OOD detection, feature-distance methods, reconstruction baselines, PatchCore-style local anomaly evidence, threshold calibration, and the difference between rejection decisions and post-hoc explanations.
@@ -41,7 +64,7 @@ Describe the optional Stage 2 module separately. Stage 2 is invoked only after S
 
 ### Chapter 5: Experiments and Results
 
-Report the multi-scheme Stage 1 comparison, threshold analysis, robustness analysis, and failure analysis. Mahalanobis is the strongest quantitative Stage 1 model on dataset v1, while PatchCore L3 provides useful heatmap/localization evidence.
+Report the multi-scheme Stage 1 comparison, threshold analysis, robustness analysis, and failure analysis. Mahalanobis is the strongest quantitative Stage 1 model on dataset v1, while PatchCore L3 provides useful heatmap/localisation evidence.
 
 Report the optional Phase 2 method comparison as a separate post-rejection explanation experiment. The selected reason-family method is `linear_svm`; the selected subtype method is the non-oracle `hierarchical_classifier`.
 

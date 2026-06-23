@@ -2,6 +2,17 @@
 
 This directory is the examiner-friendly entry point for the final dissertation delivery bundle.
 
+## Start Here
+
+The project overview provides the research question, strategy, dataset, experiments, main
+results, selected figures, conclusions, and limitations in one location.
+
+- **Supervisor / project overview:** [`project_overview.md`](project_overview.md)
+- **Progress log:** [`progress_log.md`](progress_log.md)
+- **Final evidence index:** [`final_evidence_index.md`](final_evidence_index.md)
+- **Final figure shortlist:** [`final_figure_shortlist.md`](final_figure_shortlist.md)
+- **Reproducibility guide:** [`reproducibility_runbook.md`](reproducibility_runbook.md)
+
 ## Project Summary
 
 The repository implements an unsupervised binary OOD gatekeeper for retinal Fundus Autofluorescence (FAF) image quality control:
