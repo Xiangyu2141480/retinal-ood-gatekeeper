@@ -4,6 +4,17 @@ Unsupervised out-of-distribution detection for quality control in retinal imagin
 
 This repository is a final-year project codebase for building a **pre-diagnostic quality-control gatekeeper** for Fundus Autofluorescence (FAF) images. The detector is trained only on valid/normal FAF images and rejects invalid clinical inputs before they reach a downstream diagnostic model.
 
+## Start Here
+
+The project overview provides the research question, strategy, dataset, experiments, main
+results, selected figures, conclusions, and limitations in one location.
+
+- **Supervisor / project overview:** [`docs/dissertation/project_overview.md`](docs/dissertation/project_overview.md)
+- **Progress log:** [`docs/dissertation/progress_log.md`](docs/dissertation/progress_log.md)
+- **Final evidence index:** [`docs/dissertation/final_evidence_index.md`](docs/dissertation/final_evidence_index.md)
+- **Final figure shortlist:** [`docs/dissertation/final_figure_shortlist.md`](docs/dissertation/final_figure_shortlist.md)
+- **Reproducibility guide:** [`docs/dissertation/reproducibility_runbook.md`](docs/dissertation/reproducibility_runbook.md)
+
 ## Concise project overview
 
 The completed dissertation project is a two-stage research prototype:
