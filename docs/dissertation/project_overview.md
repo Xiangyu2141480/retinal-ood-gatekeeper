@@ -203,13 +203,14 @@ parent-independent generalisation and remains a documented limitation in the
 
 ## 10. Selected Figures
 
-### 1. Stage 1 FAF OOD gatekeeper pipeline
+### 1. Two-stage rejected-input explanation pipeline
 
-![FAF OOD gatekeeper pipeline](../../reports/dissertation_figures/figure_system_pipeline_overview.png)
+![Two-stage rejected-input explanation pipeline](../../reports/dissertation_figures/reason_attribution_method_comparison/figure_two_stage_updated_pipeline.png)
 
-**Purpose:** Defines the upstream binary decision and the ID-only fitting boundary.
-**Conclusion:** The gatekeeper validates input type/quality before downstream analysis; it does
-not diagnose disease.
+**Purpose:** Defines the upstream Stage 1 rejection decision and the optional post-rejection
+Stage 2 explanation layer.
+**Conclusion:** Stage 1 remains ID-only and unsupervised; Stage 2 explains likely rejection
+reasons after rejection and does not diagnose disease.
 **Evidence:** [`final figure index`](../../reports/dissertation_final/final_figure_index.md).
 
 ### 2. Dataset taxonomy
@@ -217,30 +218,31 @@ not diagnose disease.
 ![Dataset v1 taxonomy](../../reports/dissertation_figures/figure_dataset_taxonomy.png)
 
 **Purpose:** Shows the ID/OOD structure and three OOD families.
-**Conclusion:** The benchmark is a controlled taxonomy of modality, artifact, and semantic
+**Conclusion:** The benchmark is a controlled taxonomy of modality, artefact, and semantic
 stress tests.
 **Evidence:** [`dataset v1 documentation`](../datasets/dissertation_dataset_v1.md).
 
-### 3. Stage 1 method comparison
+### 3. Stage 1 overall method comparison
 
-![Stage 1 method comparison](../../reports/dissertation_figures/figure_metrics_by_scheme.png)
+![Stage 1 overall method comparison](../../reports/dissertation_figures/figure_stage1_overall_comparison_combined.png)
 
-**Purpose:** Compares AUROC and AUPRC across all completed Stage 1 configurations.
-**Conclusion:** Mahalanobis feature distance gives the strongest aggregate quantitative result.
+**Purpose:** Combines AUROC/AUPRC with the safety-oriented FPR@95%TPR comparison.
+**Conclusion:** Mahalanobis feature distance gives the strongest aggregate quantitative result
+and the lowest FPR@95%TPR estimate in the final Stage 1 comparison.
 **Evidence:** [`metrics by scheme`](../../reports/dissertation_results/multi_scheme_comparison/metrics_by_scheme.md).
 
-### 4. Stage 1 FPR@95%TPR comparison
+### 4. Stage 1 score distribution and threshold
 
-![Stage 1 FPR at 95 percent TPR](../../reports/dissertation_figures/figure_fpr95_by_scheme.png)
+![Mahalanobis score distribution with threshold](../../reports/dissertation_figures/figure_score_distribution_with_threshold.png)
 
-**Purpose:** Provides a safety-oriented lower-is-better comparison.
-**Conclusion:** Mahalanobis has the lowest FPR@95%TPR estimate, although bootstrap uncertainty
-requires cautious interpretation.
-**Evidence:** [`bootstrap confidence intervals`](../../reports/dissertation_results/robustness_analysis/bootstrap_ci.md).
+**Purpose:** Shows the Mahalanobis score separation and the held-out ID-validation threshold.
+**Conclusion:** Global shifts separate clearly, while sensory artefacts overlap more with ID
+scores and motivate cautious threshold interpretation.
+**Evidence:** [`threshold policy sweep`](../../reports/dissertation_results/robustness_analysis/threshold_policy_sweep.md).
 
 ### 5. PatchCore layer ablation
 
-![PatchCore layer detection metrics](../../reports/dissertation_figures/figure_patchcore_layer_detection_metrics.png)
+![PatchCore layer ablation](../../reports/dissertation_figures/figure_patchcore_layer_ablation_combined.png)
 
 **Purpose:** Tests which PatchCore feature layer is most useful.
 **Conclusion:** L3 is the strongest evaluated PatchCore configuration and the selected
@@ -256,21 +258,23 @@ localisation-oriented model.
 ID-calibrated prototype policy.
 **Evidence:** [`threshold policy sweep`](../../reports/dissertation_results/robustness_analysis/threshold_policy_sweep.md).
 
-### 7. Two-stage rejected-input explanation pipeline
+### 7. Stage 2 reason-attribution method comparison
 
-![Two-stage explanation pipeline](../../reports/dissertation_figures/reason_attribution_method_comparison/figure_two_stage_updated_pipeline.png)
+![Stage 2 method comparison](../../reports/dissertation_figures/reason_attribution_method_comparison/figure_stage2_method_comparison_combined.png)
 
-**Purpose:** Separates the Stage 1 decision from optional Stage 2 explanation.
-**Conclusion:** OOD reason labels do not enter Stage 1 fitting or change its decision.
+**Purpose:** Compares reason-family and reason-subtype attribution methods after rejection.
+**Conclusion:** Linear SVM is selected for family attribution, and the non-oracle hierarchical
+classifier is selected for subtype attribution.
 **Evidence:** [`Stage 2 experiment description`](../experiments/reason_attribution_method_comparison.md).
 
-### 8. Stage 2 family-method comparison
+### 8. Full Stage 1 ROC comparison
 
-![Stage 2 family method comparison](../../reports/dissertation_figures/reason_attribution_method_comparison/figure_reason_method_family_macro_f1.png)
+![Full Stage 1 ROC comparison](../../reports/dissertation_figures/figure_roc_overall_model_comparison.png)
 
-**Purpose:** Compares family-attribution methods using macro-F1.
-**Conclusion:** Linear SVM is the selected family method under the validation selection rule.
-**Evidence:** [`family metrics by method`](../../reports/dissertation_results/reason_attribution_method_comparison/family_metrics_by_method.md).
+**Purpose:** Provides appendix-level curve evidence for all eight Stage 1 configurations.
+**Conclusion:** The ROC curves confirm the overall ranking without replacing the combined main
+comparison figure.
+**Evidence:** [`metrics by scheme`](../../reports/dissertation_results/multi_scheme_comparison/metrics_by_scheme.md).
 
 ### 9. Best family confusion matrix
 

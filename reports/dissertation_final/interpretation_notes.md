@@ -30,6 +30,30 @@ Interpretation: Mahalanobis has the best FPR@95%TPR among the evaluated Stage 1 
 
 Why it matters: Useful for threshold-safety discussion.
 
+## figure_stage1_overall_comparison_combined.png
+
+Interpretation: Mahalanobis is the strongest quantitative Stage 1 gatekeeper across the combined ranking and safety-oriented view.
+
+Why it matters: Recommended main-text Stage 1 comparison figure.
+
+## figure_roc_overall_model_comparison.png
+
+Interpretation: The regenerated ROC figure is appendix evidence for the full final experiment matrix rather than the older AE/PatchCore-only subset.
+
+Why it matters: Use as an appendix ranking-curve check, not as the main Stage 1 result figure.
+
+## figure_pr_overall_model_comparison.png
+
+Interpretation: The PR curves are useful but less visually discriminative because OOD prevalence is high.
+
+Why it matters: Appendix companion for complete ranking-curve reporting.
+
+## figure_per_ood_type_comparison.png
+
+Interpretation: Global modality and semantic shifts are easier than sensory artefacts for most methods, with Mahalanobis strongest overall.
+
+Why it matters: Replaces the older subset-only per-family figure.
+
 ## figure_layer_ablation_patchcore.png
 
 Interpretation: PatchCore L3 is retained as the localization-oriented companion even though Mahalanobis is the strongest quantitative gatekeeper.
@@ -48,9 +72,15 @@ Interpretation: Layer 3 also gives the lowest PatchCore FPR@95%TPR among the eva
 
 Why it matters: Prevents mixing metrics with opposite preference directions in one line plot.
 
+## figure_patchcore_layer_ablation_combined.png
+
+Interpretation: PatchCore L3 is the best localisation-oriented PatchCore configuration, but remains a companion to Mahalanobis rather than the strongest quantitative gatekeeper.
+
+Why it matters: Recommended main-text PatchCore ablation figure.
+
 ## figure_per_ood_subtype_by_scheme.png
 
-Interpretation: The heatmap shows strong performance on global shifts and weaker behavior on subtle local artifacts such as text watermark.
+Interpretation: The heatmap shows strong performance on global shifts and weaker behaviour on subtle local artefacts such as text watermark.
 
 Why it matters: Best appendix figure for detailed failure-mode questions.
 
@@ -59,6 +89,12 @@ Why it matters: Best appendix figure for detailed failure-mode questions.
 Interpretation: The stable comparison copy preserves the same subtype pattern while giving the dissertation a concise figure filename.
 
 Why it matters: Use when a shorter filename is preferred for the main dissertation source.
+
+## figure_score_distribution_with_threshold.png
+
+Interpretation: The figure shows why modality and semantic shifts separate clearly while sensory artefacts overlap more with ID scores.
+
+Why it matters: Optional main-text or appendix support for threshold-policy interpretation.
 
 ## figure_threshold_policy_tradeoff.png
 
@@ -83,6 +119,12 @@ Why it matters: Prevents leakage or disease-classifier misinterpretation.
 Interpretation: `linear_svm` is selected as the final family attribution method by validation macro-F1 and holds strong test macro-F1.
 
 Why it matters: Main Stage 2 quantitative comparison.
+
+## figure_stage2_method_comparison_combined.png
+
+Interpretation: The combined Stage 2 figure presents explanation performance without changing the Stage 1 ID-only OOD gatekeeper boundary.
+
+Why it matters: Recommended main-text Stage 2 comparison figure.
 
 ## figure_reason_method_accuracy_macro_f1.png
 
@@ -119,3 +161,15 @@ Why it matters: Best figure for fine-grained Stage 2 limitations.
 Interpretation: Row percentages make subtype-specific confusion patterns easier to read.
 
 Why it matters: Appendix companion for detailed Stage 2 error analysis.
+
+## figure_heatmaps_sensory_artifact_examples.png
+
+Interpretation: The triptych layout makes it clear which panel is the raw input and which is the heatmap.
+
+Why it matters: Appendix qualitative support for PatchCore as the localisation-oriented companion.
+
+## figure_heatmaps_modality_examples.png
+
+Interpretation: The modality examples provide qualitative contrast to sensory artefacts.
+
+Why it matters: Appendix qualitative support for the localisation discussion.

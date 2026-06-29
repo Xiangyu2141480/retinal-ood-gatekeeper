@@ -4,7 +4,7 @@ Use this table to keep dissertation wording precise and defensible.
 
 | claim | supported? | evidence | limitation | wording to use |
 |---|---|---|---|---|
-| The project implements an upstream FAF OOD gatekeeper. | Yes | `figure_system_pipeline_overview.png`; `README.md` | It does not diagnose disease or grade pathology. | "An upstream unsupervised binary FAF OOD gatekeeper." |
+| The project implements an upstream FAF OOD gatekeeper. | Yes | `figure_two_stage_updated_pipeline.png`; `README.md` | It does not diagnose disease or grade pathology. | "An upstream unsupervised binary FAF OOD gatekeeper with optional post-rejection explanation." |
 | Training is ID-only. | Yes | `datasets/dissertation_v1/manifests/train_id.csv`; `result_provenance.md` | Dataset v1 ID images are synthetic-backed. | "Training uses ID-only FAF rows (`label=0`, `ood_type=id`)." |
 | OOD data is evaluation/stress-test only. | Yes | `result_provenance.md`; `threshold_policy_sweep.csv` | Research thresholds use OOD labels for evaluation analysis only. | "OOD labels are used only for held-out evaluation grouping and stress-test reporting." |
 | Phase 2 reason attribution is optional post-rejection explanation. | Yes | `docs/experiments/reason_attribution_method_comparison.md`; `best_method_summary.md` | It is supervised explanation and must not be described as Stage 1 OOD training. | "Stage 2 is an optional post-rejection reason-attribution layer." |
