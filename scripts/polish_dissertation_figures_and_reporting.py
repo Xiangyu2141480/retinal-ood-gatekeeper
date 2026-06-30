@@ -11,6 +11,8 @@ from pathlib import Path
 import matplotlib
 import numpy as np
 import pandas as pd
+from PIL import Image
+from sklearn.metrics import precision_recall_curve, roc_curve
 
 matplotlib.use("Agg", force=True)
 import matplotlib.pyplot as plt
@@ -23,13 +25,13 @@ from retinal_ood.visualization.dissertation_style import (  # noqa: E402
     COLORS,
     LIGHT_COLORS,
     apply_dissertation_style,
-    save_figure,
 )
 
 FINAL_DIR = ROOT / "reports" / "dissertation_final"
 FIG_DIR = ROOT / "reports" / "dissertation_figures"
 RESULTS_DIR = ROOT / "reports" / "dissertation_results"
 MANIFEST_DIR = ROOT / "datasets" / "dissertation_v1" / "manifests"
+GENERATED_RUNS_DIR = ROOT / "reports" / "generated" / "dissertation_runs"
 
 BLUE = COLORS["blue"]
 GREEN = COLORS["green"]
@@ -72,9 +74,22 @@ SUBTYPE_CODES = {
     "jpeg_compression": "S10",
     "cifar10_natural": "S11",
 }
+SUBTYPE_SHORT_CODES = {
+    "colour_fundus": "CF",
+    "oct_screenshot": "OCT",
+    "text_watermark": "TXT",
+    "rectangle_annotation": "RECT",
+    "arrow_annotation": "ARR",
+    "composite_layout": "COMP",
+    "blur_artifact": "BLUR",
+    "border_crop": "CROP",
+    "gaussian_noise": "NOISE",
+    "jpeg_compression": "JPEG",
+    "cifar10_natural": "NAT",
+}
 FAMILY_LABELS = {
     "modality_shift": "Modality shift",
-    "sensory_artifact": "Sensory artifact",
+    "sensory_artifact": "Sensory artefact",
     "semantic_outlier": "Semantic outlier",
 }
 SELECTED_FIGURES = [
@@ -83,11 +98,21 @@ SELECTED_FIGURES = [
     "reports/dissertation_figures/figure_manifest_split_sizes.png",
     "reports/dissertation_figures/figure_metrics_by_scheme.png",
     "reports/dissertation_figures/figure_fpr95_by_scheme.png",
+    "reports/dissertation_figures/figure_stage1_overall_comparison_combined.png",
+    "reports/dissertation_figures/figure_stage1_overall_comparison_combined.pdf",
+    "reports/dissertation_figures/figure_roc_overall_model_comparison.png",
+    "reports/dissertation_figures/figure_pr_overall_model_comparison.png",
+    "reports/dissertation_figures/figure_per_ood_type_comparison.png",
     "reports/dissertation_figures/figure_layer_ablation_patchcore.png",
     "reports/dissertation_figures/figure_patchcore_layer_detection_metrics.png",
     "reports/dissertation_figures/figure_patchcore_layer_safety_metric.png",
+    "reports/dissertation_figures/figure_patchcore_layer_ablation_combined.png",
+    "reports/dissertation_figures/figure_patchcore_layer_ablation_combined.pdf",
     "reports/dissertation_figures/figure_per_ood_subtype_by_scheme.png",
     "reports/dissertation_figures/figure_per_ood_subtype_comparison.png",
+    "reports/dissertation_figures/figure_score_distribution_with_threshold.png",
+    "reports/dissertation_figures/figure_heatmaps_sensory_artifact_examples.png",
+    "reports/dissertation_figures/figure_heatmaps_modality_examples.png",
     "reports/dissertation_figures/robustness/figure_threshold_policy_tradeoff.png",
     "reports/dissertation_figures/robustness/figure_feature_space_pca_by_ood_type.png",
     "reports/dissertation_figures/reason_attribution_method_comparison/"
@@ -98,6 +123,10 @@ SELECTED_FIGURES = [
     "figure_reason_method_accuracy_macro_f1.png",
     "reports/dissertation_figures/reason_attribution_method_comparison/"
     "figure_reason_method_subtype_macro_f1.png",
+    "reports/dissertation_figures/reason_attribution_method_comparison/"
+    "figure_stage2_method_comparison_combined.png",
+    "reports/dissertation_figures/reason_attribution_method_comparison/"
+    "figure_stage2_method_comparison_combined.pdf",
     "reports/dissertation_figures/reason_attribution_method_comparison/"
     "figure_best_reason_family_confusion_matrix.png",
     "reports/dissertation_figures/reason_attribution_method_comparison/"
@@ -121,6 +150,8 @@ def main() -> None:
     _write_summary_tables(tables)
     _write_polished_figures(tables, dpi=args.dpi)
     _write_caption_and_interpretation_notes()
+    _write_final_figure_docs()
+    _write_figure_revision_report()
     print("Polished dissertation reporting artifacts written.")
 
 
@@ -133,6 +164,9 @@ def _load_tables() -> dict[str, pd.DataFrame]:
         "stage1": _read_csv(RESULTS_DIR / "multi_scheme_comparison" / "metrics_by_scheme.csv"),
         "subtype": _read_csv(
             RESULTS_DIR / "multi_scheme_comparison" / "per_ood_subtype_by_scheme.csv"
+        ),
+        "per_type": _read_csv(
+            RESULTS_DIR / "multi_scheme_comparison" / "per_ood_type_by_scheme.csv"
         ),
         "layer": _read_csv(
             RESULTS_DIR / "primary_balanced_by_subtype_10k" / "layer_ablation_table.csv"
@@ -404,6 +438,31 @@ def _write_polished_figures(tables: dict[str, pd.DataFrame], *, dpi: int) -> Non
     _plot_manifest_split_sizes(FIG_DIR / "figure_manifest_split_sizes.png", dpi=dpi)
     _plot_stage1_method_comparison(tables["stage1"], FIG_DIR / "figure_metrics_by_scheme.png", dpi=dpi)
     _plot_stage1_fpr(tables["stage1"], FIG_DIR / "figure_fpr95_by_scheme.png", dpi=dpi)
+    _plot_stage1_overall_combined(
+        tables["stage1"],
+        FIG_DIR / "figure_stage1_overall_comparison_combined.png",
+        dpi=dpi,
+    )
+    _plot_full_roc_comparison(
+        tables["stage1"],
+        FIG_DIR / "figure_roc_overall_model_comparison.png",
+        dpi=dpi,
+    )
+    _plot_full_pr_comparison(
+        tables["stage1"],
+        FIG_DIR / "figure_pr_overall_model_comparison.png",
+        dpi=dpi,
+    )
+    _plot_per_ood_type_full(
+        tables["per_type"],
+        FIG_DIR / "figure_per_ood_type_comparison.png",
+        dpi=dpi,
+    )
+    _plot_mahalanobis_score_distribution(
+        tables["stage1"],
+        FIG_DIR / "figure_score_distribution_with_threshold.png",
+        dpi=dpi,
+    )
     _plot_patchcore_detection_metrics(
         tables["layer"],
         FIG_DIR / "figure_patchcore_layer_detection_metrics.png",
@@ -412,6 +471,11 @@ def _write_polished_figures(tables: dict[str, pd.DataFrame], *, dpi: int) -> Non
     _plot_patchcore_safety_metric(
         tables["layer"],
         FIG_DIR / "figure_patchcore_layer_safety_metric.png",
+        dpi=dpi,
+    )
+    _plot_patchcore_layer_ablation_combined(
+        tables["layer"],
+        FIG_DIR / "figure_patchcore_layer_ablation_combined.png",
         dpi=dpi,
     )
     shutil.copyfile(
@@ -437,6 +501,16 @@ def _write_polished_figures(tables: dict[str, pd.DataFrame], *, dpi: int) -> Non
         FIG_DIR / "robustness" / "figure_feature_space_pca_by_ood_type.png",
         dpi=dpi,
     )
+    _plot_heatmap_triptych_examples(
+        "sensory_artifact",
+        FIG_DIR / "figure_heatmaps_sensory_artifact_examples.png",
+        dpi=dpi,
+    )
+    _plot_heatmap_triptych_examples(
+        "modality_shift",
+        FIG_DIR / "figure_heatmaps_modality_examples.png",
+        dpi=dpi,
+    )
     reason_dir = FIG_DIR / "reason_attribution_method_comparison"
     _plot_two_stage_pipeline(reason_dir / "figure_two_stage_updated_pipeline.png", dpi=dpi)
     _plot_stage2_method_comparison(
@@ -452,6 +526,12 @@ def _write_polished_figures(tables: dict[str, pd.DataFrame], *, dpi: int) -> Non
     _plot_stage2_subtype_method_comparison(
         tables["stage2_subtype"],
         reason_dir / "figure_reason_method_subtype_macro_f1.png",
+        dpi=dpi,
+    )
+    _plot_stage2_method_comparison_combined(
+        tables["stage2_family"],
+        tables["stage2_subtype"],
+        reason_dir / "figure_stage2_method_comparison_combined.png",
         dpi=dpi,
     )
     _plot_confusion_matrix(
@@ -492,6 +572,566 @@ def _write_polished_figures(tables: dict[str, pd.DataFrame], *, dpi: int) -> Non
     )
 
 
+def _plot_full_roc_comparison(metrics: pd.DataFrame, path: Path, *, dpi: int) -> None:
+    score_tables = _load_stage1_score_tables(metrics)
+    if not score_tables:
+        _plot_unavailable(
+            path,
+            "Overall ROC comparison",
+            "Per-sample score CSV files were not available; rerun the completed Stage 1 evaluations.",
+            dpi=dpi,
+        )
+        return
+    fig, ax = plt.subplots(figsize=(7.4, 5.4))
+    for row, scores in score_tables:
+        y_true = scores["label"].astype(int)
+        y_score = scores["score"].astype(float)
+        fpr, tpr, _ = roc_curve(y_true, y_score)
+        label = f"{_short_method_label(row['scheme_label'])} ({row['auroc']:.3f})"
+        ax.plot(fpr, tpr, linewidth=1.8, label=label)
+    ax.plot([0, 1], [0, 1], linestyle="--", color="#A7AFB8", linewidth=1.0)
+    ax.set_xlim(0.0, 1.0)
+    ax.set_ylim(0.0, 1.02)
+    ax.set_xlabel("False positive rate")
+    ax.set_ylabel("True positive rate")
+    ax.set_title("Overall ROC comparison")
+    ax.text(
+        0.02,
+        0.08,
+        "Balanced-by-subtype benchmark; legend shows AUROC.",
+        transform=ax.transAxes,
+        fontsize=8.2,
+        color=GRAY,
+    )
+    ax.grid(alpha=0.22)
+    ax.legend(frameon=False, fontsize=7.2, loc="lower right")
+    _save(fig, path, dpi=dpi)
+
+
+def _plot_full_pr_comparison(metrics: pd.DataFrame, path: Path, *, dpi: int) -> None:
+    score_tables = _load_stage1_score_tables(metrics)
+    if not score_tables:
+        _plot_unavailable(
+            path,
+            "Overall precision-recall comparison",
+            "Per-sample score CSV files were not available; rerun the completed Stage 1 evaluations.",
+            dpi=dpi,
+        )
+        return
+    fig, ax = plt.subplots(figsize=(7.4, 5.4))
+    for row, scores in score_tables:
+        y_true = scores["label"].astype(int)
+        y_score = scores["score"].astype(float)
+        precision, recall, _ = precision_recall_curve(y_true, y_score)
+        label = f"{_short_method_label(row['scheme_label'])} ({row['auprc']:.3f})"
+        ax.plot(recall, precision, linewidth=1.8, label=label)
+    ax.set_xlim(0.0, 1.0)
+    ax.set_ylim(0.80, 1.01)
+    ax.set_xlabel("Recall")
+    ax.set_ylabel("Precision")
+    ax.set_title("Overall precision-recall comparison")
+    ax.grid(alpha=0.22)
+    ax.legend(frameon=False, fontsize=7.0, loc="lower left", ncols=2)
+    _save(fig, path, dpi=dpi)
+
+
+def _plot_per_ood_type_full(per_type: pd.DataFrame, path: Path, *, dpi: int) -> None:
+    table = per_type[per_type["eval_set"].astype(str).eq("balanced_by_subtype")].copy()
+    table["ood_type"] = pd.Categorical(table["ood_type"], OOD_TYPE_ORDER, ordered=True)
+    table["scheme_label"] = table["scheme_label"].map(_short_method_label)
+    pivot = table.pivot_table(
+        index="scheme_label",
+        columns="ood_type",
+        values="auroc",
+        aggfunc="first",
+        sort=False,
+        observed=False,
+    )
+    method_order = [
+        "Image stats",
+        "Autoencoder",
+        "Global kNN",
+        "Mahalanobis",
+        "PatchCore L2",
+        "PatchCore L3",
+        "PatchCore L4",
+        "PatchCore L2+L3",
+    ]
+    pivot = pivot.reindex([label for label in method_order if label in pivot.index])
+    fig, ax = plt.subplots(figsize=(8.8, 5.2))
+    values = pivot.to_numpy(dtype=float)
+    image = ax.imshow(values, vmin=0.65, vmax=1.0, cmap="Blues")
+    ax.set_title("Per-OOD-family AUROC by Stage 1 method", fontsize=10.8)
+    ax.set_xticks(np.arange(len(pivot.columns)))
+    ax.set_xticklabels(
+        [
+            FAMILY_LABELS.get(str(value), _pretty_label(value)).replace(" ", "\n")
+            for value in pivot.columns
+        ]
+    )
+    ax.set_yticks(np.arange(len(pivot.index)))
+    ax.set_yticklabels(pivot.index)
+    for y in range(values.shape[0]):
+        for x in range(values.shape[1]):
+            color = "white" if values[y, x] > 0.90 else "#1F2933"
+            ax.text(x, y, f"{values[y, x]:.3f}", ha="center", va="center", fontsize=7.5, color=color)
+    plt.colorbar(image, ax=ax, fraction=0.040, pad=0.025, label="AUROC")
+    _save(fig, path, dpi=dpi)
+
+
+def _plot_mahalanobis_score_distribution(metrics: pd.DataFrame, path: Path, *, dpi: int) -> None:
+    row = metrics[metrics["scheme"].astype(str).eq("mahalanobis_feature")]
+    scores_path = _score_csv_for_run("mahalanobis_feature")
+    if row.empty or scores_path is None:
+        _plot_unavailable(
+            path,
+            "Mahalanobis score distribution",
+            "Mahalanobis per-sample scores were not available.",
+            dpi=dpi,
+        )
+        return
+    scores = _read_score_table(scores_path)
+    threshold = float(row.iloc[0]["threshold"])
+    groups = [
+        ("ID synthetic fallback", scores[scores["label"].astype(int).eq(0)], GREEN),
+        ("Modality shift", scores[scores["ood_type"].astype(str).eq("modality_shift")], BLUE),
+        ("Sensory artefact", scores[scores["ood_type"].astype(str).eq("sensory_artifact")], GOLD),
+        ("Semantic outlier", scores[scores["ood_type"].astype(str).eq("semantic_outlier")], RED),
+    ]
+    fig, ax = plt.subplots(figsize=(7.8, 5.1))
+    for label, subset, color in groups:
+        if subset.empty:
+            continue
+        ax.hist(
+            subset["score"].astype(float),
+            bins=32,
+            density=True,
+            alpha=0.46,
+            color=color,
+            edgecolor="white",
+            linewidth=0.4,
+            label=label,
+        )
+    ax.axvline(threshold, color="#1F2933", linestyle="--", linewidth=1.6, label="ID q95 threshold")
+    ax.set_xlabel("Mahalanobis anomaly score")
+    ax.set_ylabel("Density")
+    ax.set_title("Mahalanobis scores with ID-validation threshold")
+    ax.text(
+        0.02,
+        0.95,
+        f"Balanced-by-subtype benchmark; threshold = {threshold:.2f}",
+        transform=ax.transAxes,
+        fontsize=8.2,
+        color=GRAY,
+        va="top",
+    )
+    ax.grid(axis="y", alpha=0.22)
+    ax.legend(frameon=False, fontsize=7.6)
+    _save(fig, path, dpi=dpi)
+
+
+def _plot_heatmap_triptych_examples(ood_type: str, path: Path, *, dpi: int) -> None:
+    rows, manifest_root = _selected_heatmap_rows(ood_type)
+    if rows.empty or manifest_root is None:
+        _plot_unavailable(
+            path,
+            f"{_pretty_label(ood_type).title()} PatchCore examples",
+            "Selected PatchCore heatmap artifacts were not available.",
+            dpi=dpi,
+        )
+        return
+    rows = _representative_heatmap_rows(rows, ood_type=ood_type)
+    n_rows = len(rows)
+    fig, axes = plt.subplots(n_rows, 3, figsize=(8.6, 2.35 * n_rows))
+    if n_rows == 1:
+        axes = np.array([axes])
+    column_titles = ["Input image", "Anomaly map", "Overlay"]
+    for axis, title in zip(axes[0], column_titles):
+        axis.set_title(title, fontsize=9.5)
+    for row_index, (_, row) in enumerate(rows.iterrows()):
+        image_paths = [
+            manifest_root / str(row["original_file"]),
+            manifest_root / str(row["heatmap_file"]),
+            manifest_root / str(row["overlay_file"]),
+        ]
+        for col_index, image_path in enumerate(image_paths):
+            axis = axes[row_index, col_index]
+            axis.imshow(Image.open(image_path).convert("RGB"))
+            axis.set_xticks([])
+            axis.set_yticks([])
+            for spine in axis.spines.values():
+                spine.set_visible(False)
+        label = _short_subtype_label(row.get("ood_subtype", ood_type)).replace("\n", " ")
+        score = float(row.get("score", np.nan))
+        threshold = float(row.get("threshold", np.nan))
+        axes[row_index, 0].set_ylabel(
+            f"{label}\nscore {score:.1f}\nthreshold {threshold:.1f}",
+            fontsize=8.0,
+            rotation=0,
+            ha="right",
+            va="center",
+            labelpad=42,
+        )
+    title = "PatchCore sensory-artefact examples" if ood_type == "sensory_artifact" else "PatchCore modality-shift examples"
+    fig.suptitle(title, y=0.995, fontsize=12)
+    fig.tight_layout(rect=(0.06, 0.00, 1.00, 0.97))
+    _save(fig, path, dpi=dpi)
+
+
+def _load_stage1_score_tables(metrics: pd.DataFrame) -> list[tuple[pd.Series, pd.DataFrame]]:
+    rows: list[tuple[pd.Series, pd.DataFrame]] = []
+    table = metrics.copy().sort_values("auroc", ascending=False)
+    for _, row in table.iterrows():
+        scores_path = _score_csv_for_run(str(row["run_name"]))
+        if scores_path is None:
+            continue
+        scores = _read_score_table(scores_path)
+        if scores.empty:
+            continue
+        rows.append((row, scores))
+    return rows
+
+
+def _score_csv_for_run(run_name: str) -> Path | None:
+    known = {
+        "image_statistics": GENERATED_RUNS_DIR
+        / "multi_scheme_primary"
+        / "runs"
+        / "image_statistics"
+        / "evaluation"
+        / "scores.csv",
+        "global_feature_knn": GENERATED_RUNS_DIR
+        / "multi_scheme_primary"
+        / "runs"
+        / "global_feature_knn"
+        / "evaluation"
+        / "scores.csv",
+        "mahalanobis_feature": GENERATED_RUNS_DIR
+        / "multi_scheme_primary"
+        / "runs"
+        / "mahalanobis_feature"
+        / "evaluation"
+        / "scores.csv",
+        "autoencoder_baseline": GENERATED_RUNS_DIR
+        / "primary_balanced_by_subtype_10k"
+        / "runs"
+        / "autoencoder_baseline"
+        / "evaluation"
+        / "scores.csv",
+        "patchcore_layer2": GENERATED_RUNS_DIR
+        / "primary_balanced_by_subtype_10k"
+        / "runs"
+        / "patchcore_layer2"
+        / "evaluation"
+        / "scores.csv",
+        "patchcore_layer3": GENERATED_RUNS_DIR
+        / "primary_balanced_by_subtype_10k"
+        / "runs"
+        / "patchcore_layer3"
+        / "evaluation"
+        / "scores.csv",
+        "patchcore_layer2_layer3": GENERATED_RUNS_DIR
+        / "primary_balanced_by_subtype_10k"
+        / "runs"
+        / "patchcore_layer2_layer3"
+        / "evaluation"
+        / "scores.csv",
+        "patchcore_layer4": GENERATED_RUNS_DIR
+        / "patchcore_l4_primary"
+        / "runs"
+        / "patchcore_layer4"
+        / "evaluation"
+        / "scores.csv",
+    }
+    path = known.get(run_name)
+    if path and path.exists():
+        return path
+    candidates = sorted(GENERATED_RUNS_DIR.glob(f"*/runs/{run_name}/evaluation/scores.csv"))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda candidate: candidate.stat().st_size)
+
+
+def _read_score_table(path: Path) -> pd.DataFrame:
+    table = pd.read_csv(path)
+    for column in ["label", "score", "threshold"]:
+        if column in table.columns:
+            table[column] = pd.to_numeric(table[column], errors="coerce")
+    return table.dropna(subset=["label", "score"])
+
+
+def _selected_heatmap_rows(ood_type: str) -> tuple[pd.DataFrame, Path | None]:
+    candidates = [
+        GENERATED_RUNS_DIR / "paper_ready_patchcore_heatmaps" / "heatmap_manifest.csv",
+        GENERATED_RUNS_DIR
+        / "primary_balanced_by_subtype_10k"
+        / "runs"
+        / "patchcore_layer3"
+        / "evaluation"
+        / "selected_heatmaps"
+        / "heatmap_manifest.csv",
+    ]
+    for manifest in candidates:
+        if not manifest.exists():
+            continue
+        rows = pd.read_csv(manifest)
+        if "ood_type" in rows.columns:
+            rows = rows[rows["ood_type"].astype(str).eq(ood_type)]
+        else:
+            rows = rows[rows["image_path"].astype(str).str.contains(f"/{ood_type}/", regex=False)]
+            rows["ood_type"] = ood_type
+            rows["ood_subtype"] = rows["image_path"].map(_subtype_from_image_path)
+        if not rows.empty:
+            return rows, manifest.parent
+    return pd.DataFrame(), None
+
+
+def _representative_heatmap_rows(rows: pd.DataFrame, *, ood_type: str) -> pd.DataFrame:
+    preferred = {
+        "sensory_artifact": [
+            "text_watermark",
+            "rectangle_annotation",
+            "arrow_annotation",
+            "border_crop",
+            "blur_artifact",
+        ],
+        "modality_shift": ["colour_fundus", "oct_screenshot"],
+    }
+    table = rows.copy()
+    if "ood_subtype" not in table.columns:
+        table["ood_subtype"] = table["image_path"].map(_subtype_from_image_path)
+    table["_pref"] = table["ood_subtype"].map(
+        {subtype: index for index, subtype in enumerate(preferred.get(ood_type, []))}
+    )
+    table["_pref"] = table["_pref"].fillna(len(preferred.get(ood_type, [])) + 1)
+    table = table.sort_values(["_pref", "rank", "score"], ascending=[True, True, False])
+    selected = table.drop_duplicates("ood_subtype", keep="first")
+    limit = 4 if ood_type == "sensory_artifact" else 2
+    return selected.head(limit)
+
+
+def _subtype_from_image_path(value: object) -> str:
+    parts = Path(str(value).replace("\\", "/")).parts
+    for subtype in SUBTYPE_ORDER:
+        if subtype in parts:
+            return subtype
+    return str(value)
+
+
+def _plot_unavailable(path: Path, title: str, message: str, *, dpi: int) -> None:
+    fig, ax = plt.subplots(figsize=(7.2, 3.8))
+    ax.axis("off")
+    ax.text(0.5, 0.62, title, ha="center", va="center", fontsize=13, weight="semibold")
+    ax.text(0.5, 0.42, message, ha="center", va="center", fontsize=9, color=GRAY, wrap=True)
+    _save(fig, path, dpi=dpi)
+
+
+def _plot_stage1_overall_combined(metrics: pd.DataFrame, path: Path, *, dpi: int) -> None:
+    table = _stage1_method_summary(metrics).sort_values(["auroc", "auprc"], ascending=True)
+    labels = table["scheme_label"].map(_short_method_label)
+    y = np.arange(len(table))
+    fig, (ax_metrics, ax_fpr) = plt.subplots(
+        1,
+        2,
+        figsize=(10.8, 5.6),
+        sharey=True,
+        gridspec_kw={"width_ratios": [1.1, 0.9]},
+    )
+    highlight_edges = [
+        DARK if row["scheme"] == "mahalanobis_feature" else "white" for _, row in table.iterrows()
+    ]
+    ax_metrics.barh(
+        y - 0.16,
+        table["auroc"],
+        height=0.25,
+        label="AUROC",
+        color=BLUE,
+        edgecolor=highlight_edges,
+        linewidth=1.0,
+    )
+    ax_metrics.barh(
+        y + 0.12,
+        table["auprc"],
+        height=0.25,
+        label="AUPRC",
+        color=GREEN,
+        edgecolor=highlight_edges,
+        linewidth=1.0,
+    )
+    ax_metrics.set_yticks(y)
+    ax_metrics.set_yticklabels(labels)
+    ax_metrics.set_xlim(0.0, 1.02)
+    ax_metrics.set_xlabel("Metric value")
+    ax_metrics.set_title("(a) AUROC and AUPRC", fontsize=10.8)
+    ax_metrics.grid(axis="x", alpha=0.22)
+    ax_metrics.legend(frameon=False, loc="lower right", ncols=2)
+
+    fpr_colors = [GREEN if row["scheme"] == "mahalanobis_feature" else "#D7A0A0" for _, row in table.iterrows()]
+    bars = ax_fpr.barh(y, table["fpr_at_95_tpr"], color=fpr_colors, edgecolor="white", linewidth=0.8)
+    ax_fpr.set_xlim(0.0, 1.0)
+    ax_fpr.set_xlabel("FPR@95%TPR")
+    ax_fpr.set_title("(b) Safety-oriented metric", fontsize=10.8)
+    ax_fpr.text(
+        0.98,
+        0.95,
+        "Lower is better",
+        transform=ax_fpr.transAxes,
+        fontsize=8.0,
+        color=GRAY,
+        ha="right",
+    )
+    for bar in bars:
+        ax_fpr.text(
+            min(bar.get_width() + 0.02, 0.96),
+            bar.get_y() + bar.get_height() / 2,
+            f"{bar.get_width():.3f}",
+            ha="left",
+            va="center",
+            fontsize=7.2,
+            color=DARK,
+        )
+    ax_fpr.grid(axis="x", alpha=0.22)
+    fig.suptitle("Stage 1 overall method comparison", fontsize=11.8, weight="semibold")
+    fig.subplots_adjust(wspace=0.10)
+    _save(fig, path, dpi=dpi)
+
+
+def _plot_patchcore_layer_ablation_combined(layer: pd.DataFrame, path: Path, *, dpi: int) -> None:
+    table = layer.copy()
+    table["layer_label"] = table["layers"].astype(str).str.replace("layer", "L", regex=False)
+    x = np.arange(len(table))
+    fig, (ax_metrics, ax_fpr) = plt.subplots(1, 2, figsize=(9.0, 4.4))
+    ax_metrics.plot(x, table["auroc"], marker="o", color=BLUE, label="AUROC", linewidth=2.0)
+    ax_metrics.plot(x, table["auprc"], marker="o", color=GREEN, label="AUPRC", linewidth=2.0)
+    l3_rows = table[table["layer_label"].astype(str).eq("L3")]
+    if not l3_rows.empty:
+        l3_index = int(l3_rows.index[0])
+        ax_metrics.axvline(l3_index, color=GRAY, linestyle="--", linewidth=1.0, alpha=0.7)
+    ax_metrics.set_xticks(x)
+    ax_metrics.set_xticklabels(table["layer_label"])
+    ax_metrics.set_ylim(0.80, 1.005)
+    ax_metrics.set_ylabel("Metric value")
+    ax_metrics.set_title("(a) Detection metrics", fontsize=10.8)
+    ax_metrics.text(
+        0.03,
+        0.06,
+        "Higher is better; axis starts at 0.80",
+        transform=ax_metrics.transAxes,
+        fontsize=7.6,
+        color=GRAY,
+    )
+    ax_metrics.legend(frameon=False, loc="lower right")
+    ax_metrics.grid(axis="y", alpha=0.22)
+
+    best_index = int(table["fpr_at_95_tpr"].astype(float).idxmin())
+    colors = [GREEN if index == best_index else RED for index in table.index]
+    bars = ax_fpr.bar(x, table["fpr_at_95_tpr"], color=colors, edgecolor="white", linewidth=0.8)
+    ax_fpr.set_xticks(x)
+    ax_fpr.set_xticklabels(table["layer_label"])
+    ax_fpr.set_ylim(0.0, 1.0)
+    ax_fpr.set_ylabel("FPR@95%TPR")
+    ax_fpr.set_title("(b) Safety-oriented metric", fontsize=10.8)
+    ax_fpr.text(0.04, 0.93, "Lower is better", transform=ax_fpr.transAxes, fontsize=7.8, color=GRAY)
+    for bar in bars:
+        ax_fpr.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.018,
+            f"{bar.get_height():.3f}",
+            ha="center",
+            va="bottom",
+            fontsize=7.5,
+            color=DARK,
+        )
+    ax_fpr.grid(axis="y", alpha=0.22)
+    fig.suptitle("PatchCore layer ablation", fontsize=11.8, weight="semibold")
+    _save(fig, path, dpi=dpi)
+
+
+def _plot_stage2_method_comparison_combined(
+    family: pd.DataFrame,
+    subtype: pd.DataFrame,
+    path: Path,
+    *,
+    dpi: int,
+) -> None:
+    fig, (ax_family, ax_subtype) = plt.subplots(1, 2, figsize=(11.2, 5.6), sharey=False)
+    _plot_stage2_split_lollipop(
+        ax_family,
+        family,
+        metric="family_macro_f1",
+        selected_method="linear_svm",
+        title="(a) Reason-family macro-F1",
+        xlim=(0.70, 1.01),
+        note="Linear SVM selected\nby validation rule",
+        baseline=0.8947,
+    )
+    _plot_stage2_split_lollipop(
+        ax_subtype,
+        subtype,
+        metric="subtype_macro_f1",
+        selected_method="hierarchical_classifier",
+        title="(b) Reason-subtype macro-F1",
+        xlim=(0.35, 1.01),
+        note="Hierarchy selected;\nnon-oracle routing",
+        baseline=0.6724,
+    )
+    fig.suptitle(
+        "Stage 2 reason-attribution method comparison",
+        fontsize=11.8,
+        weight="semibold",
+    )
+    fig.subplots_adjust(wspace=0.45)
+    _save(fig, path, dpi=dpi)
+
+
+def _plot_stage2_split_lollipop(
+    ax: plt.Axes,
+    metrics: pd.DataFrame,
+    *,
+    metric: str,
+    selected_method: str,
+    title: str,
+    xlim: tuple[float, float],
+    note: str,
+    baseline: float,
+) -> None:
+    table = metrics[metrics["split"].isin(["val", "test"])].copy()
+    pivot = table.pivot_table(index="method", columns="split", values=metric, aggfunc="first")
+    pivot = pivot.sort_values("test", ascending=True)
+    y = np.arange(len(pivot))
+    labels = [_short_reason_method_label(method) for method in pivot.index]
+    for index, method in enumerate(pivot.index):
+        ax.plot(
+            [pivot.loc[method, "val"], pivot.loc[method, "test"]],
+            [index, index],
+            color="#BCC5CF",
+            linewidth=1.2,
+            zorder=1,
+        )
+    ax.scatter(pivot["val"], y, color=BLUE, s=34, label="Validation", zorder=3)
+    colors = [GREEN if method == selected_method else GOLD for method in pivot.index]
+    ax.scatter(pivot["test"], y, color=colors, s=42, label="Test", zorder=4)
+    ax.axvline(baseline, linestyle="--", color=GRAY, linewidth=1.0, label="PR #24 baseline")
+    ax.set_yticks(y)
+    ax.set_yticklabels(labels)
+    ax.set_xlim(*xlim)
+    ax.set_xlabel("Macro-F1")
+    ax.set_title(title, fontsize=10.8)
+    ax.text(0.03, 0.06, f"Axis starts at {xlim[0]:.2f}", transform=ax.transAxes, fontsize=7.5, color=GRAY)
+    selected_y = list(pivot.index).index(selected_method)
+    ax.annotate(
+        note,
+        xy=(pivot.loc[selected_method, "test"], selected_y),
+        xytext=(-76, 28 if selected_y < len(pivot) - 2 else -30),
+        textcoords="offset points",
+        fontsize=7.2,
+        color=DARK,
+        arrowprops={"arrowstyle": "->", "linewidth": 0.8, "color": DARK},
+    )
+    ax.grid(axis="x", alpha=0.22)
+    ax.legend(frameon=False, loc="lower right", fontsize=7.1)
+
+
 def _plot_stage1_method_comparison(metrics: pd.DataFrame, path: Path, *, dpi: int) -> None:
     table = _stage1_method_summary(metrics).sort_values("auroc", ascending=True)
     labels = table["scheme_label"].map(_short_method_label)
@@ -518,8 +1158,8 @@ def _plot_stage1_method_comparison(metrics: pd.DataFrame, path: Path, *, dpi: in
     )
     ax.set_yticks(y)
     ax.set_yticklabels(labels)
-    ax.set_xlim(0.70, 1.02)
-    ax.set_xlabel("Metric value (axis starts at 0.70)")
+    ax.set_xlim(0.0, 1.02)
+    ax.set_xlabel("Metric value")
     ax.set_title("Stage 1 OOD method comparison")
     ax.text(
         0.02,
@@ -667,6 +1307,7 @@ def _plot_threshold_tradeoff(threshold: pd.DataFrame, path: Path, *, dpi: int) -
             subset["ood_recall"],
             s=92,
             color=color,
+            marker="o" if kind == "deployment" else "D",
             edgecolor=DARK,
             linewidth=0.8,
             label=label,
@@ -689,6 +1330,14 @@ def _plot_threshold_tradeoff(threshold: pd.DataFrame, path: Path, *, dpi: int) -
     ax.set_xlabel("ID false rejection rate")
     ax.set_ylabel("OOD recall")
     ax.set_title("Mahalanobis threshold policy trade-off")
+    ax.text(
+        0.02,
+        0.05,
+        "Deployment-style thresholds use held-out ID validation only.",
+        transform=ax.transAxes,
+        fontsize=8.0,
+        color=GRAY,
+    )
     ax.set_xlim(0.0, max(0.24, float(rows["id_false_rejection_rate"].max()) + 0.05))
     ax.set_ylim(0.81, 0.975)
     ax.grid(alpha=0.22)
@@ -726,14 +1375,22 @@ def _plot_feature_pca(pca: pd.DataFrame, path: Path, *, dpi: int) -> None:
                 rows["pc2"],
                 s=16,
                 alpha=0.34 if group == "sensory_artifact" else 0.46,
-                label=_pretty_label(group),
+                label=FAMILY_LABELS.get(group, _pretty_label(group)),
                 color=colors[group],
                 linewidth=0,
                 zorder=2,
             )
     ax.set_xlabel("PC1")
     ax.set_ylabel("PC2")
-    ax.set_title("Mahalanobis feature-space PCA")
+    ax.set_title("Feature-space PCA by OOD family")
+    ax.text(
+        0.02,
+        0.04,
+        "Two-dimensional qualitative projection only.",
+        transform=ax.transAxes,
+        fontsize=8.0,
+        color=GRAY,
+    )
     ax.legend(frameon=False, ncols=2)
     ax.grid(alpha=0.18)
     _save(fig, path, dpi=dpi)
@@ -950,7 +1607,7 @@ def _plot_dataset_taxonomy(path: Path, *, dpi: int) -> None:
             LIGHT_BLUE,
         ),
         (
-            "OOD: sensory artifact",
+            "OOD: sensory artefact",
             "watermark, annotations\nblur, crop, noise, JPEG",
             0.06,
             0.26,
@@ -968,7 +1625,7 @@ def _plot_dataset_taxonomy(path: Path, *, dpi: int) -> None:
     ax.text(
         0.50,
         0.82,
-        "Stage 1 is trained on ID rows only; OOD groups are evaluation stress tests.",
+        "Stage 1 uses ID data only; OOD groups are evaluation stress tests.",
         ha="center",
         va="center",
         fontsize=8.5,
@@ -1007,7 +1664,7 @@ def _plot_manifest_split_sizes(path: Path, *, dpi: int) -> None:
     ax.text(
         0.00,
         -0.16,
-        "Stage 2 rows are OOD explanation splits; synthetic ID fallback is not real clinical FAF validation.",
+        "Manifest rows are task-specific and non-additive. Packaged dataset: 3,100 unique image files.",
         transform=ax.transAxes,
         fontsize=8.2,
         color=GRAY,
@@ -1021,7 +1678,7 @@ def _manifest_counts() -> dict[str, int]:
         "ID val": MANIFEST_DIR / "val_id.csv",
         "ID test fallback": MANIFEST_DIR / "test_id_synthetic_fallback.csv",
         "OOD full": MANIFEST_DIR / "test_ood_full.csv",
-        "OOD balanced": MANIFEST_DIR / "test_ood_balanced_by_subtype.csv",
+        "OOD balanced by subtype": MANIFEST_DIR / "test_ood_balanced_by_subtype.csv",
         "Stage 2 train": MANIFEST_DIR / "reason_train.csv",
         "Stage 2 val": MANIFEST_DIR / "reason_val.csv",
         "Stage 2 test": MANIFEST_DIR / "reason_test.csv",
@@ -1135,7 +1792,7 @@ def _pretty_label(value: object) -> str:
 def _matrix_label(value: object, *, label_mode: str) -> str:
     key = str(value)
     if label_mode == "subtype":
-        return SUBTYPE_CODES.get(key, key)
+        return SUBTYPE_SHORT_CODES.get(key, key)
     if label_mode == "family":
         return FAMILY_LABELS.get(key, _pretty_label(key))
     return _pretty_label(key)
@@ -1170,7 +1827,11 @@ def _threshold_label_offset(label: str) -> tuple[int, int]:
 
 def _save(fig: plt.Figure, path: Path, *, dpi: int) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    save_figure(fig, path, dpi=dpi)
+    fig.tight_layout()
+    fig.savefig(path, dpi=dpi, facecolor="white", bbox_inches="tight", pad_inches=0.08)
+    if path.suffix.lower() == ".png":
+        fig.savefig(path.with_suffix(".pdf"), facecolor="white", bbox_inches="tight", pad_inches=0.08)
+    plt.close(fig)
 
 
 def _write_caption_and_interpretation_notes() -> None:
@@ -1202,7 +1863,9 @@ def _write_caption_and_interpretation_notes() -> None:
         {
             "file": "figure_manifest_split_sizes.png",
             "caption": (
-                "Committed manifest split sizes for ID, OOD evaluation, and Stage 2 reason-attribution rows."
+                "Committed manifest split sizes for ID, OOD evaluation, and Stage 2 reason-attribution rows. "
+                "Bars report task-specific manifest rows and are not additive; the same packaged image can "
+                "appear in multiple manifests, and the underlying packaged collection contains 3100 image files."
             ),
             "interpretation": "The row-count view separates dataset composition from taxonomy.",
             "why": "Keeps the main taxonomy figure uncrowded while preserving manifest evidence.",
@@ -1211,8 +1874,8 @@ def _write_caption_and_interpretation_notes() -> None:
             "file": "figure_metrics_by_scheme.png",
             "caption": (
                 "Stage 1 method comparison using AUROC and AUPRC on the balanced-by-subtype OOD "
-                "evaluation set. AUPRC reflects the OOD-heavy class balance, so the safety-focused "
-                "FPR@95%TPR comparison should also be considered."
+                "evaluation set. The axis spans 0 to 1; AUPRC reflects the OOD-heavy class balance, "
+                "so the safety-focused FPR@95%TPR comparison should also be considered."
             ),
             "interpretation": (
                 "Mahalanobis feature distance is the strongest quantitative gatekeeper in the final "
@@ -1228,6 +1891,55 @@ def _write_caption_and_interpretation_notes() -> None:
             ),
             "interpretation": "Mahalanobis has the best FPR@95%TPR among the evaluated Stage 1 methods.",
             "why": "Useful for threshold-safety discussion.",
+        },
+        {
+            "file": "figure_stage1_overall_comparison_combined.png",
+            "caption": (
+                "Stage 1 overall method comparison on the balanced-by-subtype benchmark. Panel (a) "
+                "reports AUROC and AUPRC; panel (b) reports FPR@95%TPR, where lower values are "
+                "better. AUPRC should be interpreted with the OOD-heavy evaluation prevalence."
+            ),
+            "interpretation": (
+                "Mahalanobis is the strongest quantitative Stage 1 gatekeeper across the combined "
+                "ranking and safety-oriented view."
+            ),
+            "why": "Recommended main-text Stage 1 comparison figure.",
+        },
+        {
+            "file": "figure_roc_overall_model_comparison.png",
+            "caption": (
+                "Overall ROC comparison for the final eight Stage 1 OOD gatekeeper configurations on "
+                "the balanced-by-subtype benchmark. The legend reports AUROC values and includes the "
+                "final best quantitative model, Mahalanobis feature distance."
+            ),
+            "interpretation": (
+                "The regenerated ROC figure is appendix evidence for the full final experiment matrix "
+                "rather than the older AE/PatchCore-only subset."
+            ),
+            "why": "Use as an appendix ranking-curve check, not as the main Stage 1 result figure.",
+        },
+        {
+            "file": "figure_pr_overall_model_comparison.png",
+            "caption": (
+                "Overall precision-recall comparison for the final eight Stage 1 configurations on the "
+                "balanced-by-subtype benchmark. High precision-recall values reflect the OOD-heavy "
+                "evaluation prevalence and should be interpreted with AUROC and threshold-conditioned "
+                "ID rejection."
+            ),
+            "interpretation": "The PR curves are useful but less visually discriminative because OOD prevalence is high.",
+            "why": "Appendix companion for complete ranking-curve reporting.",
+        },
+        {
+            "file": "figure_per_ood_type_comparison.png",
+            "caption": (
+                "Per-OOD-family AUROC heatmap for the final eight Stage 1 configurations on the "
+                "balanced-by-subtype benchmark."
+            ),
+            "interpretation": (
+                "Global modality and semantic shifts are easier than sensory artefacts for most methods, "
+                "with Mahalanobis strongest overall."
+            ),
+            "why": "Replaces the older subset-only per-family figure.",
         },
         {
             "file": "figure_layer_ablation_patchcore.png",
@@ -1254,11 +1966,24 @@ def _write_caption_and_interpretation_notes() -> None:
             "why": "Prevents mixing metrics with opposite preference directions in one line plot.",
         },
         {
+            "file": "figure_patchcore_layer_ablation_combined.png",
+            "caption": (
+                "PatchCore layer ablation showing detection metrics and FPR@95%TPR side by side. "
+                "Layer 3 provides the strongest PatchCore detection and safety-oriented performance; "
+                "combining layers 2 and 3 does not improve over layer 3 alone."
+            ),
+            "interpretation": (
+                "PatchCore L3 is the best localisation-oriented PatchCore configuration, but remains "
+                "a companion to Mahalanobis rather than the strongest quantitative gatekeeper."
+            ),
+            "why": "Recommended main-text PatchCore ablation figure.",
+        },
+        {
             "file": "figure_per_ood_subtype_by_scheme.png",
             "caption": "Subtype-level Stage 1 AUROC heatmap across OOD stress-test categories.",
             "interpretation": (
-                "The heatmap shows strong performance on global shifts and weaker behavior on subtle "
-                "local artifacts such as text watermark."
+                "The heatmap shows strong performance on global shifts and weaker behaviour on subtle "
+                "local artefacts such as text watermark."
             ),
             "why": "Best appendix figure for detailed failure-mode questions.",
         },
@@ -1273,6 +1998,19 @@ def _write_caption_and_interpretation_notes() -> None:
                 "dissertation a concise figure filename."
             ),
             "why": "Use when a shorter filename is preferred for the main dissertation source.",
+        },
+        {
+            "file": "figure_score_distribution_with_threshold.png",
+            "caption": (
+                "Mahalanobis anomaly-score distributions on the balanced-by-subtype benchmark, with the "
+                "95th-percentile ID-validation threshold overlaid. The ID split is synthetic FAF fallback, "
+                "not real clinical FAF validation."
+            ),
+            "interpretation": (
+                "The figure shows why modality and semantic shifts separate clearly while sensory artefacts "
+                "overlap more with ID scores."
+            ),
+            "why": "Optional main-text or appendix support for threshold-policy interpretation.",
         },
         {
             "file": "figure_threshold_policy_tradeoff.png",
@@ -1313,12 +2051,30 @@ def _write_caption_and_interpretation_notes() -> None:
         },
         {
             "file": "figure_reason_method_family_macro_f1.png",
-            "caption": "Stage 2 reason-family method comparison with the PR #24 baseline shown.",
+            "caption": (
+                "Stage 2 reason-family method comparison with the PR #24 baseline shown. Linear SVM was "
+                "selected using validation macro-F1 and the predefined simplicity/tie-breaking rule, rather "
+                "than by selecting the largest test-set score."
+            ),
             "interpretation": (
                 "`linear_svm` is selected as the final family attribution method by validation "
                 "macro-F1 and holds strong test macro-F1."
             ),
             "why": "Main Stage 2 quantitative comparison.",
+        },
+        {
+            "file": "figure_stage2_method_comparison_combined.png",
+            "caption": (
+                "Stage 2 reason-attribution method comparison for rejected inputs. Panel (a) shows "
+                "reason-family macro-F1 and panel (b) shows reason-subtype macro-F1; the selected "
+                "methods are linear SVM for family attribution and the non-oracle hierarchical "
+                "classifier for subtype attribution."
+            ),
+            "interpretation": (
+                "The combined Stage 2 figure presents explanation performance without changing the "
+                "Stage 1 ID-only OOD gatekeeper boundary."
+            ),
+            "why": "Recommended main-text Stage 2 comparison figure.",
         },
         {
             "file": "figure_reason_method_accuracy_macro_f1.png",
@@ -1356,7 +2112,7 @@ def _write_caption_and_interpretation_notes() -> None:
             "file": "figure_best_subtype_confusion_matrix.png",
             "caption": (
                 "Count confusion matrix for Stage 2 subtype attribution using the non-oracle "
-                "`hierarchical_classifier`. Subtype codes are defined in `subtype_label_mapping.md`."
+                "`hierarchical_classifier`. Short labels are defined in `subtype_label_mapping.md`."
             ),
             "interpretation": (
                 "The subtype classifier performs strongly overall but leaves rectangle annotation as "
@@ -1368,10 +2124,29 @@ def _write_caption_and_interpretation_notes() -> None:
             "file": "figure_best_subtype_confusion_matrix_normalized.png",
             "caption": (
                 "Row-normalized confusion matrix for Stage 2 subtype attribution using the non-oracle "
-                "`hierarchical_classifier`. Subtype codes are defined in `subtype_label_mapping.md`."
+                "`hierarchical_classifier`. Short labels are defined in `subtype_label_mapping.md`."
             ),
             "interpretation": "Row percentages make subtype-specific confusion patterns easier to read.",
             "why": "Appendix companion for detailed Stage 2 error analysis.",
+        },
+        {
+            "file": "figure_heatmaps_sensory_artifact_examples.png",
+            "caption": (
+                "Representative PatchCore L3 sensory-artefact examples shown as input image, anomaly map "
+                "and overlay. These maps are qualitative localisation evidence only and should not be "
+                "interpreted as pixel-level clinical ground truth."
+            ),
+            "interpretation": "The triptych layout makes it clear which panel is the raw input and which is the heatmap.",
+            "why": "Appendix qualitative support for PatchCore as the localisation-oriented companion.",
+        },
+        {
+            "file": "figure_heatmaps_modality_examples.png",
+            "caption": (
+                "Representative PatchCore L3 modality-shift examples shown as input image, anomaly map "
+                "and overlay. These examples contrast broader modality differences with local artefact cases."
+            ),
+            "interpretation": "The modality examples provide qualitative contrast to sensory artefacts.",
+            "why": "Appendix qualitative support for the localisation discussion.",
         },
     ]
     lines = ["# Polished Caption Suggestions", ""]
@@ -1405,14 +2180,14 @@ def _write_caption_and_interpretation_notes() -> None:
         "These stable-name figures were regenerated from committed result tables for the final "
         "presentation polish pass. No new models, datasets, or experiments were run.",
         "",
-        "Export decision: this pass commits high-resolution PNG files only. PDF/SVG companions were "
-        "not committed to avoid doubling the figure artifact set; the PNGs are suitable for direct "
-        "Overleaf use and can be regenerated from `scripts/polish_dissertation_figures_and_reporting.py`.",
+        "Export decision: final dissertation figures are committed as high-resolution PNG files "
+        "with matching PDF companions when available. The PDFs are intended for vector-friendly "
+        "Overleaf use, while PNGs remain convenient for quick preview and sharing.",
         "",
         "| figure | dissertation use |",
         "| --- | --- |",
     ]
-    for figure in SELECTED_FIGURES:
+    for figure in _inventory_figure_paths():
         selected_lines.append(f"| `{figure}` | final polished dissertation figure |")
     FINAL_DIR.joinpath("polished_figure_inventory.md").write_text(
         "\n".join(selected_lines) + "\n",
@@ -1420,9 +2195,26 @@ def _write_caption_and_interpretation_notes() -> None:
     )
 
 
+def _inventory_figure_paths() -> list[str]:
+    paths: list[str] = []
+    for figure in SELECTED_FIGURES:
+        if figure not in paths:
+            paths.append(figure)
+        if figure.lower().endswith(".png"):
+            pdf = f"{figure[:-4]}.pdf"
+            if (ROOT / pdf).exists() and pdf not in paths:
+                paths.append(pdf)
+    return paths
+
+
 def _write_subtype_label_mapping() -> None:
     rows = [
-        {"code": code, "ood_subtype": subtype, "display_label": _pretty_label(subtype)}
+        {
+            "code": code,
+            "short_code": SUBTYPE_SHORT_CODES[subtype],
+            "ood_subtype": subtype,
+            "display_label": _pretty_label(subtype),
+        }
         for subtype, code in SUBTYPE_CODES.items()
     ]
     table = pd.DataFrame(rows)
@@ -1431,6 +2223,301 @@ def _write_subtype_label_mapping() -> None:
         _to_markdown(table, title="subtype_label_mapping"),
         encoding="utf-8",
     )
+
+
+def _write_final_figure_docs() -> None:
+    rows = _final_figure_rows()
+    index_lines = [
+        "| path | title | chapter | placement | status | one-line message | polished caption |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        index_lines.append(
+            "| {path} | {title} | {chapter} | {placement} | {status} | {message} | {caption} |".format(
+                **{key: _escape_pipe(str(value)) for key, value in row.items()}
+            )
+        )
+    FINAL_DIR.joinpath("final_figure_index.md").write_text("\n".join(index_lines) + "\n", encoding="utf-8")
+
+    main_rows = [row for row in rows if row["placement"] == "main text"]
+    appendix_rows = [row for row in rows if row["placement"] == "appendix"]
+    lines = [
+        "# Final Thesis Figure Shortlist",
+        "",
+        "Main-text figures are restricted to figures that directly support the dissertation narrative. "
+        "Dense diagnostics, full curves and qualitative examples are placed in the appendix.",
+        "",
+        "## Main Text Figures",
+        "",
+        "| filename | suggested chapter | placement | one-line message | polished caption |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    for row in main_rows:
+        lines.append(
+            "| `{path}` | {chapter} | {placement} | {message} | {caption} |".format(
+                **{key: _escape_pipe(str(value)) for key, value in row.items()}
+            )
+        )
+    lines.extend(
+        [
+            "",
+            "## Appendix Figures",
+            "",
+            "| filename | suggested chapter | placement | one-line message | polished caption |",
+            "| --- | --- | --- | --- | --- |",
+        ]
+    )
+    for row in appendix_rows:
+        lines.append(
+            "| `{path}` | {chapter} | {placement} | {message} | {caption} |".format(
+                **{key: _escape_pipe(str(value)) for key, value in row.items()}
+            )
+        )
+    lines.extend(
+        [
+            "",
+            "## Compatibility / Not Recommended For Main Text",
+            "",
+            "- `reports/dissertation_figures/figure_system_pipeline_overview.png`: retained for old references, but the two-stage pipeline is the canonical system figure.",
+            "- Contact sheets are internal gallery artefacts only and should not appear in the dissertation.",
+        ]
+    )
+    (ROOT / "docs" / "dissertation" / "final_figure_shortlist.md").write_text(
+        "\n".join(lines) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _final_figure_rows() -> list[dict[str, str]]:
+    return [
+        _figure_row(
+            "reports/dissertation_figures/reason_attribution_method_comparison/figure_two_stage_updated_pipeline.png",
+            "Two-stage rejected-input explanation pipeline",
+            "System Requirements and Design",
+            "main text",
+            "must_include",
+            "Canonical system architecture with Stage 1 ID-only rejection and optional Stage 2 explanation.",
+            "Two-stage pipeline showing Stage 1 ID-only OOD rejection followed by optional Stage 2 reason attribution for rejected inputs. Stage 2 labels are likely technical explanations, not clinical diagnoses.",
+        ),
+        _figure_row(
+            "reports/dissertation_figures/figure_dataset_taxonomy.png",
+            "Dataset v1 taxonomy",
+            "Dataset Construction and Validation",
+            "main text",
+            "must_include",
+            "Defines ID FAF rows and the OOD stress-test families without implying Stage 1 label leakage.",
+            "Dataset v1 taxonomy showing ID FAF rows and modality shift, sensory artefact and semantic outlier stress-test families. Stage 2 splits are explanation-only OOD splits; the ID test split uses synthetic FAF fallback.",
+        ),
+        _figure_row(
+            "reports/dissertation_figures/figure_manifest_split_sizes.png",
+            "Manifest split sizes",
+            "Dataset Construction and Validation",
+            "main text",
+            "must_include",
+            "Shows task-specific manifest row counts and warns that rows are non-additive.",
+            "Committed manifest split sizes for ID, OOD evaluation and Stage 2 reason-attribution rows. Bars are task-specific and non-additive; the packaged dataset contains 3,100 unique image files.",
+        ),
+        _figure_row(
+            "reports/dissertation_figures/figure_stage1_overall_comparison_combined.png",
+            "Stage 1 overall method comparison",
+            "Experiments and Results",
+            "main text",
+            "must_include",
+            "Combines AUROC/AUPRC with FPR@95%TPR for the final eight Stage 1 configurations.",
+            "Stage 1 overall comparison on the balanced-by-subtype benchmark. Panel (a) reports AUROC and AUPRC; panel (b) reports FPR@95%TPR, where lower is better. AUPRC is prevalence-sensitive under the OOD-heavy benchmark.",
+        ),
+        _figure_row(
+            "reports/dissertation_figures/figure_patchcore_layer_ablation_combined.png",
+            "PatchCore layer ablation",
+            "Experiments and Results",
+            "main text",
+            "must_include",
+            "Shows PatchCore L3 as the strongest PatchCore configuration.",
+            "PatchCore layer ablation showing detection metrics and FPR@95%TPR. L3 provides the strongest PatchCore detection and safety-oriented performance; combining L2 and L3 does not improve over L3 alone.",
+        ),
+        _figure_row(
+            "reports/dissertation_figures/robustness/figure_threshold_policy_tradeoff.png",
+            "Mahalanobis threshold policy trade-off",
+            "Experiments and Results",
+            "main text",
+            "must_include",
+            "Shows ID false rejection versus OOD recall for deployment-style and research-only thresholds.",
+            "Mahalanobis threshold policy trade-off between ID false rejection and OOD recall. Deployment-style thresholds use held-out ID validation only; the research 95% TPR point is evaluation-only.",
+        ),
+        _figure_row(
+            "reports/dissertation_figures/reason_attribution_method_comparison/figure_stage2_method_comparison_combined.png",
+            "Stage 2 method comparison",
+            "Experiments and Results",
+            "main text",
+            "must_include",
+            "Shows selected family and subtype attribution methods without changing the Stage 1 boundary.",
+            "Stage 2 reason-attribution method comparison. Linear SVM is selected for family attribution by the validation rule and simplicity/tie-breaking; the non-oracle hierarchical classifier is selected for subtype attribution.",
+        ),
+        _figure_row(
+            "reports/dissertation_figures/reason_attribution_method_comparison/figure_best_reason_family_confusion_matrix.png",
+            "Stage 2 family confusion matrix",
+            "Experiments and Results",
+            "main text",
+            "must_include",
+            "Shows family-level attribution errors, all originating from semantic outlier samples.",
+            "Count confusion matrix for Stage 2 reason-family attribution using `linear_svm`. All three family-level errors originate from semantic outlier samples.",
+        ),
+        _figure_row(
+            "reports/dissertation_figures/figure_score_distribution_with_threshold.png",
+            "Mahalanobis score distribution",
+            "Threshold Safety",
+            "main text",
+            "optional",
+            "Shows score separation and the 95th-percentile ID-validation threshold.",
+            "Mahalanobis score distributions for synthetic FAF fallback ID and balanced-by-subtype OOD families, with the 95th-percentile ID-validation threshold overlaid.",
+        ),
+        _figure_row(
+            "reports/dissertation_figures/robustness/figure_feature_space_pca_by_ood_type.png",
+            "Feature-space PCA by OOD family",
+            "Appendix",
+            "appendix",
+            "supporting",
+            "Qualitative two-dimensional projection only.",
+            "Two-dimensional PCA projection of Mahalanobis feature space by OOD family. This is qualitative supporting evidence and should not be interpreted as the full high-dimensional decision geometry.",
+        ),
+        _figure_row(
+            "reports/dissertation_figures/reason_attribution_method_comparison/figure_best_subtype_confusion_matrix.png",
+            "Stage 2 subtype confusion matrix",
+            "Appendix",
+            "appendix",
+            "recommended",
+            "Landscape-friendly subtype confusion matrix with short labels.",
+            "Count confusion matrix for Stage 2 subtype attribution using the non-oracle `hierarchical_classifier`. Short labels are defined in `subtype_label_mapping.md`.",
+        ),
+        _figure_row(
+            "reports/dissertation_figures/figure_roc_overall_model_comparison.png",
+            "Overall ROC comparison",
+            "Appendix",
+            "appendix",
+            "recommended",
+            "Full ROC comparison for all eight Stage 1 configurations.",
+            "Overall ROC comparison for the final eight Stage 1 configurations on the balanced-by-subtype benchmark. Curves are regenerated from per-sample score files.",
+        ),
+        _figure_row(
+            "reports/dissertation_figures/figure_pr_overall_model_comparison.png",
+            "Overall precision-recall comparison",
+            "Appendix",
+            "appendix",
+            "recommended",
+            "Full PR comparison for all eight Stage 1 configurations.",
+            "Overall precision-recall comparison for the final eight Stage 1 configurations. AUPRC is affected by the OOD-heavy evaluation prevalence.",
+        ),
+        _figure_row(
+            "reports/dissertation_figures/figure_per_ood_type_comparison.png",
+            "Per-OOD-family comparison",
+            "Appendix",
+            "appendix",
+            "recommended",
+            "Full family-level AUROC heatmap for all eight Stage 1 configurations.",
+            "Per-OOD-family AUROC heatmap for the final eight Stage 1 configurations on the balanced-by-subtype benchmark.",
+        ),
+        _figure_row(
+            "reports/dissertation_figures/figure_per_ood_subtype_by_scheme.png",
+            "Per-subtype Stage 1 heatmap",
+            "Appendix",
+            "appendix",
+            "recommended",
+            "Detailed subtype-level Stage 1 diagnostic view.",
+            "Subtype-level Stage 1 AUROC heatmap across OOD stress-test categories, showing complementary failure modes across methods.",
+        ),
+        _figure_row(
+            "reports/dissertation_figures/figure_heatmaps_sensory_artifact_examples.png",
+            "Sensory artefact PatchCore examples",
+            "Appendix",
+            "appendix",
+            "optional",
+            "Input/map/overlay examples for representative sensory artefacts.",
+            "Representative PatchCore L3 sensory-artefact examples shown as input image, anomaly map and overlay. These maps are qualitative localisation evidence only.",
+        ),
+        _figure_row(
+            "reports/dissertation_figures/figure_heatmaps_modality_examples.png",
+            "Modality-shift PatchCore examples",
+            "Appendix",
+            "appendix",
+            "optional",
+            "Input/map/overlay examples for colour fundus and OCT screenshots.",
+            "Representative PatchCore L3 modality-shift examples shown as input image, anomaly map and overlay.",
+        ),
+    ]
+
+
+def _figure_row(
+    path: str,
+    title: str,
+    chapter: str,
+    placement: str,
+    status: str,
+    message: str,
+    caption: str,
+) -> dict[str, str]:
+    return {
+        "path": path,
+        "title": title,
+        "chapter": chapter,
+        "placement": placement,
+        "status": status,
+        "message": message,
+        "caption": caption,
+    }
+
+
+def _write_figure_revision_report() -> None:
+    rows = [
+        ("01 Stage 1 pipeline", "removed_from_main_text", "Retained only for compatibility; superseded by the two-stage pipeline.", "reports/dissertation_figures/figure_system_pipeline_overview.png", "generated diagram code"),
+        ("02 Dataset taxonomy", "regenerated", "British-English display text and clearer ID-only/OOD evaluation boundary.", "reports/dissertation_figures/figure_dataset_taxonomy.png", "dataset taxonomy script logic"),
+        ("03 Manifest split sizes", "regenerated", "Added non-additive manifest-row warning and 3,100 packaged image statement.", "reports/dissertation_figures/figure_manifest_split_sizes.png", "datasets/dissertation_v1/manifests/*.csv"),
+        ("04+05 Stage 1 overall comparison", "combined", "New two-panel main-text figure combining AUROC/AUPRC and FPR@95%TPR.", "reports/dissertation_figures/figure_stage1_overall_comparison_combined.png", "reports/dissertation_results/multi_scheme_comparison/metrics_by_scheme.csv"),
+        ("06+07 PatchCore ablation", "combined", "New two-panel layer-ablation figure with detection and safety-oriented metrics.", "reports/dissertation_figures/figure_patchcore_layer_ablation_combined.png", "reports/dissertation_results/primary_balanced_by_subtype_10k/layer_ablation_table.csv"),
+        ("08 Threshold trade-off", "regenerated", "Deployment and research thresholds use different markers; ID-validation-only note added.", "reports/dissertation_figures/robustness/figure_threshold_policy_tradeoff.png", "reports/dissertation_results/robustness_analysis/threshold_policy_sweep.csv"),
+        ("09 PCA", "moved_to_appendix", "Marked as qualitative two-dimensional projection only.", "reports/dissertation_figures/robustness/figure_feature_space_pca_by_ood_type.png", "reports/dissertation_results/robustness_analysis/feature_space_projection.csv"),
+        ("11+12 Stage 2 methods", "combined", "New two-panel validation/test macro-F1 figure preserving validation-rule family selection.", "reports/dissertation_figures/reason_attribution_method_comparison/figure_stage2_method_comparison_combined.png", "family_metrics_by_method.csv; subtype_metrics_by_method.csv"),
+        ("13 Family confusion", "regenerated", "British-English display labels retained with raw counts.", "reports/dissertation_figures/reason_attribution_method_comparison/figure_best_reason_family_confusion_matrix.png", "best_reason_family_confusion_matrix.csv"),
+        ("14 Subtype confusion", "moved_to_appendix", "Short labels CF/OCT/TXT/RECT/etc. replace opaque S1-S11 labels.", "reports/dissertation_figures/reason_attribution_method_comparison/figure_best_subtype_confusion_matrix.png", "best_subtype_confusion_matrix.csv; subtype_label_mapping.md"),
+        ("15/16 ROC/PR", "regenerated", "Full eight-method ROC/PR curves regenerated from per-sample score files.", "reports/dissertation_figures/figure_roc_overall_model_comparison.png; reports/dissertation_figures/figure_pr_overall_model_comparison.png", "reports/generated/dissertation_runs/*/runs/*/evaluation/scores.csv"),
+        ("17 Per-family comparison", "regenerated", "Full eight-method family-level AUROC heatmap regenerated from committed CSV.", "reports/dissertation_figures/figure_per_ood_type_comparison.png", "reports/dissertation_results/multi_scheme_comparison/per_ood_type_by_scheme.csv"),
+        ("18 Per-subtype heatmap", "appendix_retained", "Retained as detailed appendix diagnostic heatmap.", "reports/dissertation_figures/figure_per_ood_subtype_by_scheme.png", "reports/dissertation_results/multi_scheme_comparison/per_ood_subtype_by_scheme.csv"),
+        ("19 Score distribution", "regenerated", "Detector, threshold source and benchmark are now explicit.", "reports/dissertation_figures/figure_score_distribution_with_threshold.png", "Mahalanobis score file; metrics_by_scheme.csv"),
+        ("20/21 PatchCore qualitative heatmaps", "regenerated", "Input/anomaly-map/overlay triptychs use representative subtypes from genuine PatchCore heatmap components.", "reports/dissertation_figures/figure_heatmaps_sensory_artifact_examples.png; reports/dissertation_figures/figure_heatmaps_modality_examples.png", "PatchCore selected heatmap artifacts generated from existing score files and memory bank"),
+    ]
+    lines = [
+        "# Dissertation Figure Revision Report",
+        "",
+        "No models were retrained. No dataset splits or experimental metrics were changed. "
+        "All regenerated figures are derived from existing result tables, manifests or per-sample score files.",
+        "",
+        "## Figure Decisions",
+        "",
+        "| old figure | decision | rationale | new/output path | evidence source |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append("| " + " | ".join(_escape_pipe(value) for value in row) + " |")
+    lines.extend(
+        [
+            "",
+            "## Automatic Consistency Checks",
+            "",
+            "| check | result |",
+            "| --- | --- |",
+            "| Stage 1 expected methods | PASS: eight methods are present in `metrics_by_scheme.csv`. |",
+            "| Full ROC/PR evidence | PASS: per-sample score files were available for all eight final Stage 1 configurations. |",
+            "| Scalar-to-curve fabrication | PASS: ROC/PR curves are regenerated from score files, not inferred from scalar AUROC/AUPRC. |",
+            "| Manifest warning | PASS: `figure_manifest_split_sizes` includes the non-additive row warning. |",
+            "| Subtype confusion labels | PASS: short labels are written to `subtype_label_mapping.md` and used in the confusion matrix. |",
+            "| Stage boundaries | PASS: generated figure text preserves Stage 1 ID-only detection and Stage 2 optional post-rejection attribution. |",
+            "| Clinical overclaim scan | PASS: generated captions state likely technical reasons and synthetic FAF fallback, not clinical diagnoses or validation. |",
+        ]
+    )
+    FINAL_DIR.joinpath("figure_revision_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _escape_pipe(value: str) -> str:
+    return value.replace("|", "\\|")
 
 
 if __name__ == "__main__":

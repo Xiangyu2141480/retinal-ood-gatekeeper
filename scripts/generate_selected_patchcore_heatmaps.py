@@ -56,6 +56,7 @@ def generate_selected_patchcore_heatmaps(
     out_dir: str | Path,
     categories: Sequence[str],
     per_category: int,
+    subtypes: Sequence[str] = (),
     alpha: float = 0.45,
     cmap: str = "magma",
 ) -> Path:
@@ -66,9 +67,14 @@ def generate_selected_patchcore_heatmaps(
     data_cfg = config.get("data", {})
     root_dir = Path(data_cfg.get("root_dir", "data"))
     scores = pd.read_csv(scores_csv)
-    selected = _select_category_rows(scores, categories=categories, per_category=per_category)
+    selected = _select_category_rows(
+        scores,
+        categories=categories,
+        subtypes=subtypes,
+        per_category=per_category,
+    )
     if selected.empty:
-        raise ValueError("No selected OOD rows matched the requested categories")
+        raise ValueError("No selected OOD rows matched the requested categories or subtypes")
 
     transform = build_transforms(
         image_size=int(data_cfg.get("image_size", 224)),
@@ -101,7 +107,8 @@ def generate_selected_patchcore_heatmaps(
     for index, (_, row) in enumerate(selected.iterrows()):
         ood_type = str(row.get("ood_type", "ood"))
         subtype = str(row.get("ood_subtype", ood_type))
-        stem = f"{ood_type}_{index + 1:03d}_{_safe_stem(subtype)}"
+        selection_group = str(row.get("_selection_group", subtype))
+        stem = f"{ood_type}_{index + 1:03d}_{_safe_stem(selection_group)}"
         image_path = root_dir / str(row["image_path"])
         paths = save_heatmap_artifacts(
             image_path,
@@ -124,6 +131,9 @@ def generate_selected_patchcore_heatmaps(
                 "score": score,
                 "prediction": int(score >= threshold),
                 "threshold": threshold,
+                "ood_type": ood_type,
+                "ood_subtype": subtype,
+                "selection_group": selection_group,
                 "original_file": paths["original_file"].relative_to(out_dir).as_posix(),
                 "heatmap_file": paths["heatmap_file"].relative_to(out_dir).as_posix(),
                 "overlay_file": paths["overlay_file"].relative_to(out_dir).as_posix(),
@@ -139,6 +149,7 @@ def _select_category_rows(
     scores: pd.DataFrame,
     *,
     categories: Sequence[str],
+    subtypes: Sequence[str] = (),
     per_category: int,
 ) -> pd.DataFrame:
     required = ["image_path", "label", "ood_type", "score"]
@@ -157,10 +168,20 @@ def _select_category_rows(
         rows = rows.sort_values(["score", "image_path"], ascending=[False, True], kind="stable")
         rows = rows.head(per_category).copy()
         rows["_category_rank"] = np.arange(1, len(rows) + 1)
+        rows["_selection_group"] = category
+        selected.append(rows)
+    if subtypes and "ood_subtype" not in table.columns:
+        raise ValueError("scores.csv missing ood_subtype column required for subtype selection")
+    for subtype in subtypes:
+        rows = table[(table["label"] == 1) & (table["ood_subtype"].astype(str) == subtype)]
+        rows = rows.sort_values(["score", "image_path"], ascending=[False, True], kind="stable")
+        rows = rows.head(per_category).copy()
+        rows["_category_rank"] = np.arange(1, len(rows) + 1)
+        rows["_selection_group"] = subtype
         selected.append(rows)
     if not selected:
         return pd.DataFrame(columns=table.columns)
-    return pd.concat(selected, ignore_index=True)
+    return pd.concat(selected, ignore_index=True).drop_duplicates("image_path", keep="first")
 
 
 def _load_detector(config: dict[str, Any], checkpoint: str | Path) -> PatchCoreDetector:
@@ -204,6 +225,9 @@ def _write_manifest(path: Path, rows: list[dict[str, Any]]) -> None:
         "score",
         "prediction",
         "threshold",
+        "ood_type",
+        "ood_subtype",
+        "selection_group",
         "original_file",
         "heatmap_file",
         "overlay_file",
@@ -221,6 +245,13 @@ def _parse_categories(values: list[str] | None) -> list[str]:
     return categories or ["sensory_artifact", "modality_shift", "semantic_outlier"]
 
 
+def _parse_subtypes(values: list[str] | None) -> list[str]:
+    subtypes: list[str] = []
+    for value in values or []:
+        subtypes.extend(part.strip() for part in value.split(",") if part.strip())
+    return subtypes
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True, help="Resolved PatchCore YAML config")
@@ -228,17 +259,21 @@ def main() -> None:
     parser.add_argument("--scores-csv", required=True, help="Evaluation scores.csv")
     parser.add_argument("--out-dir", required=True, help="Heatmap output directory")
     parser.add_argument("--category", action="append", help="OOD category to select")
+    parser.add_argument("--subtype", action="append", help="OOD subtype to select")
     parser.add_argument("--per-category", type=int, default=3)
     parser.add_argument("--alpha", type=float, default=0.45)
     parser.add_argument("--cmap", default="magma")
     args = parser.parse_args()
+    subtypes = _parse_subtypes(args.subtype)
+    categories = [] if subtypes and not args.category else _parse_categories(args.category)
 
     manifest = generate_selected_patchcore_heatmaps(
         config_path=args.config,
         checkpoint=args.checkpoint,
         scores_csv=args.scores_csv,
         out_dir=args.out_dir,
-        categories=_parse_categories(args.category),
+        categories=categories,
+        subtypes=subtypes,
         per_category=args.per_category,
         alpha=args.alpha,
         cmap=args.cmap,
