@@ -81,6 +81,17 @@ Stage 1 remains an ID-only unsupervised OOD gatekeeper. OOD labels are used only
 
 This repository includes runnable training, evaluation, reporting, and local UI entrypoints. It intentionally does **not** include medical image data, model weights, private manifests, or institutional files.
 
+For a quick repository health check after cloning or pulling updates, run:
+
+```bash
+pytest
+ruff check .
+python scripts/final_repository_audit.py --repo-root .
+```
+
+The audit checks the final dissertation evidence bundle, required documentation, and repository
+hygiene without rerunning the computationally expensive experiments.
+
 ## Recommended thesis contribution
 
 Main question:
