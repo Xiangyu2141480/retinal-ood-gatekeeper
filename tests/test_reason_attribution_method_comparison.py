@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 from PIL import Image
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
@@ -545,8 +546,12 @@ def test_comparison_writes_canonical_outputs_with_consistent_selection(tmp_path:
     selected_subtype_row = subtype_metrics[
         (subtype_metrics["method"] == result.best_subtype_method) & (subtype_metrics["split"] == "val")
     ].iloc[0]
-    assert selected_models["selected_family_validation_value"] == selected_family_row["family_macro_f1"]
-    assert selected_models["selected_subtype_validation_value"] == selected_subtype_row["subtype_macro_f1"]
+    assert selected_models["selected_family_validation_value"] == pytest.approx(
+        selected_family_row["family_macro_f1"]
+    )
+    assert selected_models["selected_subtype_validation_value"] == pytest.approx(
+        selected_subtype_row["subtype_macro_f1"]
+    )
 
     predictions = pd.read_csv(canonical_paths["predictions_test"])
     assert len(predictions) == result.split_sizes["test"]

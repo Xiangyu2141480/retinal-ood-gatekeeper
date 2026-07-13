@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import json
 from pathlib import Path
 from typing import Any
 
@@ -128,9 +129,9 @@ def run_reason_attribution_method_comparison(config: ComparisonConfig) -> Compar
     fitted: dict[str, ReasonMethodModel] = {}
     predictions: dict[tuple[str, str], ReasonPredictions] = {}
 
+    train_split = features["train"]
     for spec in specs:
         try:
-            train_split = features["train"]
             model = fit_reason_method(
                 spec,
                 train_split.matrix(spec.feature_set),
@@ -148,63 +149,65 @@ def run_reason_attribution_method_comparison(config: ComparisonConfig) -> Compar
             continue
         fitted[spec.name] = model
 
-        for split_name in ("val", "test"):
-            split = features[split_name]
-            split_predictions = model.predict(
-                split.matrix(spec.feature_set),
-                unknown_threshold=config.unknown_threshold,
-            )
-            predictions[(spec.name, split_name)] = split_predictions
-            family_records.extend(
-                _family_metric_rows(
-                    spec=spec,
-                    split=split_name,
-                    true_family=split.metadata["ood_type"].astype(str).to_numpy(),
-                    predictions=split_predictions,
-                    unknown_threshold=config.unknown_threshold,
-                    train_seconds=model.train_seconds,
-                )
-            )
-            per_family_records.extend(
-                _per_family_rows(
-                    spec=spec,
-                    split=split_name,
-                    true_family=split.metadata["ood_type"].astype(str).to_numpy(),
-                    predictions=split_predictions,
-                )
-            )
-            threshold = compute_unknown_threshold_curve(
-                true_family=split.metadata["ood_type"].astype(str).to_numpy(),
-                predicted_family=split_predictions.family_argmax,
-                confidence=split_predictions.family_confidence,
-                thresholds=np.asarray(config.thresholds, dtype=float),
-            )
-            threshold["method"] = spec.name
-            threshold["split"] = split_name
-            threshold_records.extend(threshold.to_dict(orient="records"))
-
-            subtype_rows, per_subtype_rows = _subtype_metric_rows(
-                spec=spec,
-                split=split_name,
-                true_subtype=split.metadata["ood_subtype"].astype(str).to_numpy(),
-                predictions=split_predictions,
-                include_subtype=config.include_subtype,
-            )
-            subtype_records.extend(subtype_rows)
-            per_subtype_records.extend(per_subtype_rows)
-
     if not fitted:
         raise RuntimeError("No reason attribution methods were fitted successfully")
+
+    fitted_specs = [spec for spec in specs if spec.name in fitted]
+    for spec in fitted_specs:
+        split_records = _evaluate_method_on_split(
+            spec=spec,
+            model=fitted[spec.name],
+            split_name="val",
+            split_features=features["val"],
+            include_subtype=config.include_subtype,
+            unknown_threshold=config.unknown_threshold,
+            thresholds=np.asarray(config.thresholds, dtype=float),
+        )
+        predictions[(spec.name, "val")] = split_records["predictions"]
+        family_records.extend(split_records["family_records"])
+        subtype_records.extend(split_records["subtype_records"])
+        per_family_records.extend(split_records["per_family_records"])
+        per_subtype_records.extend(split_records["per_subtype_records"])
+        threshold_records.extend(split_records["threshold_records"])
+
+    family_metrics = pd.DataFrame(family_records)
+    subtype_metrics = pd.DataFrame(subtype_records)
+
+    best_family_method = select_best_method(family_metrics, split="val")
+    best_subtype_method = _select_best_subtype_method(subtype_metrics, include_subtype=config.include_subtype)
+    selected_method = best_family_method
+
+    selected_models = _selected_models_payload(
+        config=config,
+        split_sizes=split_sizes,
+        family_metrics=family_metrics,
+        subtype_metrics=subtype_metrics,
+        best_family_method=best_family_method,
+        best_subtype_method=best_subtype_method,
+    )
+
+    for spec in fitted_specs:
+        split_records = _evaluate_method_on_split(
+            spec=spec,
+            model=fitted[spec.name],
+            split_name="test",
+            split_features=features["test"],
+            include_subtype=config.include_subtype,
+            unknown_threshold=config.unknown_threshold,
+            thresholds=np.asarray(config.thresholds, dtype=float),
+        )
+        predictions[(spec.name, "test")] = split_records["predictions"]
+        family_records.extend(split_records["family_records"])
+        subtype_records.extend(split_records["subtype_records"])
+        per_family_records.extend(split_records["per_family_records"])
+        per_subtype_records.extend(split_records["per_subtype_records"])
+        threshold_records.extend(split_records["threshold_records"])
 
     family_metrics = pd.DataFrame(family_records)
     subtype_metrics = pd.DataFrame(subtype_records)
     per_family = pd.DataFrame(per_family_records)
     per_subtype = pd.DataFrame(per_subtype_records)
     threshold_metrics = pd.DataFrame(threshold_records)
-
-    best_family_method = select_best_method(family_metrics, split="val")
-    best_subtype_method = _select_best_subtype_method(subtype_metrics, include_subtype=config.include_subtype)
-    selected_method = best_family_method
 
     confusion_tables = _write_best_confusion_tables(
         out_dir=out_dir,
@@ -213,6 +216,14 @@ def run_reason_attribution_method_comparison(config: ComparisonConfig) -> Compar
         best_family_method=best_family_method,
         best_subtype_method=best_subtype_method,
         include_subtype=config.include_subtype,
+    )
+    selected_predictions = _write_selected_predictions_table(
+        out_dir=out_dir,
+        test_features=features["test"],
+        predictions=predictions,
+        best_family_method=best_family_method,
+        best_subtype_method=best_subtype_method,
+        unknown_threshold=config.unknown_threshold,
     )
     best_summary = _best_summary_table(
         family_metrics=family_metrics,
@@ -244,6 +255,11 @@ def run_reason_attribution_method_comparison(config: ComparisonConfig) -> Compar
         method_subset=config.method_names,
     )
     tables.update(confusion_tables)
+    tables["selected_models"] = _write_selected_models_json(
+        out_dir / "selected_models.json",
+        payload=selected_models,
+    )
+    tables["predictions_test"] = selected_predictions
 
     figures = _write_required_figures(
         figures_dir=figures_dir,
@@ -414,6 +430,57 @@ def _assert_same_manifest_order(left: FeatureTable, right: FeatureTable, *, spli
         raise ValueError(f"Feature extractors produced different row order for {split}")
 
 
+def _evaluate_method_on_split(
+    *,
+    spec: ReasonMethodSpec,
+    model: ReasonMethodModel,
+    split_name: str,
+    split_features: _SplitFeatures,
+    include_subtype: bool,
+    unknown_threshold: float,
+    thresholds: np.ndarray,
+) -> dict[str, Any]:
+    split_predictions = model.predict(
+        split_features.matrix(spec.feature_set),
+        unknown_threshold=unknown_threshold,
+    )
+    threshold = compute_unknown_threshold_curve(
+        true_family=split_features.metadata["ood_type"].astype(str).to_numpy(),
+        predicted_family=split_predictions.family_argmax,
+        confidence=split_predictions.family_confidence,
+        thresholds=thresholds,
+    )
+    threshold["method"] = spec.name
+    threshold["split"] = split_name
+    subtype_rows, per_subtype_rows = _subtype_metric_rows(
+        spec=spec,
+        split=split_name,
+        true_subtype=split_features.metadata["ood_subtype"].astype(str).to_numpy(),
+        predictions=split_predictions,
+        include_subtype=include_subtype,
+    )
+    return {
+        "predictions": split_predictions,
+        "family_records": _family_metric_rows(
+            spec=spec,
+            split=split_name,
+            true_family=split_features.metadata["ood_type"].astype(str).to_numpy(),
+            predictions=split_predictions,
+            unknown_threshold=unknown_threshold,
+            train_seconds=model.train_seconds,
+        ),
+        "per_family_records": _per_family_rows(
+            spec=spec,
+            split=split_name,
+            true_family=split_features.metadata["ood_type"].astype(str).to_numpy(),
+            predictions=split_predictions,
+        ),
+        "subtype_records": subtype_rows,
+        "per_subtype_records": per_subtype_rows,
+        "threshold_records": threshold.to_dict(orient="records"),
+    }
+
+
 def _family_metric_rows(
     *,
     spec: ReasonMethodSpec,
@@ -582,6 +649,45 @@ def _select_best_subtype_method(subtype_metrics: pd.DataFrame, *, include_subtyp
     return select_best_method(ok, split="val", metric_column="subtype_macro_f1")
 
 
+def _selected_models_payload(
+    *,
+    config: ComparisonConfig,
+    split_sizes: dict[str, int],
+    family_metrics: pd.DataFrame,
+    subtype_metrics: pd.DataFrame,
+    best_family_method: str,
+    best_subtype_method: str,
+) -> dict[str, Any]:
+    family_val = _row_for_method(family_metrics, method=best_family_method, split="val")
+    subtype_val = None
+    if best_subtype_method not in {"not_requested", "not_available"}:
+        subtype_val = _row_for_method(subtype_metrics, method=best_subtype_method, split="val")
+    return {
+        "selected_family_method": best_family_method,
+        "selected_subtype_method": best_subtype_method,
+        "selected_family_validation_value": float(family_val["family_macro_f1"]),
+        "selected_subtype_validation_value": (
+            None if subtype_val is None else float(subtype_val["subtype_macro_f1"])
+        ),
+        "selection_metric_family": "family_macro_f1",
+        "selection_metric_subtype": "subtype_macro_f1",
+        "tie_break_rule": "highest validation macro-F1, then lower complexity, then method name",
+        "seed": int(config.seed),
+        "unknown_threshold": float(config.unknown_threshold),
+        "threshold_policy": (
+            f"Fixed unknown threshold {float(config.unknown_threshold):.1f}; "
+            "validation and test curves are descriptive only."
+        ),
+        "manifests": {
+            "train": str(Path(config.train_manifest)),
+            "val": str(Path(config.val_manifest)),
+            "test": str(Path(config.test_manifest)),
+        },
+        "split_sizes": {split: int(size) for split, size in split_sizes.items()},
+        "test_evaluation_started_after_selection": True,
+    }
+
+
 def _write_best_confusion_tables(
     *,
     out_dir: Path,
@@ -606,6 +712,9 @@ def _write_best_confusion_tables(
     family_path = out_dir / "best_reason_family_confusion_matrix.csv"
     family_confusion.to_csv(family_path)
     outputs["best_family_confusion_csv"] = family_path
+    canonical_family_path = out_dir / "family_confusion_matrix.csv"
+    family_confusion.to_csv(canonical_family_path)
+    outputs["family_confusion_csv"] = canonical_family_path
 
     subtype_path = out_dir / "best_subtype_confusion_matrix.csv"
     if include_subtype and best_subtype_method in {method for method, split in predictions if split == "test"}:
@@ -622,7 +731,51 @@ def _write_best_confusion_tables(
             )
             subtype_confusion.to_csv(subtype_path)
             outputs["best_subtype_confusion_csv"] = subtype_path
+            canonical_subtype_path = out_dir / "subtype_confusion_matrix.csv"
+            subtype_confusion.to_csv(canonical_subtype_path)
+            outputs["subtype_confusion_csv"] = canonical_subtype_path
     return outputs
+
+
+def _write_selected_predictions_table(
+    *,
+    out_dir: Path,
+    test_features: _SplitFeatures,
+    predictions: dict[tuple[str, str], ReasonPredictions],
+    best_family_method: str,
+    best_subtype_method: str,
+    unknown_threshold: float,
+) -> Path:
+    family_predictions = predictions[(best_family_method, "test")]
+    subtype_predictions = predictions.get((best_subtype_method, "test"))
+    subtype_values = (
+        subtype_predictions.subtype.astype(str)
+        if subtype_predictions is not None and subtype_predictions.subtype is not None
+        else np.full(len(test_features.metadata), "not_available", dtype=object)
+    )
+    subtype_confidence = (
+        subtype_predictions.subtype_confidence.astype(float)
+        if subtype_predictions is not None and subtype_predictions.subtype_confidence is not None
+        else np.full(len(test_features.metadata), np.nan, dtype=float)
+    )
+    predictions_table = pd.DataFrame(
+        {
+            "image_path": test_features.metadata["image_path"].astype(str).to_numpy(),
+            "true_family": test_features.metadata["ood_type"].astype(str).to_numpy(),
+            "true_subtype": test_features.metadata["ood_subtype"].astype(str).to_numpy(),
+            "predicted_family": family_predictions.family.astype(str),
+            "argmax_family": family_predictions.family_argmax.astype(str),
+            "family_confidence": family_predictions.family_confidence.astype(float),
+            "predicted_subtype": subtype_values,
+            "subtype_confidence": subtype_confidence,
+            "selected_family_method": best_family_method,
+            "selected_subtype_method": best_subtype_method,
+            "unknown_threshold": float(unknown_threshold),
+        }
+    )
+    path = out_dir / "predictions_test.csv"
+    predictions_table.to_csv(path, index=False)
+    return path
 
 
 def _best_summary_table(
@@ -797,6 +950,9 @@ def _write_required_tables(
             out_dir / "best_method_summary.md",
             "Best Method Summary",
         ),
+        "method_comparison": _write_csv(overview, out_dir / "method_comparison.csv"),
+        "family_metrics": _write_csv(family_metrics, out_dir / "family_metrics.csv"),
+        "subtype_metrics": _write_csv(subtype_metrics, out_dir / "subtype_metrics.csv"),
     }
     tables["skipped_methods"] = _write_skipped_methods(
         out_dir / "skipped_methods.md",
@@ -882,6 +1038,18 @@ def _write_table(dataframe: pd.DataFrame, csv_path: Path, md_path: Path, title: 
     dataframe.to_csv(csv_path, index=False)
     md_path.write_text(f"# {title}\n\n{dataframe_to_markdown(dataframe)}\n", encoding="utf-8")
     return csv_path
+
+
+def _write_csv(dataframe: pd.DataFrame, path: Path) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    dataframe.to_csv(path, index=False)
+    return path
+
+
+def _write_selected_models_json(path: Path, *, payload: dict[str, Any]) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return path
 
 
 def _write_skipped_methods(
