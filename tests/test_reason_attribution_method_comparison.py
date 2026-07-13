@@ -18,7 +18,11 @@ from retinal_ood.reason_attribution.comparison import (
     select_best_method,
     snapshot_file_hashes,
 )
-from retinal_ood.reason_attribution.classifier import FAMILY_CLASSES, ReasonPredictions
+from retinal_ood.reason_attribution.classifier import (
+    FAMILY_CLASSES,
+    SUBTYPE_CLASSES,
+    ReasonPredictions,
+)
 from retinal_ood.reason_attribution.methods import (
     HierarchicalReasonClassifier,
     METADATA_EXCLUDED_COLUMNS,
@@ -347,6 +351,38 @@ def test_subtype_can_be_disabled_and_hierarchy_uses_predicted_family(tmp_path: P
     assert predictions.subtype.tolist() == ["colour_fundus", "colour_fundus", "colour_fundus"]
 
 
+def test_subtype_disabled_writes_empty_canonical_confusion_only(tmp_path: Path):
+    train_manifest, val_manifest, test_manifest = _write_reason_manifests(tmp_path)
+    result = run_reason_attribution_method_comparison(
+        ComparisonConfig(
+            train_manifest=train_manifest,
+            val_manifest=val_manifest,
+            test_manifest=test_manifest,
+            root_dir=tmp_path,
+            out_dir=tmp_path / "results",
+            figures_dir=tmp_path / "figures",
+            include_subtype=False,
+            method_names=("image_statistics_logreg",),
+            global_image_size=12,
+            statistics_image_size=16,
+        )
+    )
+
+    canonical_path = tmp_path / "results" / "subtype_confusion_matrix.csv"
+    assert canonical_path.exists()
+    assert result.tables["subtype_confusion_csv"] == canonical_path
+
+    canonical = pd.read_csv(canonical_path, index_col=0)
+    assert canonical.empty
+    assert canonical.columns.tolist() == list(SUBTYPE_CLASSES)
+    assert not (tmp_path / "results" / "best_subtype_confusion_matrix.csv").exists()
+    assert "best_subtype_confusion_csv" not in result.tables
+
+    subtype_metrics = pd.read_csv(tmp_path / "results" / "subtype_metrics.csv")
+    assert set(subtype_metrics["status"]) == {"not_requested"}
+    assert subtype_metrics["subtype_macro_f1"].isna().all()
+
+
 def test_comparison_runs_all_validation_predictions_before_any_test_predictions(
     tmp_path: Path,
     monkeypatch,
@@ -430,6 +466,121 @@ def test_comparison_runs_all_validation_predictions_before_any_test_predictions(
         ("predict", "alpha_method", "val"),
         ("predict", "beta_method", "val"),
     ]
+
+
+def test_predictions_trace_independent_family_and_hierarchical_subtype_winners(
+    tmp_path: Path,
+    monkeypatch,
+):
+    train_manifest, val_manifest, test_manifest = _write_variable_reason_manifests(
+        tmp_path,
+        train_variants=range(1),
+        val_variants=range(1),
+        test_variants=range(1),
+    )
+    split_features = _make_split_features(train_manifest, val_manifest, test_manifest)
+    split_by_matrix_id = {
+        id(split.statistics): split_name
+        for split_name, split in split_features.items()
+    }
+    specs = (
+        ReasonMethodSpec(
+            "family_specialist",
+            "statistics",
+            "logistic_regression",
+            "family specialist",
+            1,
+        ),
+        ReasonMethodSpec(
+            "hierarchical_classifier",
+            "statistics",
+            "hierarchical",
+            "hierarchical subtype specialist",
+            2,
+            is_hierarchical=True,
+        ),
+    )
+
+    class _WinnerModel:
+        def __init__(self, method_name: str) -> None:
+            self.method_name = method_name
+            self.train_seconds = 0.01
+
+        def predict(self, features: np.ndarray, *, unknown_threshold: float) -> ReasonPredictions:
+            del unknown_threshold
+            metadata = split_features[split_by_matrix_id[id(features)]].metadata
+            true_family = metadata["ood_type"].astype(str).to_numpy()
+            true_subtype = metadata["ood_subtype"].astype(str).to_numpy()
+            if self.method_name == "family_specialist":
+                family_argmax = true_family.copy()
+                family_confidence = np.full(len(metadata), 0.95, dtype=float)
+                subtype = np.full(len(metadata), "colour_fundus", dtype=object)
+                subtype_confidence = np.full(len(metadata), 0.55, dtype=float)
+            else:
+                family_argmax = np.full(len(metadata), "sensory_artifact", dtype=object)
+                family_confidence = np.full(len(metadata), 0.61, dtype=float)
+                subtype = true_subtype.copy()
+                subtype_confidence = np.full(len(metadata), 0.87, dtype=float)
+            return ReasonPredictions(
+                family=family_argmax.copy(),
+                family_confidence=family_confidence,
+                family_argmax=family_argmax,
+                subtype=subtype,
+                subtype_confidence=subtype_confidence,
+            )
+
+    def _fake_fit_reason_method(
+        spec: ReasonMethodSpec,
+        train_features: np.ndarray,
+        family_labels: np.ndarray,
+        *,
+        subtype_labels: np.ndarray | None,
+        include_subtype: bool,
+        seed: int,
+    ) -> _WinnerModel:
+        del train_features, family_labels, subtype_labels, include_subtype, seed
+        return _WinnerModel(spec.name)
+
+    monkeypatch.setattr(comparison_module, "_extract_feature_sets", lambda config: split_features)
+    monkeypatch.setattr(comparison_module, "resolve_method_specs", lambda **kwargs: specs)
+    monkeypatch.setattr(comparison_module, "fit_reason_method", _fake_fit_reason_method)
+
+    result = run_reason_attribution_method_comparison(
+        ComparisonConfig(
+            train_manifest=train_manifest,
+            val_manifest=val_manifest,
+            test_manifest=test_manifest,
+            root_dir=tmp_path,
+            out_dir=tmp_path / "results",
+            figures_dir=tmp_path / "figures",
+            include_subtype=True,
+            include_hierarchical=True,
+            method_names=tuple(spec.name for spec in specs),
+        )
+    )
+
+    assert result.best_family_method == "family_specialist"
+    assert result.best_subtype_method == "hierarchical_classifier"
+
+    exported = pd.read_csv(tmp_path / "results" / "predictions_test.csv")
+    assert exported["family_winner_method"].unique().tolist() == ["family_specialist"]
+    assert exported["family_winner_predicted_family"].tolist() == exported["true_family"].tolist()
+    assert exported["family_winner_family_argmax"].tolist() == exported["true_family"].tolist()
+    assert exported["family_winner_family_confidence"].tolist() == pytest.approx(
+        [0.95] * len(exported)
+    )
+    assert exported["subtype_routing_family_method"].unique().tolist() == [
+        "hierarchical_classifier"
+    ]
+    assert set(exported["subtype_routing_family_argmax"]) == {"sensory_artifact"}
+    assert exported["subtype_routing_family_confidence"].tolist() == pytest.approx(
+        [0.61] * len(exported)
+    )
+    assert exported["predicted_subtype"].tolist() == exported["true_subtype"].tolist()
+    assert (
+        exported["family_winner_family_argmax"]
+        != exported["subtype_routing_family_argmax"]
+    ).any()
 
 
 def test_comparison_fits_scalers_and_estimators_on_training_features_only(

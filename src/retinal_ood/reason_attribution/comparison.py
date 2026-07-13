@@ -716,6 +716,10 @@ def _write_best_confusion_tables(
     family_confusion.to_csv(canonical_family_path)
     outputs["family_confusion_csv"] = canonical_family_path
 
+    canonical_subtype_path = out_dir / "subtype_confusion_matrix.csv"
+    pd.DataFrame(columns=list(SUBTYPE_CLASSES)).to_csv(canonical_subtype_path)
+    outputs["subtype_confusion_csv"] = canonical_subtype_path
+
     subtype_path = out_dir / "best_subtype_confusion_matrix.csv"
     if include_subtype and best_subtype_method in {method for method, split in predictions if split == "test"}:
         subtype_predictions = predictions[(best_subtype_method, "test")]
@@ -731,9 +735,7 @@ def _write_best_confusion_tables(
             )
             subtype_confusion.to_csv(subtype_path)
             outputs["best_subtype_confusion_csv"] = subtype_path
-            canonical_subtype_path = out_dir / "subtype_confusion_matrix.csv"
             subtype_confusion.to_csv(canonical_subtype_path)
-            outputs["subtype_confusion_csv"] = canonical_subtype_path
     return outputs
 
 
@@ -758,6 +760,16 @@ def _write_selected_predictions_table(
         if subtype_predictions is not None and subtype_predictions.subtype_confidence is not None
         else np.full(len(test_features.metadata), np.nan, dtype=float)
     )
+    subtype_routing_family_argmax = (
+        subtype_predictions.family_argmax.astype(str)
+        if subtype_predictions is not None
+        else np.full(len(test_features.metadata), "not_available", dtype=object)
+    )
+    subtype_routing_family_confidence = (
+        subtype_predictions.family_confidence.astype(float)
+        if subtype_predictions is not None
+        else np.full(len(test_features.metadata), np.nan, dtype=float)
+    )
     predictions_table = pd.DataFrame(
         {
             "image_path": test_features.metadata["image_path"].astype(str).to_numpy(),
@@ -771,6 +783,13 @@ def _write_selected_predictions_table(
             "selected_family_method": best_family_method,
             "selected_subtype_method": best_subtype_method,
             "unknown_threshold": float(unknown_threshold),
+            "family_winner_predicted_family": family_predictions.family.astype(str),
+            "family_winner_family_argmax": family_predictions.family_argmax.astype(str),
+            "family_winner_family_confidence": family_predictions.family_confidence.astype(float),
+            "family_winner_method": best_family_method,
+            "subtype_routing_family_argmax": subtype_routing_family_argmax,
+            "subtype_routing_family_confidence": subtype_routing_family_confidence,
+            "subtype_routing_family_method": best_subtype_method,
         }
     )
     path = out_dir / "predictions_test.csv"
