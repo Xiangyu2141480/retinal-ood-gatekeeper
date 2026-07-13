@@ -351,6 +351,22 @@ def test_subtype_can_be_disabled_and_hierarchy_uses_predicted_family(tmp_path: P
     assert predictions.subtype.tolist() == ["colour_fundus", "colour_fundus", "colour_fundus"]
 
 
+def test_compatibility_summary_reports_tied_hardest_classes_without_idxmin_bias():
+    per_class = pd.DataFrame(
+        {
+            "family": ["modality_shift", "sensory_artifact", "semantic_outlier"],
+            "f1": [1.0, 1.0, 1.0],
+        }
+    )
+
+    label = comparison_module._hardest_label(per_class, label_column="family")
+
+    assert label == (
+        "no unique hardest; modality_shift, semantic_outlier, sensory_artifact "
+        "tied (F1=1.0000)"
+    )
+
+
 def test_subtype_disabled_writes_empty_canonical_confusion_only(tmp_path: Path):
     train_manifest, val_manifest, test_manifest = _write_reason_manifests(tmp_path)
     result = run_reason_attribution_method_comparison(

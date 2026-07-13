@@ -30,8 +30,8 @@ all zero.
 ## Scope and limitations
 
 This optional supervised Stage 2 module explains a rejected input after Stage 1; it does not
-decide rejection and is not a disease classifier. The grouped protocol removes dependence between
-derived variants of the same synthetic parent within this benchmark, but remains a controlled,
-closed-set, synthetic-backed, non-clinical evaluation. Reason labels are likely rejection
+decide rejection and is not a disease classifier. The grouped protocol eliminates cross-partition parent overlap;
+variants remain dependent within a split because one parent contributes multiple transformed variants there.
+The evaluation remains controlled, closed-set, synthetic-backed, and non-clinical. Reason labels are likely rejection
 explanations, not clinical diagnoses. Parent grouping does not establish patient-independent or
 device-independent clinical generalisation.

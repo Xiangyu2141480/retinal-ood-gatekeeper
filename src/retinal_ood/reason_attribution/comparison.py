@@ -1250,7 +1250,6 @@ def _plot_selection_summary(summary: pd.DataFrame, path: Path) -> Path:
         fontsize=9,
         transform=ax.transAxes,
     )
-    fig.tight_layout()
     fig.savefig(path, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     return path
@@ -1389,8 +1388,14 @@ def _row_for_method(dataframe: pd.DataFrame, *, method: str, split: str) -> pd.S
 def _hardest_label(dataframe: pd.DataFrame, *, label_column: str) -> str:
     if dataframe.empty:
         return "not_available"
-    row = dataframe.sort_values("f1", ascending=True, kind="stable").iloc[0]
-    return f"{row[label_column]} (F1={float(row['f1']):.4f})"
+    minimum = float(dataframe["f1"].min())
+    tied = dataframe[
+        np.isclose(dataframe["f1"].astype(float), minimum, rtol=0.0, atol=1e-12)
+    ]
+    labels = sorted(tied[label_column].astype(str))
+    if len(labels) == 1:
+        return f"{labels[0]} (F1={minimum:.4f})"
+    return f"no unique hardest; {', '.join(labels)} tied (F1={minimum:.4f})"
 
 
 def _metric_lookup(dataframe: pd.DataFrame, method: str, split: str, column: str) -> float:

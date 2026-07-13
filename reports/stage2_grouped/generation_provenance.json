@@ -52,7 +52,7 @@
     "feature_statistics_fusion",
     "hierarchical_classifier"
   ],
-  "runtime_seconds": 82.26890459982678,
+  "runtime_seconds": 82.97843790007755,
   "seed": 42,
   "statistics_image_size": 224,
   "test_manifest": "datasets\\dissertation_v1\\manifests\\reason_grouped_test.csv",

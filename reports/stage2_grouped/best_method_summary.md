@@ -17,7 +17,7 @@
 | best_subtype_validation_macro_f1 | 0.9059 |
 | best_subtype_test_macro_f1 | 0.9176 |
 | subtype_macro_f1_delta_vs_pr24_baseline | 0.2452 |
-| hardest_family | modality_shift (F1=1.0000) |
+| hardest_family | no unique hardest; modality_shift, semantic_outlier, sensory_artifact tied (F1=1.0000) |
 | hardest_subtype | text_watermark (F1=0.7742) |
 | selected_final_method | feature_statistics_fusion |
 | selection_rationale | Selected by validation reason-family macro-F1, with simpler methods preferred on ties. |

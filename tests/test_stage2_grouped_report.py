@@ -235,6 +235,8 @@ def test_report_package_uses_generated_evidence_and_preserves_legacy(tmp_path: P
         "Stage 1 remains unchanged",
         "closed-set",
         "non-clinical",
+        "eliminates cross-partition parent overlap",
+        "variants remain dependent within a split",
     ):
         assert phrase in summary
 
@@ -243,6 +245,11 @@ def test_report_package_uses_generated_evidence_and_preserves_legacy(tmp_path: P
         pdf = figures_dir / f"{figure}.pdf"
         assert png.stat().st_size > 1_000
         assert pdf.stat().st_size > 1_000
+
+    figure_index = (figures_dir / "figure_index.md").read_text(encoding="utf-8")
+    for figure in module.FIGURE_FILENAMES:
+        assert f"{figure}.png" in figure_index
+        assert f"{figure}.pdf" in figure_index
 
 
 def test_hardest_class_reports_a_tie_without_arbitrary_single_winner():
@@ -292,6 +299,8 @@ def test_committed_grouped_outputs_are_complete_and_consistent():
     assert str(selected["selected_subtype_validation_value"]) in summary
     assert "No unique hardest family" in summary
     assert "modality_shift, semantic_outlier, sensory_artifact" in summary
+    assert "eliminates cross-partition parent overlap" in summary
+    assert "variants remain dependent within a split" in summary
 
     comparison = pd.read_csv(out_dir / "legacy_vs_grouped_comparison.csv")
     expected_differences = (
@@ -305,3 +314,8 @@ def test_committed_grouped_outputs_are_complete_and_consistent():
     for figure in module.FIGURE_FILENAMES:
         assert (figures_dir / f"{figure}.png").stat().st_size > 1_000
         assert (figures_dir / f"{figure}.pdf").stat().st_size > 1_000
+
+    figure_index = (figures_dir / "figure_index.md").read_text(encoding="utf-8")
+    for figure in module.FIGURE_FILENAMES:
+        assert f"{figure}.png" in figure_index
+        assert f"{figure}.pdf" in figure_index
