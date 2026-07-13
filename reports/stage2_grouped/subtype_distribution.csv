@@ -1,0 +1,12 @@
+family,subtype,train,validation,test,total
+modality_shift,colour_fundus,120,40,40,200
+modality_shift,oct_screenshot,120,40,40,200
+sensory_artifact,text_watermark,90,30,30,150
+sensory_artifact,rectangle_annotation,90,30,30,150
+sensory_artifact,arrow_annotation,90,30,30,150
+sensory_artifact,composite_layout,90,30,30,150
+sensory_artifact,blur_artifact,90,30,30,150
+sensory_artifact,border_crop,90,30,30,150
+sensory_artifact,gaussian_noise,90,30,30,150
+sensory_artifact,jpeg_compression,90,30,30,150
+semantic_outlier,cifar10_natural,300,100,100,500

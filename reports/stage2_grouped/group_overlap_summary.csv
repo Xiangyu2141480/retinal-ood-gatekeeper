@@ -1,0 +1,5 @@
+overlap_scope,image_path_overlap_count,group_id_overlap_count
+train-val,0,0
+train-test,0,0
+val-test,0,0
+all-three,0,0
