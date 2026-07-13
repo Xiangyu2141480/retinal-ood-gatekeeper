@@ -1,0 +1,17 @@
+method,split,status,feature_set,estimator,complexity,subtype_accuracy,subtype_macro_f1
+image_statistics_logreg,val,ok,statistics,logistic_regression,1,0.8476190476190476,0.8048935531434125
+global_feature_knn,val,ok,global,knn,3,0.6452380952380953,0.5225243230162216
+nearest_centroid,val,ok,global,nearest_centroid,2,0.5761904761904761,0.4679055505432237
+logistic_regression,val,ok,global,logistic_regression,3,0.7666666666666667,0.702838665781483
+linear_svm,val,ok,global,linear_svm,4,0.680952380952381,0.6114081041731265
+random_forest_or_gradient_boosting,val,ok,global,random_forest,5,0.8238095238095238,0.7670975911239754
+feature_statistics_fusion,val,ok,fusion,logistic_regression,4,0.8666666666666667,0.8342526613127679
+hierarchical_classifier,val,ok,fusion,hierarchical_logistic,6,0.9238095238095239,0.9058507271445498
+image_statistics_logreg,test,ok,statistics,logistic_regression,1,0.9095238095238095,0.886125737442477
+global_feature_knn,test,ok,global,knn,3,0.6547619047619048,0.5429550465923244
+nearest_centroid,test,ok,global,nearest_centroid,2,0.5642857142857143,0.4499456087780631
+logistic_regression,test,ok,global,logistic_regression,3,0.7619047619047619,0.693694020540669
+linear_svm,test,ok,global,linear_svm,4,0.6928571428571428,0.6132618557918329
+random_forest_or_gradient_boosting,test,ok,global,random_forest,5,0.830952380952381,0.7696124225299048
+feature_statistics_fusion,test,ok,fusion,logistic_regression,4,0.9047619047619048,0.8777222324185071
+hierarchical_classifier,test,ok,fusion,hierarchical_logistic,6,0.9357142857142857,0.9175854801338393

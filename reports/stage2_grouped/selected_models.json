@@ -1,0 +1,25 @@
+{
+  "image_path_resolution": "Manifest image_path is resolved relative to root_dir: images/... -> data/images/...",
+  "image_root": "data",
+  "manifests": {
+    "test": "datasets\\dissertation_v1\\manifests\\reason_grouped_test.csv",
+    "train": "datasets\\dissertation_v1\\manifests\\reason_grouped_train.csv",
+    "val": "datasets\\dissertation_v1\\manifests\\reason_grouped_val.csv"
+  },
+  "seed": 42,
+  "selected_family_method": "feature_statistics_fusion",
+  "selected_family_validation_value": 0.9924836011792534,
+  "selected_subtype_method": "hierarchical_classifier",
+  "selected_subtype_validation_value": 0.9058507271445498,
+  "selection_metric_family": "family_macro_f1",
+  "selection_metric_subtype": "subtype_macro_f1",
+  "split_sizes": {
+    "test": 420,
+    "train": 1260,
+    "val": 420
+  },
+  "test_evaluation_started_after_selection": true,
+  "threshold_policy": "Fixed unknown threshold 0.5; validation and test curves are descriptive only.",
+  "tie_break_rule": "highest validation macro-F1, then lower complexity, then method name",
+  "unknown_threshold": 0.5
+}

@@ -245,6 +245,26 @@ def test_report_package_uses_generated_evidence_and_preserves_legacy(tmp_path: P
         assert pdf.stat().st_size > 1_000
 
 
+def test_hardest_class_reports_a_tie_without_arbitrary_single_winner():
+    module = _load_report_module()
+    metrics = pd.DataFrame(
+        [
+            {"method": "selected", "split": "test", "family": "alpha", "f1": 1.0},
+            {"method": "selected", "split": "test", "family": "beta", "f1": 1.0},
+            {"method": "other", "split": "test", "family": "gamma", "f1": 0.1},
+        ]
+    )
+
+    label, score = module._hardest_class(
+        metrics,
+        method="selected",
+        class_column="family",
+    )
+
+    assert label == "alpha, beta (tie)"
+    assert score == pytest.approx(1.0)
+
+
 def test_committed_grouped_outputs_are_complete_and_consistent():
     module = _load_report_module()
     root = Path(__file__).resolve().parents[1]
@@ -267,6 +287,20 @@ def test_committed_grouped_outputs_are_complete_and_consistent():
     assert selected["selected_family_method"] == family_winner
     assert selected["selected_subtype_method"] == subtype_winner
     assert selected["test_evaluation_started_after_selection"] is True
+
+    summary = (out_dir / "summary.md").read_text(encoding="utf-8")
+    assert str(selected["selected_subtype_validation_value"]) in summary
+    assert "No unique hardest family" in summary
+    assert "modality_shift, semantic_outlier, sensory_artifact" in summary
+
+    comparison = pd.read_csv(out_dir / "legacy_vs_grouped_comparison.csv")
+    expected_differences = (
+        comparison["parent-grouped split"] - comparison["legacy row-level split"]
+    )
+    assert comparison["difference"].tolist() == pytest.approx(
+        expected_differences.tolist(),
+        abs=1e-15,
+    )
 
     for figure in module.FIGURE_FILENAMES:
         assert (figures_dir / f"{figure}.png").stat().st_size > 1_000
