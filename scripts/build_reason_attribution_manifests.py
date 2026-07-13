@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from retinal_ood.evaluation.report_tables import dataframe_to_markdown
 from retinal_ood.reason_attribution.classifier import FAMILY_CLASSES, SUBTYPE_CLASSES
+from retinal_ood.reason_attribution.grouped_split import parent_grouped_stratified_split
 
 SAFE_COLUMNS = [
     "image_path",
@@ -58,15 +59,19 @@ def build_reason_manifests(
     train_ratio: float = 0.6,
     val_ratio: float = 0.2,
     test_ratio: float = 0.2,
+    split_mode: str = "row",
+    output_prefix: str = "reason",
     reports_dir: str | Path = "reports/dissertation_results/reason_attribution",
 ) -> ReasonManifestResult:
     """Build deterministic OOD-only reason attribution train/val/test manifests."""
     _validate_ratios(train_ratio, val_ratio, test_ratio)
+    _validate_split_mode(split_mode)
     source = pd.read_csv(input_manifest)
     _validate_input_frame(source)
     prepared = _prepare_safe_frame(source)
-    split_frames = _stratified_split(
+    split_frames = _split_reason_frame(
         prepared,
+        split_mode=split_mode,
         seed=seed,
         train_ratio=train_ratio,
         val_ratio=val_ratio,
@@ -76,15 +81,15 @@ def build_reason_manifests(
     output_dir.mkdir(parents=True, exist_ok=True)
     manifest_paths: dict[str, Path] = {}
     for split_name, frame in split_frames.items():
-        path = output_dir / f"reason_{split_name}.csv"
+        path = output_dir / f"{output_prefix}_{split_name}.csv"
         frame.to_csv(path, index=False)
         manifest_paths[split_name] = path
 
     reports_path = Path(reports_dir)
     reports_path.mkdir(parents=True, exist_ok=True)
     audit_table = _build_audit_table(split_frames, source)
-    audit_csv = reports_path / "reason_manifest_audit.csv"
-    audit_md = reports_path / "reason_manifest_audit.md"
+    audit_csv = reports_path / f"{output_prefix}_manifest_audit.csv"
+    audit_md = reports_path / f"{output_prefix}_manifest_audit.md"
     audit_table.to_csv(audit_csv, index=False)
     _write_audit_markdown(audit_md, audit_table)
     return ReasonManifestResult(
@@ -100,6 +105,11 @@ def _validate_ratios(train_ratio: float, val_ratio: float, test_ratio: float) ->
         raise ValueError("train/val/test ratios must be positive")
     if abs(sum(ratios) - 1.0) > 1e-6:
         raise ValueError("train/val/test ratios must sum to 1.0")
+
+
+def _validate_split_mode(split_mode: str) -> None:
+    if split_mode not in {"row", "grouped"}:
+        raise ValueError("split_mode must be 'row' or 'grouped'")
 
 
 def _validate_input_frame(frame: pd.DataFrame) -> None:
@@ -152,6 +162,32 @@ def _prepare_safe_frame(frame: pd.DataFrame) -> pd.DataFrame:
     prepared["ood_type"] = prepared["ood_type"].astype(str).str.strip()
     prepared["ood_subtype"] = prepared["ood_subtype"].astype(str).str.strip()
     return prepared
+
+
+def _split_reason_frame(
+    frame: pd.DataFrame,
+    *,
+    split_mode: str,
+    seed: int,
+    train_ratio: float,
+    val_ratio: float,
+    test_ratio: float,
+) -> dict[str, pd.DataFrame]:
+    if split_mode == "grouped":
+        return parent_grouped_stratified_split(
+            frame,
+            seed=seed,
+            train_ratio=train_ratio,
+            val_ratio=val_ratio,
+            test_ratio=test_ratio,
+        )
+    return _stratified_split(
+        frame,
+        seed=seed,
+        train_ratio=train_ratio,
+        val_ratio=val_ratio,
+        test_ratio=test_ratio,
+    )
 
 
 def _stratified_split(
@@ -270,6 +306,8 @@ def main() -> None:
     parser.add_argument("--train-ratio", type=float, default=0.6)
     parser.add_argument("--val-ratio", type=float, default=0.2)
     parser.add_argument("--test-ratio", type=float, default=0.2)
+    parser.add_argument("--split-mode", choices=("row", "grouped"), default="row")
+    parser.add_argument("--output-prefix", default="reason", help="Prefix for split CSV and audit filenames")
     parser.add_argument(
         "--reports-dir",
         default="reports/dissertation_results/reason_attribution",
@@ -283,6 +321,8 @@ def main() -> None:
         train_ratio=args.train_ratio,
         val_ratio=args.val_ratio,
         test_ratio=args.test_ratio,
+        split_mode=args.split_mode,
+        output_prefix=args.output_prefix,
         reports_dir=args.reports_dir,
     )
     for split_name, path in result.manifest_paths.items():
