@@ -30,9 +30,10 @@ Key manifests:
 - `datasets/dissertation_v1/manifests/test_id_synthetic_fallback.csv`: 150 synthetic fallback ID rows, not real clinical FAF validation.
 - `datasets/dissertation_v1/manifests/test_ood_full.csv`: 2100 OOD rows across modality shift, sensory artifact, and semantic outlier groups.
 - `datasets/dissertation_v1/manifests/test_ood_balanced_by_subtype.csv`: 1650 balanced OOD rows used in the main comparison and robustness package.
-- `datasets/dissertation_v1/manifests/reason_train.csv`: 1260 OOD-only Stage 2 reason-attribution training rows.
-- `datasets/dissertation_v1/manifests/reason_val.csv`: 420 OOD-only Stage 2 validation rows.
-- `datasets/dissertation_v1/manifests/reason_test.csv`: 420 OOD-only Stage 2 test rows.
+- `datasets/dissertation_v1/manifests/reason_grouped_train.csv`: 1260 OOD-only Stage 2 training rows in 630 groups.
+- `datasets/dissertation_v1/manifests/reason_grouped_val.csv`: 420 OOD-only Stage 2 validation rows in 210 groups.
+- `datasets/dissertation_v1/manifests/reason_grouped_test.csv`: 420 OOD-only Stage 2 test rows in 210 groups.
+- `reason_train.csv`, `reason_val.csv`, and `reason_test.csv` are retained only as the legacy row-stratified sensitivity comparison.
 
 ## 3. Model Families Evaluated
 
@@ -73,11 +74,18 @@ Main evidence: `reports/dissertation_results/robustness_analysis/method_disagree
 
 Phase 2 adds optional post-rejection reason attribution. It explains likely rejection causes after Stage 1 has already decided `REJECT`; it does not change the Stage 1 ID-only unsupervised OOD gatekeeper.
 
-The best reason-family method is `linear_svm`, with held-out family test accuracy 0.9881 and family test macro-F1 0.9901. This improves over the PR #24 family baseline by +0.0954 macro-F1. The hardest reason family is `semantic_outlier`.
+The final parent-grouped validation split selects `feature_statistics_fusion` for family attribution
+(validation macro-F1 0.9924836011792534). On the grouped test split it reaches accuracy and
+macro-F1 1.0000. All three family F1 values are 1.0000, so there is no unique hardest family.
 
-The best subtype method is the non-oracle `hierarchical_classifier`, with subtype accuracy 0.9238 and subtype macro-F1 0.9059. This improves over the PR #24 subtype baseline by +0.2335 macro-F1. The hardest subtype is `rectangle_annotation`.
+The final parent-grouped validation split selects the non-oracle `hierarchical_classifier` for
+subtype attribution (validation macro-F1 0.9058507271445498). Grouped test accuracy is 0.9357 and
+macro-F1 is 0.9176. The hardest grouped-test subtype is `text_watermark` (F1 0.7742).
 
-Main evidence: `reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md`, `reports/dissertation_results/reason_attribution_method_comparison/leakage_sanity_check.md`, and `docs/experiments/reason_attribution_method_comparison.md`.
+Main evidence: `reports/stage2_grouped/selected_models.json`,
+`reports/stage2_grouped/family_metrics.csv`, `reports/stage2_grouped/subtype_metrics.csv`,
+`reports/stage2_grouped/group_overlap_summary.csv`, and
+`docs/experiments/reason_attribution_parent_grouped.md`.
 
 ## 9. Feature-Space Interpretation
 
@@ -99,7 +107,10 @@ Main evidence: `reports/dissertation_results/robustness_analysis/runtime_resourc
 - Mahalanobis may perform strongly because many OOD groups introduce global feature shifts.
 - Subtle local artifacts, especially text watermark, remain challenging.
 - Stage 2 reason labels are likely explanations for rejected inputs, not clinical diagnoses.
-- Stage 2 reason-attribution splits are disjoint by image path but have `parent_image_hash` overlap for generated sensory-artifact variants, so high Stage 2 scores may be optimistic for parent-independent generalization.
+- Final Stage 2 grouped splits are disjoint across partitions by image path and group ID, including
+  parent hashes for generated variants. Related variants remain dependent within one split. The
+  remaining limitations are controlled, closed-set, synthetic-backed evaluation and lack of
+  patient/device/site-independent validation, not residual cross-partition parent overlap.
 - Real clinical FAF validation and prospective threshold calibration are future work.
 
 ## 12. Future Work
@@ -110,7 +121,8 @@ Recommended future work:
 - Calibrate thresholds prospectively using validation ID data and operational cost targets.
 - Expand subtle/local artifact coverage.
 - Study hybrid Mahalanobis decision plus PatchCore explanation workflows.
-- Regenerate Stage 2 reason-attribution splits grouped by `parent_image_hash` before claiming parent-independent reason-attribution robustness.
+- Replicate grouped Stage 2 attribution across additional seeds and real independent clinical
+  cohorts before making patient- or device-generalisation claims.
 - Measure runtime/resource behavior on target school-server and deployment hardware.
 
 ## 13. Where To Find Every Figure/Table/Script
@@ -123,8 +135,12 @@ Recommended future work:
 - Full table shortlist: `docs/dissertation/final_table_shortlist.md`
 - Reproducibility runbook: `docs/dissertation/reproducibility_runbook.md`
 - School-server runbook: `docs/dissertation/school_server_runbook.md`
-- Phase 2 reason-attribution findings: `reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md`
-- Phase 2 leakage sanity check: `reports/dissertation_results/reason_attribution_method_comparison/leakage_sanity_check.md`
+- Final Phase 2 grouped findings: `reports/stage2_grouped/summary.md`
+- Phase 2 grouped split audit: `reports/stage2_grouped/split_audit.md`
+- Pre-remediation code/data audit: `docs/dissertation/vincent_feedback_code_audit.md`
+- Pre-remediation overlap evidence: `reports/audit/parent_overlap_summary.csv` and
+  `reports/audit/parent_overlap_examples.csv`
+- Legacy Phase 2 sensitivity evidence: `reports/dissertation_results/reason_attribution_method_comparison/`
 - Final audit: `scripts/final_repository_audit.py`
 - Final bundle builder: `scripts/build_dissertation_delivery_bundle.py`
 
@@ -141,6 +157,6 @@ Recommended future work:
 | Autoencoder is a weaker reconstruction baseline. | `reports/dissertation_results/multi_scheme_comparison/metrics_by_scheme.csv` | `scripts/train_autoencoder.py`; `scripts/evaluate_autoencoder.py` | `figure_stage1_overall_comparison_combined.png` | Demonstrates reconstruction-baseline limitations. |
 | FPR@95%TPR is critical for safety interpretation. | `reports/dissertation_results/robustness_analysis/bootstrap_ci.csv` | `scripts/bootstrap_dissertation_metrics.py` | `figure_bootstrap_ci_fpr95.png` | FPR intervals are wider and overlap. |
 | Results are proof-of-concept due to synthetic ID fallback. | `docs/experiments/dissertation_robustness_key_findings.md` | Final interpretation docs | `claims_and_limitations_matrix.md` | Not real clinical FAF validation or deployment validation. |
-| Phase 2 reason attribution is optional post-rejection explanation. | `docs/experiments/reason_attribution_method_comparison.md`; `reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md` | `scripts/compare_reason_attribution_methods.py` | `figure_two_stage_updated_pipeline.png` | Stage 1 remains ID-only and unsupervised; OOD labels are Stage 2 targets only. |
-| The best Stage 2 family method is `linear_svm`. | `reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md` | `scripts/compare_reason_attribution_methods.py` | `figure_stage2_method_comparison_combined.png` | Test accuracy 0.9881 and macro-F1 0.9901; hardest family is `semantic_outlier`. |
-| The best Stage 2 subtype method is the non-oracle `hierarchical_classifier`. | `reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md`; `leakage_sanity_check.md` | `scripts/compare_reason_attribution_methods.py` | `figure_best_subtype_confusion_matrix.png` | Test accuracy 0.9238 and macro-F1 0.9059; hardest subtype is `rectangle_annotation`. |
+| Phase 2 reason attribution is optional post-rejection explanation. | `docs/experiments/reason_attribution_parent_grouped.md`; `reports/stage2_grouped/selected_models.json` | `scripts/generate_stage2_grouped_report.py` | `figure_grouped_stage2_method_comparison.png` | Stage 1 remains ID-only and unsupervised; OOD labels are Stage 2 targets only. |
+| The grouped Stage 2 family method is `feature_statistics_fusion`. | `reports/stage2_grouped/family_metrics.csv`; `selected_models.json` | `scripts/generate_stage2_grouped_report.py` | `figure_grouped_family_confusion_matrix.png` | Validation macro-F1 0.9925; grouped test accuracy/macro-F1 1.0000/1.0000; no unique hardest family. |
+| The grouped Stage 2 subtype method is the non-oracle `hierarchical_classifier`. | `reports/stage2_grouped/subtype_metrics.csv`; `predictions_test.csv` | `scripts/generate_stage2_grouped_report.py` | `figure_grouped_subtype_confusion_matrix.png` | Validation macro-F1 0.9059; grouped test accuracy/macro-F1 0.9357/0.9176; hardest subtype `text_watermark`. |

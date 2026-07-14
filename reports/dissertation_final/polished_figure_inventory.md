@@ -1,6 +1,6 @@
 # Polished Figure Inventory
 
-These stable-name figures were regenerated from committed result tables for the final presentation polish pass. No new models, datasets, or experiments were run.
+These stable-name figures were regenerated from committed result tables for the final presentation polish pass. The parent-grouped Stage 2 figures listed below are the final attribution evidence. Earlier figures under `reason_attribution_method_comparison/` remain as explicitly labelled row-level sensitivity artifacts; the two-stage pipeline diagram remains architecturally valid. No new Stage 1 models or datasets were introduced.
 
 Export decision: final dissertation figures are committed as high-resolution PNG files with matching PDF companions when available. The PDFs are intended for vector-friendly Overleaf use, while PNGs remain convenient for quick preview and sharing.
 
@@ -62,3 +62,11 @@ Export decision: final dissertation figures are committed as high-resolution PNG
 | `reports/dissertation_figures/reason_attribution_method_comparison/figure_best_subtype_confusion_matrix.pdf` | final polished dissertation figure |
 | `reports/dissertation_figures/reason_attribution_method_comparison/figure_best_subtype_confusion_matrix_normalized.png` | final polished dissertation figure |
 | `reports/dissertation_figures/reason_attribution_method_comparison/figure_best_subtype_confusion_matrix_normalized.pdf` | final polished dissertation figure |
+| `reports/dissertation_figures/stage2_grouped/figure_grouped_family_confusion_matrix.png` | final parent-grouped Stage 2 figure |
+| `reports/dissertation_figures/stage2_grouped/figure_grouped_family_confusion_matrix.pdf` | final parent-grouped Stage 2 figure |
+| `reports/dissertation_figures/stage2_grouped/figure_grouped_subtype_confusion_matrix.png` | final parent-grouped Stage 2 figure |
+| `reports/dissertation_figures/stage2_grouped/figure_grouped_subtype_confusion_matrix.pdf` | final parent-grouped Stage 2 figure |
+| `reports/dissertation_figures/stage2_grouped/figure_grouped_stage2_method_comparison.png` | final parent-grouped Stage 2 figure |
+| `reports/dissertation_figures/stage2_grouped/figure_grouped_stage2_method_comparison.pdf` | final parent-grouped Stage 2 figure |
+| `reports/dissertation_figures/stage2_grouped/figure_legacy_vs_grouped_stage2_metrics.png` | appendix split-sensitivity figure |
+| `reports/dissertation_figures/stage2_grouped/figure_legacy_vs_grouped_stage2_metrics.pdf` | appendix split-sensitivity figure |

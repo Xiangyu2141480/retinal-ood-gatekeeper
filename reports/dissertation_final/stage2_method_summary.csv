@@ -1,9 +1,9 @@
-method,feature_set,estimator,family_accuracy,family_macro_f1,subtype_accuracy,subtype_macro_f1,selected_role
-feature_statistics_fusion,fusion,logistic_regression,0.9952,0.9939,0.8476,0.8134,
-hierarchical_classifier,fusion,hierarchical_logistic,0.9952,0.9939,0.9238,0.9059,Selected subtype method
-random_forest_or_gradient_boosting,global,random_forest,0.9905,0.9911,0.7405,0.6786,
-logistic_regression,global,logistic_regression,0.9929,0.9901,0.6952,0.6303,
-linear_svm,global,linear_svm,0.9881,0.9901,0.6524,0.5894,Selected family method
-global_feature_knn,global,knn,0.9762,0.974,0.569,0.4683,
-image_statistics_logreg,statistics,logistic_regression,0.9476,0.9433,0.9048,0.8802,
-nearest_centroid,global,nearest_centroid,0.781,0.7665,0.5405,0.4137,
+method,feature_set,estimator,validation_family_macro_f1,test_family_accuracy,test_family_macro_f1,validation_subtype_macro_f1,test_subtype_accuracy,test_subtype_macro_f1,selected_role
+image_statistics_logreg,statistics,logistic_regression,0.9120889062026576,0.9452380952380952,0.9405389465860386,0.8048935531434125,0.9095238095238096,0.886125737442477,
+global_feature_knn,global,knn,0.9391478696741854,0.9714285714285714,0.967585746053655,0.5225243230162216,0.6547619047619048,0.5429550465923244,
+nearest_centroid,global,nearest_centroid,0.8109767398758224,0.8023809523809524,0.7734623772608948,0.4679055505432237,0.5642857142857143,0.4499456087780631,
+logistic_regression,global,logistic_regression,0.9600544593083588,1.0,1.0,0.702838665781483,0.7619047619047619,0.693694020540669,
+linear_svm,global,linear_svm,0.9845516802038542,0.9976190476190476,0.996254564749212,0.6114081041731265,0.6928571428571428,0.6132618557918329,
+random_forest_or_gradient_boosting,global,random_forest,0.9924135873502964,0.9976190476190476,0.9979035639413,0.7670975911239754,0.830952380952381,0.7696124225299048,
+feature_statistics_fusion,fusion,logistic_regression,0.9924836011792534,1.0,1.0,0.8342526613127679,0.9047619047619048,0.8777222324185071,Selected family method
+hierarchical_classifier,fusion,hierarchical_logistic,0.9924836011792534,1.0,1.0,0.9058507271445498,0.9357142857142856,0.9175854801338392,Selected subtype method

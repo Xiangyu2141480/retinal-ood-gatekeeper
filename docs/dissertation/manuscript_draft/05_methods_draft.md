@@ -20,7 +20,9 @@ For rejected inputs, Stage 2 predicts a likely rejection reason family, such as 
 
 The Phase 2 comparison uses image-derived features only. Metadata fields such as `image_path`, `filename`, `source`, `source_dataset`, `source_url`, `license_status`, `notes`, `label`, `ood_type`, `ood_subtype`, `synthetic_transform`, and `severity` are not encoded as input features. `ood_type` and `ood_subtype` are targets only.
 
-The selected reason-family method is `linear_svm`. The selected subtype method is the non-oracle `hierarchical_classifier`. At validation and test time, the hierarchical subtype model routes by predicted family, not ground-truth family, so it should not be described as an oracle hierarchy.
+The final evaluation uses `reason_grouped_train.csv`, `reason_grouped_val.csv`, and `reason_grouped_test.csv`. A row's group is its non-empty `parent_image_hash`, otherwise its `image_path`. With seed 42, groups are assigned in a deterministic 60/20/20 split (1260/420/420 rows), giving zero cross-partition image-path and group-ID overlap. Parent grouping does not make variants independent: transformed variants from a common parent remain dependent within the one partition that contains that parent.
+
+All scalers and estimators are fitted on grouped training rows only. Family and subtype methods are selected independently by grouped validation macro-F1, followed by the existing complexity and method-name tie-breaks; test results are computed retrospectively after selection is frozen. This selects `feature_statistics_fusion` for family attribution and the non-oracle `hierarchical_classifier` for subtype attribution. At validation and test time, the hierarchical subtype model routes by its predicted family, not ground-truth family. Stage 1 anomaly scores are not Stage 2 inputs.
 
 ## Scope
 

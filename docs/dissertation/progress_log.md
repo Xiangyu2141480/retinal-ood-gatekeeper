@@ -111,6 +111,9 @@ stored. Future completed tasks should add a short factual entry using the same f
   [`leakage sanity check`](../../reports/dissertation_results/reason_attribution_method_comparison/leakage_sanity_check.md).
 - **Status:** Complete.
 
+Historical note: this entry records the legacy row-stratified comparison. Its files and metrics
+remain available as sensitivity evidence, but Section 12 below is the final Stage 2 protocol.
+
 ## 10. Final Figure and Reporting Polish
 
 - **Purpose:** Make the completed evidence directly usable in a dissertation.
@@ -138,4 +141,24 @@ stored. Future completed tasks should add a short factual entry using the same f
 - **Evidence path:** [`final evidence index`](final_evidence_index.md),
   [`reproducibility runbook`](reproducibility_runbook.md),
   [`final audit`](../../scripts/final_repository_audit.py).
+- **Status:** Complete.
+
+## 12. Parent-Grouped Stage 2 Evaluation
+
+- **Purpose:** Eliminate cross-partition parent/group overlap from the final Stage 2 evaluation
+  while leaving Stage 1 unchanged.
+- **Work completed:** Added deterministic seed-42 grouped manifests (1260/420/420), audited zero
+  pairwise image-path and group-ID overlap, reran all eight Stage 2 candidates, and preserved the
+  legacy row-level package for sensitivity comparison.
+- **Key result:** Grouped validation selects `feature_statistics_fusion` for family attribution
+  (macro-F1 0.9925; grouped test accuracy/macro-F1 1.0000/1.0000) and the non-oracle
+  `hierarchical_classifier` for subtype attribution (validation macro-F1 0.9059; grouped test
+  accuracy 0.9357 and macro-F1 0.9176). No family is uniquely hardest; `text_watermark` is the
+  hardest subtype (F1 0.7742).
+- **Main conclusion:** Parent grouping eliminates cross-partition parent/group overlap, not
+  dependence among variants within one split. Stage 2 remains optional supervised post-rejection
+  explanation on a controlled closed-set synthetic-backed benchmark.
+- **Evidence path:** [`grouped Stage 2 summary`](../../reports/stage2_grouped/summary.md),
+  [`split audit`](../../reports/stage2_grouped/split_audit.md), and
+  [`legacy comparison`](../../reports/stage2_grouped/legacy_vs_grouped_comparison.csv).
 - **Status:** Complete.

@@ -20,19 +20,25 @@ results, selected figures, conclusions, and limitations in one location.
 The completed dissertation project is a two-stage research prototype:
 
 1. **Stage 1:** an ID-only unsupervised FAF OOD gatekeeper that outputs `ACCEPT` or `REJECT`.
-2. **Stage 2:** an optional post-rejection explanation layer that predicts likely rejection reasons.
+2. **Stage 2:** an optional supervised post-rejection explanation layer that predicts likely rejection reasons; it never decides rejection.
 
 The recommended final methods are Mahalanobis feature distance for the Stage 1 quantitative
-gatekeeper, PatchCore L3 for localization-oriented heatmap evidence, `linear_svm` for Stage 2
-reason-family attribution, and `hierarchical_classifier` for Stage 2 subtype attribution.
+gatekeeper, PatchCore L3 for localization-oriented heatmap evidence,
+`feature_statistics_fusion` for Stage 2 reason-family attribution, and the non-oracle
+`hierarchical_classifier` for Stage 2 subtype attribution.
 
 ## Main findings
 
 - Mahalanobis is the best Stage 1 quantitative model: AUROC `0.9724`, AUPRC `0.9975`, FPR@95%TPR `0.2000`.
 - PatchCore L3 is the best Stage 1 localization-oriented companion for heatmaps and failure-case discussion.
-- `linear_svm` is the selected Stage 2 family method: accuracy `0.9881`, macro-F1 `0.9901`.
-- `hierarchical_classifier` is the selected Stage 2 subtype method: accuracy `0.9238`, macro-F1 `0.9059`.
-- The results remain proof-of-concept: synthetic ID fallback, curated OOD stress tests, and Stage 2 parent-image-hash overlap are documented limitations.
+- On the final parent-grouped Stage 2 test split, `feature_statistics_fusion` is the
+  validation-selected family method: accuracy `1.0000`, macro-F1 `1.0000`.
+- The non-oracle `hierarchical_classifier` is the validation-selected subtype method: accuracy
+  `0.9357`, macro-F1 `0.9176`; `text_watermark` is the hardest subtype (F1 `0.7742`).
+- The final Stage 2 train/validation/test manifests have zero cross-partition image-path and
+  group-ID overlap. Variants from a common parent remain dependent within one split. The results
+  remain proof-of-concept because the benchmark is controlled, closed-set, and synthetic-backed;
+  parent grouping is not patient-independent clinical validation.
 
 ## Repository map
 
@@ -41,10 +47,12 @@ reason-family attribution, and `hierarchical_classifier` for Stage 2 subtype att
 | `datasets/dissertation_v1/` | committed dissertation dataset package, manifests, checksums, and metadata |
 | `reports/dissertation_results/multi_scheme_comparison/` | Stage 1 method comparison tables |
 | `reports/dissertation_results/robustness_analysis/` | robustness, threshold, failure-analysis, and provenance tables |
-| `reports/dissertation_results/reason_attribution_method_comparison/` | Stage 2 reason-attribution method comparison tables |
+| `reports/dissertation_results/reason_attribution_method_comparison/` | legacy row-level Stage 2 sensitivity tables |
+| `reports/stage2_grouped/` | final parent-grouped Stage 2 split audit, metrics, predictions, and legacy sensitivity comparison |
 | `reports/dissertation_figures/` | polished Stage 1, taxonomy, pipeline, and method figures |
 | `reports/dissertation_figures/robustness/` | robustness, threshold, feature-space, and failure-analysis figures |
-| `reports/dissertation_figures/reason_attribution_method_comparison/` | polished Stage 2 method and confusion-matrix figures |
+| `reports/dissertation_figures/reason_attribution_method_comparison/` | legacy row-level Stage 2 figures plus the two-stage pipeline |
+| `reports/dissertation_figures/stage2_grouped/` | final grouped Stage 2 method, confusion, and legacy-comparison figures |
 | `reports/dissertation_final/` | final summary tables, caption suggestions, and interpretation notes |
 | `docs/dissertation/` | final evidence index, figure/table shortlist, runbooks, and manuscript draft blocks |
 
@@ -76,6 +84,21 @@ The project builds a Python/PyTorch pipeline that:
 8. Optionally explains rejected inputs with a post-rejection Stage 2 reason-attribution module.
 
 Stage 1 remains an ID-only unsupervised OOD gatekeeper. OOD labels are used only for held-out evaluation and, in the optional Stage 2 module, as explanation targets after rejection. The Stage 2 reason labels are likely explanations such as modality shift or sensory artifact, not disease diagnoses.
+
+The final Stage 2 evaluation uses `reason_grouped_train.csv`, `reason_grouped_val.csv`, and
+`reason_grouped_test.csv`. The older `reason_train.csv`, `reason_val.csv`, and `reason_test.csv`
+are retained as a labelled legacy row-stratified comparison only.
+
+Rebuild the final grouped Stage 2 package with the repository image-root convention:
+
+```bash
+python scripts/build_reason_attribution_manifests.py --input datasets/dissertation_v1/manifests/test_ood_full.csv --out-dir datasets/dissertation_v1/manifests --split-mode grouped --output-prefix reason_grouped --seed 42
+python scripts/audit_stage2_grouped.py --input datasets/dissertation_v1/manifests/test_ood_full.csv --train datasets/dissertation_v1/manifests/reason_grouped_train.csv --val datasets/dissertation_v1/manifests/reason_grouped_val.csv --test datasets/dissertation_v1/manifests/reason_grouped_test.csv --out-dir reports/stage2_grouped --seed 42
+python scripts/generate_stage2_grouped_report.py --root-dir data --train-manifest datasets/dissertation_v1/manifests/reason_grouped_train.csv --val-manifest datasets/dissertation_v1/manifests/reason_grouped_val.csv --test-manifest datasets/dissertation_v1/manifests/reason_grouped_test.csv --legacy-dir reports/dissertation_results/reason_attribution_method_comparison --out-dir reports/stage2_grouped --figures-dir reports/dissertation_figures/stage2_grouped --seed 42
+```
+
+Manifest paths beginning `images/...` resolve under `--root-dir data`, i.e.
+`data/images/...`.
 
 ## Repository status
 

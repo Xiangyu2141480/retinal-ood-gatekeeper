@@ -14,8 +14,9 @@ diagnostic model is used. Stage 1 is an unsupervised out-of-distribution (OOD) d
 using in-distribution (ID) FAF rows only. An optional Stage 2 module runs only after rejection
 and assigns a likely reason family and, where appropriate, a subtype. On the current controlled
 benchmark, Mahalanobis feature distance is the strongest quantitative Stage 1 method, while
-PatchCore L3 provides the most useful localisation-oriented evidence. Stage 2 also performs
-strongly on the current reason-attribution splits. However, the ID test set is synthetic FAF
+PatchCore L3 provides the most useful localisation-oriented evidence. Under the final
+parent-grouped Stage 2 protocol, validation selects `feature_statistics_fusion` for family
+attribution and the non-oracle `hierarchical_classifier` for subtype attribution. However, the ID test set is synthetic FAF
 fallback rather than real clinical FAF, so the complete system remains a research
 proof-of-concept rather than evidence of clinical deployment readiness.
 
@@ -111,12 +112,14 @@ subtypes:
 | [`test_id_synthetic_fallback.csv`](../../datasets/dissertation_v1/manifests/test_id_synthetic_fallback.csv) | 150 | Synthetic fallback ID test |
 | [`test_ood_full.csv`](../../datasets/dissertation_v1/manifests/test_ood_full.csv) | 2,100 | Full OOD evaluation set |
 | [`test_ood_balanced_by_subtype.csv`](../../datasets/dissertation_v1/manifests/test_ood_balanced_by_subtype.csv) | 1,650 | Main balanced OOD comparison set |
-| [`reason_train.csv`](../../datasets/dissertation_v1/manifests/reason_train.csv) | 1,260 | OOD-only Stage 2 fitting |
-| [`reason_val.csv`](../../datasets/dissertation_v1/manifests/reason_val.csv) | 420 | OOD-only Stage 2 validation |
-| [`reason_test.csv`](../../datasets/dissertation_v1/manifests/reason_test.csv) | 420 | OOD-only Stage 2 test |
+| [`reason_grouped_train.csv`](../../datasets/dissertation_v1/manifests/reason_grouped_train.csv) | 1,260 | Final parent-grouped OOD-only Stage 2 fitting |
+| [`reason_grouped_val.csv`](../../datasets/dissertation_v1/manifests/reason_grouped_val.csv) | 420 | Final parent-grouped Stage 2 validation and selection |
+| [`reason_grouped_test.csv`](../../datasets/dissertation_v1/manifests/reason_grouped_test.csv) | 420 | Final retrospective parent-grouped Stage 2 test |
 
 The ID test set is synthetic FAF fallback and is **not** real clinical FAF validation.
-Reason-attribution manifests contain OOD rows only.
+Reason-attribution manifests contain OOD rows only. The older `reason_train.csv`,
+`reason_val.csv`, and `reason_test.csv` remain unchanged as legacy row-stratified sensitivity
+manifests, not final headline evidence.
 
 ## 6. Stage 1 Methods
 
@@ -165,7 +168,7 @@ set). It should therefore be interpreted alongside AUROC and the safety-oriented
 | Which method is strongest quantitatively? | Eight-scheme Stage 1 comparison | Mahalanobis: AUROC 0.9724, AUPRC 0.9975, FPR@95%TPR 0.2000 | Mahalanobis is the primary quantitative Stage 1 method on this benchmark. | [`metrics_by_scheme.csv`](../../reports/dissertation_results/multi_scheme_comparison/metrics_by_scheme.csv) |
 | How do thresholds affect safety? | ID-calibrated threshold sweep | Mahalanobis ID q95: ID false rejection 0.0467, OOD recall 0.9079 | Threshold choice creates a measurable sensitivity/specificity trade-off. | [`threshold_policy_sweep.csv`](../../reports/dissertation_results/robustness_analysis/threshold_policy_sweep.csv) |
 | Can patch methods add useful evidence? | PatchCore ablation and disagreement analysis | PatchCore L3 is the best PatchCore and catches 111 Mahalanobis false negatives | PatchCore is weaker overall but useful for localisation and complementary examples. | [`layer_ablation_table.csv`](../../reports/dissertation_results/primary_balanced_by_subtype_10k/layer_ablation_table.csv), [`method_disagreement_cases.md`](../../reports/dissertation_results/robustness_analysis/method_disagreement_cases.md) |
-| Can rejected inputs be explained? | Stage 2 method comparison | Linear SVM family macro-F1 0.9901; hierarchical subtype macro-F1 0.9059 | Optional post-rejection explanations are feasible on the current controlled splits. | [`best_method_summary.md`](../../reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md) |
+| Can rejected inputs be explained? | Parent-grouped Stage 2 method comparison | `feature_statistics_fusion` family test macro-F1 1.0000; hierarchical subtype test macro-F1 0.9176 | Optional post-rejection explanations are feasible on this controlled grouped split; the result is not clinical generalisation. | [`summary.md`](../../reports/stage2_grouped/summary.md) |
 
 ## 8. Additional Stage 1 Analysis
 
@@ -189,17 +192,18 @@ Stage 2 is a supervised post-hoc explanation module. It is evaluated separately 
 after Stage 1 has already returned `REJECT`. It does not participate in the unsupervised
 accept/reject decision.
 
-The selected reason-family method is **linear SVM**, with test accuracy **0.9881** and test
-macro-F1 **0.9901**. The hardest family is `semantic_outlier`. The selected subtype method is the
-non-oracle **hierarchical classifier**, with test accuracy **0.9238** and test macro-F1
-**0.9059**. Its test-time routing uses the predicted family rather than the ground-truth family.
-The hardest subtype is `rectangle_annotation`.
+The final grouped validation split selects **feature-statistics fusion** for family attribution
+(macro-F1 **0.9925**). Retrospective grouped test accuracy and macro-F1 are both **1.0000**; all
+three family F1 values are 1.0000, so there is no unique hardest family. Grouped validation
+selects the non-oracle **hierarchical classifier** for subtype attribution (macro-F1 **0.9059**).
+Grouped test accuracy is **0.9357**, macro-F1 is **0.9176**, and `text_watermark` is the hardest
+subtype (F1 **0.7742**). Test-time routing uses predicted rather than ground-truth family.
 
-Reason labels describe likely causes of rejection, not clinical diagnoses. The reason splits are
-disjoint by image path, but generated sensory-artifact variants have `parent_image_hash` overlap
-across train, validation, and test. This may make Stage 2 results optimistic for
-parent-independent generalisation and remains a documented limitation in the
-[`leakage sanity check`](../../reports/dissertation_results/reason_attribution_method_comparison/leakage_sanity_check.md).
+Reason labels describe likely causes of rejection, not clinical diagnoses. The final manifests
+have zero cross-partition image-path and group-ID overlap. Parent grouping does not make variants
+from a common parent independent: related transformed variants remain together within one split.
+The protocol remains controlled, closed-set, and synthetic-backed, as documented in the
+[`grouped split audit`](../../reports/stage2_grouped/split_audit.md).
 
 ## 10. Selected Figures
 
@@ -260,12 +264,12 @@ ID-calibrated prototype policy.
 
 ### 7. Stage 2 reason-attribution method comparison
 
-![Stage 2 method comparison](../../reports/dissertation_figures/reason_attribution_method_comparison/figure_stage2_method_comparison_combined.png)
+![Stage 2 method comparison](../../reports/dissertation_figures/stage2_grouped/figure_grouped_stage2_method_comparison.png)
 
 **Purpose:** Compares reason-family and reason-subtype attribution methods after rejection.
-**Conclusion:** Linear SVM is selected for family attribution, and the non-oracle hierarchical
-classifier is selected for subtype attribution.
-**Evidence:** [`Stage 2 experiment description`](../experiments/reason_attribution_method_comparison.md).
+**Conclusion:** Grouped validation selects feature-statistics fusion for family attribution and
+the non-oracle hierarchical classifier for subtype attribution.
+**Evidence:** [`parent-grouped Stage 2 experiment`](../experiments/reason_attribution_parent_grouped.md).
 
 ### 8. Full Stage 1 ROC comparison
 
@@ -278,21 +282,22 @@ comparison figure.
 
 ### 9. Best family confusion matrix
 
-![Best family confusion matrix](../../reports/dissertation_figures/reason_attribution_method_comparison/figure_best_reason_family_confusion_matrix.png)
+![Best family confusion matrix](../../reports/dissertation_figures/stage2_grouped/figure_grouped_family_confusion_matrix.png)
 
-**Purpose:** Shows where the selected family method makes errors.
-**Conclusion:** Family errors are rare and concentrate in semantic outliers.
-**Evidence:** [`best method summary`](../../reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md).
+**Purpose:** Shows grouped-test performance for the validation-selected family method.
+**Conclusion:** All 420 grouped test rows are classified correctly at family level; there is no
+unique hardest family, and the result remains controlled rather than clinical.
+**Evidence:** [`grouped family metrics`](../../reports/stage2_grouped/family_metrics.csv).
 
 ### 10. Best subtype confusion matrix
 
-![Best subtype confusion matrix](../../reports/dissertation_figures/reason_attribution_method_comparison/figure_best_subtype_confusion_matrix.png)
+![Best subtype confusion matrix](../../reports/dissertation_figures/stage2_grouped/figure_grouped_subtype_confusion_matrix.png)
 
 **Purpose:** Shows fine-grained error structure for the non-oracle hierarchical classifier.
-**Conclusion:** Subtype attribution is strong overall, while rectangle annotation remains the
-hardest subtype.
+**Conclusion:** Subtype attribution is strong overall, while `text_watermark` has the lowest
+grouped-test F1 (0.7742).
 **Evidence:** [`subtype label mapping`](../../reports/dissertation_final/subtype_label_mapping.md)
-and [`leakage sanity check`](../../reports/dissertation_results/reason_attribution_method_comparison/leakage_sanity_check.md).
+and [`grouped subtype metrics`](../../reports/stage2_grouped/subtype_metrics.csv).
 
 ## 11. Main Conclusions
 
@@ -312,7 +317,8 @@ and [`leakage sanity check`](../../reports/dissertation_results/reason_attributi
 - No result supports a claim of clinical deployment readiness.
 - The OOD benchmark is a controlled stress test, not an estimate of clinical prevalence.
 - Stage 2 is supervised and limited to known reason families and subtypes.
-- `parent_image_hash` overlap exists across Stage 2 splits for generated artifact variants.
+- Cross-partition parent/group overlap is zero in the final Stage 2 manifests, but variants from
+  one parent remain dependent within their assigned split.
 - Stage 2 predictions are likely explanations, not clinical diagnoses.
 - Future scanner, site, protocol, and population variation is not comprehensively represented.
 
@@ -323,8 +329,8 @@ ablation, threshold analysis, robustness and failure analysis, Stage 2 implement
 comparison, reproducibility bundle, and final figure/reporting polish are complete. The current
 priority is dissertation writing: integrating the evidence into coherent chapters, captions,
 tables, and discussion. Real clinical FAF validation, prospective threshold calibration, broader
-scanner/site testing, and parent-grouped Stage 2 splits remain future research rather than
-unfinished claims in the present study.
+scanner/site testing, repeated grouped Stage 2 splits across seeds, and real rejection cases
+remain future research rather than unfinished claims in the present study.
 
 ## 14. Where to Find the Evidence
 
@@ -334,7 +340,8 @@ unfinished claims in the present study.
 | Final evidence index | [`docs/dissertation/final_evidence_index.md`](final_evidence_index.md) |
 | Stage 1 comparison | [`reports/dissertation_results/multi_scheme_comparison/`](../../reports/dissertation_results/multi_scheme_comparison/) |
 | Robustness and failure analysis | [`reports/dissertation_results/robustness_analysis/`](../../reports/dissertation_results/robustness_analysis/) |
-| Stage 2 comparison | [`reports/dissertation_results/reason_attribution_method_comparison/`](../../reports/dissertation_results/reason_attribution_method_comparison/) |
+| Final Stage 2 comparison | [`reports/stage2_grouped/`](../../reports/stage2_grouped/) |
+| Legacy Stage 2 sensitivity package | [`reports/dissertation_results/reason_attribution_method_comparison/`](../../reports/dissertation_results/reason_attribution_method_comparison/) |
 | Figure index | [`reports/dissertation_final/final_figure_index.md`](../../reports/dissertation_final/final_figure_index.md) |
 | Dataset manifests | [`datasets/dissertation_v1/manifests/`](../../datasets/dissertation_v1/manifests/) |
 | Reproducibility instructions | [`docs/dissertation/reproducibility_runbook.md`](reproducibility_runbook.md) |

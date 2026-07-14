@@ -10,17 +10,17 @@ Robustness analysis supports the Mahalanobis ranking for AUROC and AUPRC, while 
 
 The optional Phase 2 experiment evaluates rejected-input reason attribution. It is separate from the Stage 1 OOD gatekeeper: Stage 1 remains ID-only and unsupervised, and OOD labels are used only as Stage 2 explanation targets after rejection.
 
-The best reason-family method is `linear_svm`. On the held-out reason test split, it achieves family test accuracy 0.9881 and family test macro-F1 0.9901. This improves over the PR #24 family baseline by +0.0954 macro-F1. The hardest family is `semantic_outlier`.
+The final Stage 2 protocol groups all variants from a common synthetic parent into one partition. It contains 1260 training, 420 validation, and 420 test rows, with zero cross-partition image-path and group-ID overlap. Related variants remain dependent within their assigned split. Grouped validation family macro-F1 selects `feature_statistics_fusion` (0.9925); its retrospective grouped test accuracy and macro-F1 are both 1.0000. All three family test F1 values are 1.0000, so there is no unique hardest family.
 
-The best subtype method is the non-oracle `hierarchical_classifier`. It achieves subtype accuracy 0.9238 and subtype macro-F1 0.9059, improving over the PR #24 subtype baseline by +0.2335 macro-F1. The hierarchy routes by predicted family at test time, not ground-truth family. The hardest subtype is `rectangle_annotation`.
+Grouped validation subtype macro-F1 selects the non-oracle `hierarchical_classifier` (0.9059). Its retrospective grouped test accuracy is 0.9357 and macro-F1 is 0.9176. The hierarchy routes by predicted family at test time, not ground-truth family. The hardest grouped-test subtype is `text_watermark` (F1 0.7742).
 
-The family-level scores are plausible because modality shifts, sensory artifacts, and semantic outliers create separable image-derived feature patterns in the current taxonomy. The subtype result is also plausible because the hierarchy first separates broad families before making finer within-family decisions. However, the reason splits are disjoint by `image_path` but not by `parent_image_hash`, especially for generated sensory-artifact variants. These scores should therefore be described as held-out image-file performance, not parent-independent generalization.
+Relative to the preserved legacy row-level protocol, grouped-minus-legacy test macro-F1 is +0.0099 for family attribution and +0.0116 for subtype attribution. These increases are split-allocation sensitivity results from one deterministic seed, not evidence that grouping removed within-split variant dependence or established clinical generalisation. The controlled family taxonomy is visually separable, and the hierarchy benefits from decomposing the 11-way subtype task into predicted-family routes.
 
 ## Figures and Tables
 
-The Phase 2 main-text figure set should include the two-stage pipeline, the reason method comparison, the best reason-family confusion matrix, and optionally the best subtype confusion matrix. Reason attribution examples may be used qualitatively if space allows.
+The Phase 2 main-text figure set should include the two-stage pipeline, `figure_grouped_stage2_method_comparison`, and `figure_grouped_family_confusion_matrix`; `figure_grouped_subtype_confusion_matrix` and the legacy-versus-grouped sensitivity figure can be placed in the appendix.
 
-The Phase 2 main tables should include `best_method_summary.md` and, where space allows, the family method comparison table. The leakage sanity check belongs in the appendix because it documents feature exclusions, split disjointness, parent-hash overlap, and the non-oracle hierarchy check.
+The Phase 2 main tables should include `reports/stage2_grouped/summary.md` and the compact grouped method summary. The grouped split audit and legacy-versus-grouped table belong in the appendix because they document feature isolation, zero cross-partition overlap, remaining within-split dependence, and the non-oracle hierarchy.
 
 ## Interpretation
 

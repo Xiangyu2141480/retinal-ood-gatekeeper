@@ -1,13 +1,17 @@
-# Reason Attribution Method Comparison
+# Legacy Row-Level Reason Attribution Method Comparison
+
+> **Historical sensitivity evidence.** This document records the superseded row-stratified
+> `reason_train`/`reason_val`/`reason_test` experiment. The final dissertation evidence uses the
+> parent-grouped protocol in `docs/experiments/reason_attribution_parent_grouped.md` and
+> `reports/stage2_grouped/`. The metrics below remain valid for their legacy split only.
 
 ## Motivation
 
 The Phase 2 reason-attribution module explains rejected inputs after the Stage 1 gatekeeper
 has already made the binary `ACCEPT` / `REJECT` decision. PR #24 introduced a single
 deterministic image-statistics logistic-regression baseline. This experiment compares several
-lightweight Stage 2 alternatives on the same finalized `reason_train`, `reason_val`, and
-`reason_test` splits so the dissertation can report a selected method rather than a single
-uncontested baseline.
+lightweight Stage 2 alternatives on the legacy `reason_train`, `reason_val`, and `reason_test`
+splits. It is retained so the final grouped rerun can be compared with the earlier protocol.
 
 Stage 1 remains unchanged: it is an ID-only unsupervised OOD gatekeeper trained only to reject
 invalid or OOD inputs. OOD taxonomy labels are used only for this optional Stage 2 explanation
@@ -86,12 +90,12 @@ The hardest selected family result was `semantic_outlier` (`F1=0.9848`) for the 
 family method. The hardest subtype for the best subtype method was `rectangle_annotation`
 (`F1=0.7241`).
 
-## Best Selected Method
+## Best Selected Method Within The Legacy Protocol
 
-For dissertation reporting, use `linear_svm` as the selected family-level Stage 2 reason
-attribution method because it won the validation macro-F1 selection criterion. Use
-`hierarchical_classifier` as the best subtype attribution method because the family-routed
-subtype models substantially improved fine-grained subtype macro-F1.
+Within this legacy row-level experiment, `linear_svm` was the validation-selected family method
+and `hierarchical_classifier` was the selected subtype method. Do not use these legacy choices as
+the final grouped headline; grouped validation instead selects `feature_statistics_fusion` for
+family attribution and retains the non-oracle hierarchy for subtype attribution.
 
 This distinction is important: family reason selection and subtype attribution are related but
 not identical objectives.
@@ -109,7 +113,8 @@ The reason splits are disjoint by `image_path`, but a final leakage sanity gate 
 `parent_image_hash` across train/validation/test for generated sensory-artifact variants. This
 means method-comparison scores may be optimistic for generated artifact subtypes and should be
 reported as split-level rather than parent-independent generalization. A grouped-by-parent split
-is recommended before making stronger claims about artifact-subtype robustness.
+was therefore implemented for the final evaluation. Its zero cross-partition overlap does not
+make variants from a common parent independent within their assigned split.
 
 The pooled-pixel representation is deliberately lightweight and reproducible, but richer frozen
 visual encoders may be worth testing later if runtime, dependency, and external validation
@@ -128,3 +133,9 @@ Primary artifacts:
 - Results: `reports/dissertation_results/reason_attribution_method_comparison/`
 - Figures: `reports/dissertation_figures/reason_attribution_method_comparison/`
 - Script: `scripts/compare_reason_attribution_methods.py`
+
+Final grouped evidence:
+
+- Protocol: `docs/experiments/reason_attribution_parent_grouped.md`
+- Results: `reports/stage2_grouped/`
+- Figures: `reports/dissertation_figures/stage2_grouped/`
