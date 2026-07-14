@@ -76,13 +76,33 @@ Caption: Mahalanobis feature-space PCA by OOD category. This is a qualitative vi
 
 Caption: Two-stage pipeline showing Stage 1 ID-only rejection followed by optional Stage 2 reason attribution for rejected inputs. Stage 2 labels are likely explanations, not clinical diagnoses.
 
+## figure_grouped_stage2_method_comparison.png
+
+Caption: Parent-grouped Stage 2 reason-attribution comparison. Grouped validation macro-F1 selects `feature_statistics_fusion` for family attribution and the non-oracle `hierarchical_classifier` for subtype attribution; the displayed grouped test scores are retrospective and do not affect selection.
+
+## figure_grouped_family_confusion_matrix.png
+
+Caption: Count confusion matrix for `feature_statistics_fusion` on the 420-image parent-grouped Stage 2 test split. All three family-level F1 scores are 1.0000, so no family is uniquely hardest. This controlled synthetic-backed result should not be interpreted as clinical generalisation.
+
+## figure_grouped_subtype_confusion_matrix.png
+
+Caption: Count confusion matrix for the non-oracle `hierarchical_classifier` on the parent-grouped Stage 2 test split. Test accuracy is 0.9357 and macro-F1 is 0.9176; `text_watermark` has the lowest subtype F1 (0.7742).
+
+## figure_legacy_vs_grouped_stage2_metrics.png
+
+Caption: Sensitivity comparison between the legacy row-stratified and final parent-grouped Stage 2 protocols. Parent grouping eliminates cross-partition parent/group overlap, but variants from a common parent remain dependent within one split; metric differences from this single deterministic allocation are not evidence of clinical generalisation.
+
+## Legacy row-level Stage 2 figures
+
+The captions below describe the preserved row-level sensitivity package and must not be used as the final grouped headline evidence.
+
 ## figure_reason_method_family_macro_f1.png
 
-Caption: Stage 2 reason-family method comparison with the PR #24 baseline shown. Linear SVM was selected using validation macro-F1 and the predefined simplicity/tie-breaking rule, rather than by selecting the largest test-set score.
+Caption: Legacy row-level Stage 2 reason-family method comparison with the PR #24 baseline shown. Linear SVM was selected within that historical protocol using validation macro-F1 and the predefined simplicity/tie-breaking rule.
 
 ## figure_stage2_method_comparison_combined.png
 
-Caption: Stage 2 reason-attribution method comparison for rejected inputs. Panel (a) shows reason-family macro-F1 and panel (b) shows reason-subtype macro-F1; the selected methods are linear SVM for family attribution and the non-oracle hierarchical classifier for subtype attribution.
+Caption: Legacy row-level Stage 2 reason-attribution method comparison for rejected inputs. This figure is retained for split-sensitivity context and is superseded by the parent-grouped comparison.
 
 ## figure_reason_method_accuracy_macro_f1.png
 
@@ -94,19 +114,19 @@ Caption: Stage 2 subtype method comparison using test macro-F1 with the PR #24 b
 
 ## figure_best_reason_family_confusion_matrix.png
 
-Caption: Count confusion matrix for Stage 2 reason-family attribution using `linear_svm`.
+Caption: Legacy row-level count confusion matrix for Stage 2 reason-family attribution using `linear_svm`.
 
 ## figure_best_reason_family_confusion_matrix_normalized.png
 
-Caption: Row-normalized confusion matrix for Stage 2 reason-family attribution using `linear_svm`.
+Caption: Legacy row-level row-normalized confusion matrix for Stage 2 reason-family attribution using `linear_svm`.
 
 ## figure_best_subtype_confusion_matrix.png
 
-Caption: Count confusion matrix for Stage 2 subtype attribution using the non-oracle `hierarchical_classifier`. Short labels are defined in `subtype_label_mapping.md`.
+Caption: Legacy row-level count confusion matrix for Stage 2 subtype attribution using the non-oracle `hierarchical_classifier`. Short labels are defined in `subtype_label_mapping.md`.
 
 ## figure_best_subtype_confusion_matrix_normalized.png
 
-Caption: Row-normalized confusion matrix for Stage 2 subtype attribution using the non-oracle `hierarchical_classifier`. Short labels are defined in `subtype_label_mapping.md`.
+Caption: Legacy row-level row-normalized confusion matrix for Stage 2 subtype attribution using the non-oracle `hierarchical_classifier`. Short labels are defined in `subtype_label_mapping.md`.
 
 ## figure_heatmaps_sensory_artifact_examples.png
 

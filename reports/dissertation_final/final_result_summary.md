@@ -38,12 +38,13 @@ The completed system contains:
 | hardest_subtype | text_watermark (AUROC 0.7361) | reports/dissertation_results/robustness_analysis/subtype_influence.csv |
 | key_robustness_result | Mahalanobis remains strongest under bootstrap AUROC/AUPRC; FPR intervals overlap. | reports/dissertation_results/robustness_analysis/bootstrap_ci.csv |
 | key_failure_analysis_result | Text watermark dominates Mahalanobis false negatives; PatchCore L3 catches many misses. | reports/dissertation_results/robustness_analysis/method_disagreement_cases.md |
-| optional_stage2_scope | Optional post-rejection reason attribution; Stage 1 remains ID-only and unsupervised. | reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md |
-| best_reason_family_method | linear_svm: test accuracy 0.9881, test macro-F1 0.9901, +0.0954 macro-F1 versus PR #24 baseline. | reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md |
-| best_reason_subtype_method | non-oracle hierarchical_classifier: subtype accuracy 0.9238, subtype macro-F1 0.9059, +0.2335 macro-F1 versus PR #24 baseline. | reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md |
-| hardest_reason_family | semantic_outlier | reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md |
-| hardest_reason_subtype | rectangle_annotation | reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md |
-| reason_attribution_limitation | Reason labels are likely explanations, not clinical diagnoses; reason splits are image-path disjoint but not parent-image-hash disjoint. | reports/dissertation_results/reason_attribution_method_comparison/leakage_sanity_check.md |
+| optional_stage2_scope | Optional supervised post-rejection reason attribution; Stage 1 remains ID-only and unsupervised. | reports/stage2_grouped/summary.md |
+| best_reason_family_method | feature_statistics_fusion: validation macro-F1 0.9925; grouped test accuracy and macro-F1 1.0000. | reports/stage2_grouped/selected_models.json |
+| best_reason_subtype_method | non-oracle hierarchical_classifier: validation macro-F1 0.9059; grouped test accuracy 0.9357 and macro-F1 0.9176. | reports/stage2_grouped/selected_models.json |
+| hardest_reason_family | no unique hardest family; all three grouped test F1 values are 1.0000 | reports/stage2_grouped/per_family_f1_by_method.csv |
+| hardest_reason_subtype | text_watermark (F1 0.7742) | reports/stage2_grouped/per_subtype_f1_by_method.csv |
+| legacy_stage2_sensitivity | grouped minus legacy: family test macro-F1 +0.0099; subtype test macro-F1 +0.0116 | reports/stage2_grouped/legacy_vs_grouped_comparison.csv |
+| reason_attribution_limitation | Reason labels are likely explanations, not clinical diagnoses; cross-partition parent/group overlap is zero, but variants from a common parent remain dependent within one split. | reports/stage2_grouped/split_audit.md |
 
 ## Polished Results Narrative
 
@@ -54,11 +55,13 @@ lowest FPR@95%TPR among the evaluated schemes. PatchCore L3 should be discussed 
 localization-oriented companion because it provides heatmap evidence and helps interpret selected
 failure cases, even though it is not the strongest quantitative model.
 
-Stage 2 is optional and runs only after rejection. It should be reported as post-hoc reason
-attribution rather than OOD detection. The selected family method is `linear_svm`; the selected
-subtype method is the non-oracle `hierarchical_classifier`. These labels are likely explanations,
-not clinical diagnoses.
+Stage 2 is optional, supervised, and runs only after Stage 1 has rejected an input. It should be
+reported as post-hoc reason attribution rather than OOD detection. Grouped validation selects
+`feature_statistics_fusion` for family attribution and the non-oracle `hierarchical_classifier`
+for subtype attribution. Their grouped test results are retrospective only. These labels are
+likely explanations, not clinical diagnoses.
 
 The main limitations to retain are synthetic ID fallback, proof-of-concept stress-test evaluation,
-no clinical deployment validation, supervised post-hoc Stage 2 explanation, and parent-image-hash
-overlap in the generated-artifact Stage 2 reason splits.
+no clinical deployment validation, and supervised closed-set Stage 2 explanation. Parent grouping
+eliminates cross-partition parent/group overlap, but transformed variants from a common parent
+remain dependent within one split; it does not establish patient, device, or site independence.

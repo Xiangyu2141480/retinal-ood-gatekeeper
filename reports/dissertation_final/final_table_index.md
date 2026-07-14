@@ -10,8 +10,10 @@
 | reports/dissertation_results/primary_balanced_by_subtype_10k/layer_ablation_table.md | PatchCore layer ablation | Methods / Results | appendix | recommended | Full PatchCore layer table. |
 | reports/dissertation_results/robustness_analysis/threshold_policy_sweep.md | Threshold policy sweep | Threshold Safety | appendix | must_include | Research and deployment-style threshold policies. |
 | reports/dissertation_results/robustness_analysis/dissertation_takeaway_table.md | Robustness takeaway table | Discussion | appendix | recommended | Links robustness findings to implications. |
-| reports/dissertation_results/reason_attribution_method_comparison/best_method_summary.md | Best Stage 2 method summary | Stage 2 Results | appendix | must_include | Records selected Stage 2 methods and headline metrics. |
-| reports/dissertation_results/reason_attribution_method_comparison/family_metrics_by_method.md | Stage 2 family metrics by method | Stage 2 Results | appendix | backup | Full family attribution comparison. |
-| reports/dissertation_results/reason_attribution_method_comparison/subtype_metrics_by_method.md | Stage 2 subtype metrics by method | Stage 2 Results | appendix | backup | Full subtype attribution comparison. |
+| reports/stage2_grouped/summary.md | Parent-grouped Stage 2 summary | Stage 2 Results | appendix | must_include | Records the final protocol, selected methods, metrics, and limitations. |
+| reports/stage2_grouped/family_metrics_by_method.md | Parent-grouped family metrics by method | Stage 2 Results | appendix | recommended | Full grouped family attribution comparison. |
+| reports/stage2_grouped/subtype_metrics_by_method.md | Parent-grouped subtype metrics by method | Stage 2 Results | appendix | recommended | Full grouped subtype attribution comparison. |
+| reports/stage2_grouped/legacy_vs_grouped_comparison.csv | Legacy versus grouped sensitivity table | Stage 2 Results | appendix | recommended | Keeps the row-level results as labelled sensitivity evidence. |
 | reports/dissertation_final/subtype_label_mapping.md | Stage 2 subtype code mapping | Phase 2 Results | appendix | must_include | Defines S1-S11 labels used in compact subtype confusion matrices. |
-| reports/dissertation_results/reason_attribution_method_comparison/leakage_sanity_check.md | Stage 2 leakage sanity check | Limitations | appendix | must_include | Documents feature exclusions, parent-hash overlap, and non-oracle hierarchy. |
+| reports/stage2_grouped/split_audit.md | Parent-grouped split audit | Limitations | appendix | must_include | Documents zero cross-partition image-path/group overlap and the deterministic grouped protocol. |
+| reports/dissertation_results/reason_attribution_method_comparison/leakage_sanity_check.md | Legacy row-level leakage sanity check | Limitations | appendix | backup | Historical evidence for the superseded row-level split. |

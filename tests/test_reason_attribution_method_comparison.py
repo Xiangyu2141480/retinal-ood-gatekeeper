@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 from PIL import Image
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
 
+from retinal_ood.reason_attribution import comparison as comparison_module
 from retinal_ood.reason_attribution.comparison import (
     ComparisonConfig,
     compute_unknown_threshold_curve,
@@ -13,9 +18,15 @@ from retinal_ood.reason_attribution.comparison import (
     select_best_method,
     snapshot_file_hashes,
 )
+from retinal_ood.reason_attribution.classifier import (
+    FAMILY_CLASSES,
+    SUBTYPE_CLASSES,
+    ReasonPredictions,
+)
 from retinal_ood.reason_attribution.methods import (
     HierarchicalReasonClassifier,
     METADATA_EXCLUDED_COLUMNS,
+    ReasonMethodSpec,
     extract_global_pooled_features_from_manifest,
 )
 
@@ -95,6 +106,80 @@ def _write_reason_manifests(root: Path, *, include_id: bool = False) -> tuple[Pa
         pd.DataFrame(rows_by_split[split]).to_csv(path, index=False)
         paths.append(path)
     return tuple(paths)  # type: ignore[return-value]
+
+
+def _write_variable_reason_manifests(
+    root: Path,
+    *,
+    train_variants: range,
+    val_variants: range,
+    test_variants: range,
+) -> tuple[Path, Path, Path]:
+    subtype_by_family = {
+        "modality_shift": ["colour_fundus", "oct_screenshot"],
+        "sensory_artifact": ["text_watermark", "rectangle_annotation"],
+        "semantic_outlier": ["cifar10_natural", "cifar10_natural"],
+    }
+    rows_by_split: dict[str, list[dict[str, object]]] = {"train": [], "val": [], "test": []}
+    variants_by_split = {
+        "train": train_variants,
+        "val": val_variants,
+        "test": test_variants,
+    }
+    for split, variants in variants_by_split.items():
+        for family, subtypes in subtype_by_family.items():
+            for subtype_index, subtype in enumerate(subtypes):
+                for variant in variants:
+                    rows_by_split[split].append(
+                        {
+                            "image_path": f"images/{split}_{family}_{subtype_index}_{variant}.png",
+                            "label": 1,
+                            "split": split,
+                            "filename": f"{split}_{family}_{subtype_index}_{variant}.png",
+                            "source": f"source_{split}_{variant}",
+                            "source_dataset": f"dataset_{family}",
+                            "source_url": f"https://example.invalid/{split}/{variant}",
+                            "license_status": "public",
+                            "ood_type": family,
+                            "ood_subtype": subtype,
+                            "synthetic_transform": f"transform_{subtype_index}",
+                            "severity": variant,
+                            "notes": f"metadata note {variant}",
+                        }
+                    )
+    paths = []
+    for split in ("train", "val", "test"):
+        path = root / f"variable_reason_{split}.csv"
+        pd.DataFrame(rows_by_split[split]).to_csv(path, index=False)
+        paths.append(path)
+    return tuple(paths)  # type: ignore[return-value]
+
+
+def _make_split_features(
+    train_manifest: Path,
+    val_manifest: Path,
+    test_manifest: Path,
+) -> dict[str, comparison_module._SplitFeatures]:
+    manifests = {
+        "train": pd.read_csv(train_manifest),
+        "val": pd.read_csv(val_manifest),
+        "test": pd.read_csv(test_manifest),
+    }
+    offsets = {"train": 10.0, "val": 100.0, "test": 200.0}
+    split_features: dict[str, comparison_module._SplitFeatures] = {}
+    for split, metadata in manifests.items():
+        row_count = len(metadata)
+        row_index = np.arange(row_count, dtype=np.float32).reshape(-1, 1)
+        family_index = metadata["ood_type"].map({label: index for index, label in enumerate(FAMILY_CLASSES)}).to_numpy(dtype=np.float32).reshape(-1, 1)
+        statistics = np.concatenate([row_index + offsets[split], family_index + offsets[split] / 10.0], axis=1)
+        global_features = np.concatenate([row_index + offsets[split] / 2.0, family_index + offsets[split] / 20.0], axis=1)
+        split_features[split] = comparison_module._SplitFeatures(
+            metadata=metadata,
+            statistics=statistics.astype(np.float32),
+            global_features=global_features.astype(np.float32),
+            fusion=np.concatenate([global_features, statistics], axis=1).astype(np.float32),
+        )
+    return split_features
 
 
 def test_global_pooled_features_are_image_only_and_ignore_metadata(tmp_path: Path):
@@ -264,6 +349,409 @@ def test_subtype_can_be_disabled_and_hierarchy_uses_predicted_family(tmp_path: P
     assert predictions.family_argmax.tolist() == ["modality_shift", "modality_shift", "modality_shift"]
     assert predictions.subtype is not None
     assert predictions.subtype.tolist() == ["colour_fundus", "colour_fundus", "colour_fundus"]
+
+
+def test_compatibility_summary_reports_tied_hardest_classes_without_idxmin_bias():
+    per_class = pd.DataFrame(
+        {
+            "family": ["modality_shift", "sensory_artifact", "semantic_outlier"],
+            "f1": [1.0, 1.0, 1.0],
+        }
+    )
+
+    label = comparison_module._hardest_label(per_class, label_column="family")
+
+    assert label == (
+        "no unique hardest; modality_shift, semantic_outlier, sensory_artifact "
+        "tied (F1=1.0000)"
+    )
+
+
+def test_subtype_disabled_writes_empty_canonical_confusion_only(tmp_path: Path):
+    train_manifest, val_manifest, test_manifest = _write_reason_manifests(tmp_path)
+    result = run_reason_attribution_method_comparison(
+        ComparisonConfig(
+            train_manifest=train_manifest,
+            val_manifest=val_manifest,
+            test_manifest=test_manifest,
+            root_dir=tmp_path,
+            out_dir=tmp_path / "results",
+            figures_dir=tmp_path / "figures",
+            include_subtype=False,
+            method_names=("image_statistics_logreg",),
+            global_image_size=12,
+            statistics_image_size=16,
+        )
+    )
+
+    canonical_path = tmp_path / "results" / "subtype_confusion_matrix.csv"
+    assert canonical_path.exists()
+    assert result.tables["subtype_confusion_csv"] == canonical_path
+
+    canonical = pd.read_csv(canonical_path, index_col=0)
+    assert canonical.empty
+    assert canonical.columns.tolist() == list(SUBTYPE_CLASSES)
+    assert not (tmp_path / "results" / "best_subtype_confusion_matrix.csv").exists()
+    assert "best_subtype_confusion_csv" not in result.tables
+
+    subtype_metrics = pd.read_csv(tmp_path / "results" / "subtype_metrics.csv")
+    assert set(subtype_metrics["status"]) == {"not_requested"}
+    assert subtype_metrics["subtype_macro_f1"].isna().all()
+
+
+def test_comparison_runs_all_validation_predictions_before_any_test_predictions(
+    tmp_path: Path,
+    monkeypatch,
+):
+    train_manifest, val_manifest, test_manifest = _write_variable_reason_manifests(
+        tmp_path,
+        train_variants=range(1),
+        val_variants=range(1),
+        test_variants=range(1),
+    )
+    split_features = _make_split_features(train_manifest, val_manifest, test_manifest)
+    split_by_matrix_id = {
+        id(split.statistics): split_name
+        for split_name, split in split_features.items()
+    }
+    metadata_by_split = {
+        split_name: split.metadata.reset_index(drop=True)
+        for split_name, split in split_features.items()
+    }
+    events: list[tuple[str, str, str]] = []
+    specs = (
+        ReasonMethodSpec("alpha_method", "statistics", "logistic_regression", "alpha", 1),
+        ReasonMethodSpec("beta_method", "statistics", "logistic_regression", "beta", 2),
+    )
+
+    class _TracingModel:
+        def __init__(self, method_name: str) -> None:
+            self.method_name = method_name
+            self.train_seconds = 0.01
+
+        def predict(self, features: np.ndarray, *, unknown_threshold: float) -> ReasonPredictions:
+            split = split_by_matrix_id[id(features)]
+            events.append(("predict", self.method_name, split))
+            metadata = metadata_by_split[split]
+            family = metadata["ood_type"].astype(str).to_numpy()
+            subtype = metadata["ood_subtype"].astype(str).to_numpy()
+            confidence = np.full(len(metadata), 0.9, dtype=float)
+            return ReasonPredictions(
+                family=family.copy(),
+                family_confidence=confidence,
+                family_argmax=family.copy(),
+                subtype=subtype.copy(),
+                subtype_confidence=confidence.copy(),
+            )
+
+    def _fake_fit_reason_method(
+        spec: ReasonMethodSpec,
+        train_features: np.ndarray,
+        family_labels: np.ndarray,
+        *,
+        subtype_labels: np.ndarray | None,
+        include_subtype: bool,
+        seed: int,
+    ) -> _TracingModel:
+        del train_features, family_labels, subtype_labels, include_subtype, seed
+        events.append(("fit", spec.name, "train"))
+        return _TracingModel(spec.name)
+
+    monkeypatch.setattr(comparison_module, "_extract_feature_sets", lambda config: split_features)
+    monkeypatch.setattr(comparison_module, "resolve_method_specs", lambda **kwargs: specs)
+    monkeypatch.setattr(comparison_module, "fit_reason_method", _fake_fit_reason_method)
+
+    run_reason_attribution_method_comparison(
+        ComparisonConfig(
+            train_manifest=train_manifest,
+            val_manifest=val_manifest,
+            test_manifest=test_manifest,
+            root_dir=tmp_path,
+            out_dir=tmp_path / "results",
+            figures_dir=tmp_path / "figures",
+            seed=13,
+            include_subtype=True,
+            method_names=tuple(spec.name for spec in specs),
+        )
+    )
+
+    prediction_events = [event for event in events if event[0] == "predict"]
+    first_test_index = next(index for index, event in enumerate(prediction_events) if event[2] == "test")
+
+    assert prediction_events[:first_test_index] == [
+        ("predict", "alpha_method", "val"),
+        ("predict", "beta_method", "val"),
+    ]
+
+
+def test_predictions_trace_independent_family_and_hierarchical_subtype_winners(
+    tmp_path: Path,
+    monkeypatch,
+):
+    train_manifest, val_manifest, test_manifest = _write_variable_reason_manifests(
+        tmp_path,
+        train_variants=range(1),
+        val_variants=range(1),
+        test_variants=range(1),
+    )
+    split_features = _make_split_features(train_manifest, val_manifest, test_manifest)
+    split_by_matrix_id = {
+        id(split.statistics): split_name
+        for split_name, split in split_features.items()
+    }
+    specs = (
+        ReasonMethodSpec(
+            "family_specialist",
+            "statistics",
+            "logistic_regression",
+            "family specialist",
+            1,
+        ),
+        ReasonMethodSpec(
+            "hierarchical_classifier",
+            "statistics",
+            "hierarchical",
+            "hierarchical subtype specialist",
+            2,
+            is_hierarchical=True,
+        ),
+    )
+
+    class _WinnerModel:
+        def __init__(self, method_name: str) -> None:
+            self.method_name = method_name
+            self.train_seconds = 0.01
+
+        def predict(self, features: np.ndarray, *, unknown_threshold: float) -> ReasonPredictions:
+            del unknown_threshold
+            metadata = split_features[split_by_matrix_id[id(features)]].metadata
+            true_family = metadata["ood_type"].astype(str).to_numpy()
+            true_subtype = metadata["ood_subtype"].astype(str).to_numpy()
+            if self.method_name == "family_specialist":
+                family_argmax = true_family.copy()
+                family_confidence = np.full(len(metadata), 0.95, dtype=float)
+                subtype = np.full(len(metadata), "colour_fundus", dtype=object)
+                subtype_confidence = np.full(len(metadata), 0.55, dtype=float)
+            else:
+                family_argmax = np.full(len(metadata), "sensory_artifact", dtype=object)
+                family_confidence = np.full(len(metadata), 0.61, dtype=float)
+                subtype = true_subtype.copy()
+                subtype_confidence = np.full(len(metadata), 0.87, dtype=float)
+            return ReasonPredictions(
+                family=family_argmax.copy(),
+                family_confidence=family_confidence,
+                family_argmax=family_argmax,
+                subtype=subtype,
+                subtype_confidence=subtype_confidence,
+            )
+
+    def _fake_fit_reason_method(
+        spec: ReasonMethodSpec,
+        train_features: np.ndarray,
+        family_labels: np.ndarray,
+        *,
+        subtype_labels: np.ndarray | None,
+        include_subtype: bool,
+        seed: int,
+    ) -> _WinnerModel:
+        del train_features, family_labels, subtype_labels, include_subtype, seed
+        return _WinnerModel(spec.name)
+
+    monkeypatch.setattr(comparison_module, "_extract_feature_sets", lambda config: split_features)
+    monkeypatch.setattr(comparison_module, "resolve_method_specs", lambda **kwargs: specs)
+    monkeypatch.setattr(comparison_module, "fit_reason_method", _fake_fit_reason_method)
+
+    result = run_reason_attribution_method_comparison(
+        ComparisonConfig(
+            train_manifest=train_manifest,
+            val_manifest=val_manifest,
+            test_manifest=test_manifest,
+            root_dir=tmp_path,
+            out_dir=tmp_path / "results",
+            figures_dir=tmp_path / "figures",
+            include_subtype=True,
+            include_hierarchical=True,
+            method_names=tuple(spec.name for spec in specs),
+        )
+    )
+
+    assert result.best_family_method == "family_specialist"
+    assert result.best_subtype_method == "hierarchical_classifier"
+
+    exported = pd.read_csv(tmp_path / "results" / "predictions_test.csv")
+    assert exported["family_winner_method"].unique().tolist() == ["family_specialist"]
+    assert exported["family_winner_predicted_family"].tolist() == exported["true_family"].tolist()
+    assert exported["family_winner_family_argmax"].tolist() == exported["true_family"].tolist()
+    assert exported["family_winner_family_confidence"].tolist() == pytest.approx(
+        [0.95] * len(exported)
+    )
+    assert exported["subtype_routing_family_method"].unique().tolist() == [
+        "hierarchical_classifier"
+    ]
+    assert set(exported["subtype_routing_family_argmax"]) == {"sensory_artifact"}
+    assert exported["subtype_routing_family_confidence"].tolist() == pytest.approx(
+        [0.61] * len(exported)
+    )
+    assert exported["predicted_subtype"].tolist() == exported["true_subtype"].tolist()
+    assert (
+        exported["family_winner_family_argmax"]
+        != exported["subtype_routing_family_argmax"]
+    ).any()
+
+
+def test_comparison_fits_scalers_and_estimators_on_training_features_only(
+    tmp_path: Path,
+    monkeypatch,
+):
+    train_manifest, val_manifest, test_manifest = _write_variable_reason_manifests(
+        tmp_path,
+        train_variants=range(2),
+        val_variants=range(1),
+        test_variants=range(3),
+    )
+    split_features = _make_split_features(train_manifest, val_manifest, test_manifest)
+    train_statistics = split_features["train"].statistics.copy()
+    train_family_labels = split_features["train"].metadata["ood_type"].astype(str).to_numpy()
+    train_subtype_labels = split_features["train"].metadata["ood_subtype"].astype(str).to_numpy()
+    scaler_calls: list[np.ndarray] = []
+    logistic_calls: list[tuple[np.ndarray, np.ndarray]] = []
+
+    original_scaler_fit = StandardScaler.fit
+    original_logistic_fit = LogisticRegression.fit
+
+    def _record_scaler_fit(self, X, y=None, sample_weight=None):
+        scaler_calls.append(np.asarray(X, dtype=np.float32).copy())
+        return original_scaler_fit(self, X, y=y, sample_weight=sample_weight)
+
+    def _record_logistic_fit(self, X, y, sample_weight=None):
+        logistic_calls.append(
+            (
+                np.asarray(X, dtype=np.float32).copy(),
+                np.asarray(y).astype(str).copy(),
+            )
+        )
+        return original_logistic_fit(self, X, y, sample_weight=sample_weight)
+
+    monkeypatch.setattr(comparison_module, "_extract_feature_sets", lambda config: split_features)
+    monkeypatch.setattr(StandardScaler, "fit", _record_scaler_fit)
+    monkeypatch.setattr(LogisticRegression, "fit", _record_logistic_fit)
+
+    run_reason_attribution_method_comparison(
+        ComparisonConfig(
+            train_manifest=train_manifest,
+            val_manifest=val_manifest,
+            test_manifest=test_manifest,
+            root_dir=tmp_path,
+            out_dir=tmp_path / "results",
+            figures_dir=tmp_path / "figures",
+            seed=17,
+            include_subtype=True,
+            method_names=("image_statistics_logreg",),
+        )
+    )
+
+    assert len(scaler_calls) == 2
+    for recorded_matrix in scaler_calls:
+        np.testing.assert_allclose(recorded_matrix, train_statistics)
+
+    assert len(logistic_calls) == 2
+    assert all(matrix.shape[0] == len(train_family_labels) for matrix, _ in logistic_calls)
+    assert {tuple(labels.tolist()) for _, labels in logistic_calls} == {
+        tuple(train_family_labels.tolist()),
+        tuple(train_subtype_labels.tolist()),
+    }
+
+
+def test_comparison_writes_canonical_outputs_with_consistent_selection(tmp_path: Path):
+    train_manifest, val_manifest, test_manifest = _write_reason_manifests(tmp_path)
+
+    result = run_reason_attribution_method_comparison(
+        ComparisonConfig(
+            train_manifest=train_manifest,
+            val_manifest=val_manifest,
+            test_manifest=test_manifest,
+            root_dir=tmp_path,
+            out_dir=tmp_path / "results",
+            figures_dir=tmp_path / "figures",
+            seed=23,
+            unknown_threshold=0.5,
+            include_subtype=True,
+            include_hierarchical=True,
+            method_names=("image_statistics_logreg", "nearest_centroid", "hierarchical_classifier"),
+            global_image_size=12,
+            statistics_image_size=16,
+        )
+    )
+
+    out_dir = tmp_path / "results"
+    canonical_paths = {
+        "method_comparison": out_dir / "method_comparison.csv",
+        "family_metrics": out_dir / "family_metrics.csv",
+        "subtype_metrics": out_dir / "subtype_metrics.csv",
+        "selected_models": out_dir / "selected_models.json",
+        "predictions_test": out_dir / "predictions_test.csv",
+        "family_confusion": out_dir / "family_confusion_matrix.csv",
+        "subtype_confusion": out_dir / "subtype_confusion_matrix.csv",
+    }
+
+    for path in canonical_paths.values():
+        assert path.exists()
+
+    selected_models = json.loads(canonical_paths["selected_models"].read_text(encoding="utf-8"))
+    assert selected_models["selected_family_method"] == result.best_family_method
+    assert selected_models["selected_subtype_method"] == result.best_subtype_method
+    assert selected_models["selection_metric_family"] == "family_macro_f1"
+    assert selected_models["selection_metric_subtype"] == "subtype_macro_f1"
+    assert selected_models["test_evaluation_started_after_selection"] is True
+    assert selected_models["split_sizes"] == result.split_sizes
+    assert selected_models["manifests"] == {
+        "train": "<external>/reason_train.csv",
+        "val": "<external>/reason_val.csv",
+        "test": "<external>/reason_test.csv",
+    }
+    assert not any(Path(value).is_absolute() for value in selected_models["manifests"].values())
+
+    family_metrics = pd.read_csv(canonical_paths["family_metrics"])
+    subtype_metrics = pd.read_csv(canonical_paths["subtype_metrics"])
+    selected_family_row = family_metrics[
+        (family_metrics["method"] == result.best_family_method) & (family_metrics["split"] == "val")
+    ].iloc[0]
+    selected_subtype_row = subtype_metrics[
+        (subtype_metrics["method"] == result.best_subtype_method) & (subtype_metrics["split"] == "val")
+    ].iloc[0]
+    assert selected_models["selected_family_validation_value"] == pytest.approx(
+        selected_family_row["family_macro_f1"]
+    )
+    assert selected_models["selected_subtype_validation_value"] == pytest.approx(
+        selected_subtype_row["subtype_macro_f1"]
+    )
+
+    predictions = pd.read_csv(canonical_paths["predictions_test"])
+    assert len(predictions) == result.split_sizes["test"]
+    assert set(
+        [
+            "image_path",
+            "true_family",
+            "true_subtype",
+            "predicted_family",
+            "argmax_family",
+            "family_confidence",
+            "predicted_subtype",
+            "subtype_confidence",
+            "selected_family_method",
+            "selected_subtype_method",
+            "unknown_threshold",
+        ]
+    ).issubset(predictions.columns)
+    assert predictions["selected_family_method"].nunique() == 1
+    assert predictions["selected_family_method"].iloc[0] == result.best_family_method
+    assert predictions["selected_subtype_method"].nunique() == 1
+    assert predictions["selected_subtype_method"].iloc[0] == result.best_subtype_method
+
+    family_confusion = pd.read_csv(canonical_paths["family_confusion"], index_col=0)
+    subtype_confusion = pd.read_csv(canonical_paths["subtype_confusion"], index_col=0)
+    assert int(family_confusion.to_numpy().sum()) == result.split_sizes["test"]
+    assert int(subtype_confusion.to_numpy().sum()) == result.split_sizes["test"]
 
 
 class _FixedEstimator:

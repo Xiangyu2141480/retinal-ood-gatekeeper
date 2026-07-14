@@ -1,0 +1,4 @@
+split,total_rows,unique_image_paths,unique_groups,modality_shift,sensory_artifact,semantic_outlier
+train,1260,1260,630,240,720,300
+validation,420,420,210,80,240,100
+test,420,420,210,80,240,100

@@ -14,7 +14,7 @@ The reason families are `modality_shift`, `sensory_artifact`, and `semantic_outl
 
 The reason attribution manifests were derived from the dataset v1 OOD evaluation split only. No ID rows were included in the Stage 2 reason training, validation, or test manifests. Each row has `label=1`, a reason family in `ood_type`, and a subtype in `ood_subtype`. Patient identifiers, `Eye_ID`, clinical labels, disease labels, and biomarker labels are excluded.
 
-The Stage 2 model was trained with deterministic image-derived features and a balanced logistic-regression classifier. On the held-out reason test split, the reason family classifier achieved:
+The initial PR #24 baseline used deterministic image-derived features and a balanced logistic-regression classifier on the legacy row-level manifests. It is retained as historical context rather than final evidence. On that split, the reason family classifier achieved:
 
 - accuracy: `0.8810`
 - macro-F1: `0.8947`
@@ -29,47 +29,40 @@ With the optional subtype classifier enabled, the subtype results were:
 
 The subtype result is weaker than the family-level result, which is expected because fine-grained artifact categories can share similar low-level visual statistics.
 
-### Multi-method comparison for rejected-input reason attribution
+### Final parent-grouped multi-method comparison
 
-To avoid presenting the Phase 2 explanation layer as a single unchallenged classifier, a systematic
-multi-method comparison was run on the finalized `reason_train`, `reason_val`, and `reason_test`
-splits. The comparison kept the first-stage OOD gatekeeper fixed and unchanged. Stage 1 remains an
-ID-only unsupervised detector that decides whether an input is accepted or rejected; OOD taxonomy
-labels are used only by the optional second-stage explanation module after rejection.
+The final comparison uses `reason_grouped_train`, `reason_grouped_val`, and
+`reason_grouped_test`. A row is grouped by non-empty `parent_image_hash`, otherwise by its own
+`image_path`. Seed 42 produces 1260/420/420 train/validation/test rows, and all pairwise image-path
+and group-ID overlaps are zero. All transformed variants from a common parent remain together in
+one partition; grouping does not make those variants independent within that partition.
 
-The compared Stage 2 methods included image-statistics logistic regression, k-nearest neighbours,
-nearest centroid, logistic regression, linear SVM, random forest, feature-statistics fusion, and a
-hierarchical family-to-subtype classifier. The committed run used deterministic image-derived
-features only: low-level image statistics `h(x)`, pooled-pixel global features `z(x)`, and their
-concatenation. Metadata fields such as file name, source dataset, notes, `ood_type`, and
-`ood_subtype` were not used as input features; reason labels served only as Stage 2 targets.
+All eight candidates were rerun: image-statistics logistic regression, global-feature k-nearest
+neighbours, nearest centroid, logistic regression, linear SVM, random forest, feature-statistics
+fusion, and the hierarchical family-to-subtype classifier. Inputs are image statistics `h(x)`,
+pooled global features `z(x)`, or their concatenation. Metadata, targets, and Stage 1 anomaly scores
+are excluded. Scalers and estimators fit grouped training rows only. Family and subtype methods are
+selected independently by grouped validation macro-F1 with the predefined complexity/name
+tie-breaks; test predictions are computed only after both choices are frozen.
 
-The pre-specified selection rule was validation reason-family macro-F1, with simpler methods
-preferred on ties. Under this rule, `linear_svm` was selected as the family-level explanation
-method. It achieved validation family macro-F1 `0.9908` and held-out test family macro-F1 `0.9901`
-with test accuracy `0.9881`, known coverage `0.9952` at `gamma=0.5`, and an `unknown_ood` rate
-of `0.0048`. This improved over the PR #24 family macro-F1 baseline of `0.8947` by `+0.0954`.
-The fused and hierarchical methods had a slightly higher raw test family macro-F1 (`0.9939`), but
-they were not selected as the final family method because model selection was based on validation
-performance rather than post-hoc test-set ranking.
+Grouped validation selects `feature_statistics_fusion` for family attribution (accuracy 0.9929,
+macro-F1 0.9925). Its retrospective grouped test accuracy and macro-F1 are both 1.0000. Each of the
+three family test F1 values is 1.0000, so no family is uniquely hardest. Grouped validation selects
+the non-oracle `hierarchical_classifier` for subtype attribution (accuracy 0.9238, macro-F1
+0.9059). It reaches grouped test accuracy 0.9357 and macro-F1 0.9176; `text_watermark` is the
+hardest subtype (F1 0.7742). The hierarchy routes with its predicted family rather than an oracle
+ground-truth family.
 
-For subtype attribution, the best method was the `hierarchical_classifier`. It achieved validation
-subtype macro-F1 `0.8671` and test subtype macro-F1 `0.9059`, improving over the PR #24 subtype
-baseline of `0.6724` by `+0.2335`. This result suggests that fine-grained reason attribution
-benefits from first separating broad reason families and then routing to a family-specific subtype
-model. The hierarchy is evaluated using the predicted family at test time, not the ground-truth
-family, so it does not rely on oracle family labels during prediction.
+The legacy row-level protocol is preserved as sensitivity evidence. Grouped-minus-legacy test
+macro-F1 is +0.0099 for family attribution and +0.0116 for subtype attribution. The increase means
+that this deterministic grouped allocation was not harder on those aggregate metrics; it does not
+show that related variants became independent, nor does it establish patient, device, site, or
+clinical generalisation.
 
-The hardest family for the selected `linear_svm` family method was `semantic_outlier`
-(`F1=0.9848`). The hardest subtype for the best hierarchical subtype method was
-`rectangle_annotation` (`F1=0.7241`), consistent with the observation that some visual artifact
-subtypes overlap in simple low-level appearance cues. These subtype predictions should therefore
-be interpreted as likely rejection explanations rather than definitive labels.
-
-This comparison preserves the conceptual boundary of the dissertation. The system remains an
-unsupervised FAF OOD gatekeeper in Stage 1, with an optional post-hoc Stage 2 explanation module.
-It is not a disease classifier, and the reason-attribution experiment should not be described as
-clinical deployment validation.
+This comparison preserves the conceptual boundary of the dissertation. Stage 1 remains the
+ID-only unsupervised gatekeeper and alone decides acceptance or rejection. Stage 2 is optional,
+supervised, and post-rejection. It is not a disease classifier, and its reason labels are likely
+technical explanations rather than clinical diagnoses.
 
 ## Discussion
 

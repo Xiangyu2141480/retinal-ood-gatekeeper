@@ -26,7 +26,7 @@ The completed system contains:
 1. Stage 1 ID-only OOD gatekeeper.
 2. Multi-scheme OOD model comparison.
 3. Robustness and failure analysis.
-4. Optional Stage 2 rejected-input reason attribution.
+4. Optional supervised Stage 2 rejected-input reason attribution after Stage 1 rejection.
 5. Reproducible dataset and Git LFS package.
 6. Dissertation-ready figures and evidence index.
 
@@ -34,7 +34,7 @@ The completed system contains:
 
 - Stage 1 best quantitative method: Mahalanobis feature distance.
 - Stage 1 best localization-oriented method: PatchCore L3.
-- Stage 2 best family method: `linear_svm`.
+- Stage 2 best family method on the final grouped protocol: `feature_statistics_fusion`.
 - Stage 2 best subtype method: `hierarchical_classifier`.
 - Stage 2 is optional post-rejection explanation only; reason labels are likely explanations, not clinical diagnoses.
 
@@ -45,7 +45,8 @@ The completed system contains:
 | Dataset package | `datasets/dissertation_v1/` |
 | Stage 1 results | `reports/dissertation_results/multi_scheme_comparison/` |
 | Robustness and failure analysis | `reports/dissertation_results/robustness_analysis/` |
-| Stage 2 reason-attribution results | `reports/dissertation_results/reason_attribution_method_comparison/` |
+| Final Stage 2 grouped results | `reports/stage2_grouped/` |
+| Legacy Stage 2 row-level results | `reports/dissertation_results/reason_attribution_method_comparison/` |
 | Final figures | `reports/dissertation_figures/` |
 | Final polish tables and captions | `reports/dissertation_final/` |
 | Manuscript draft blocks | `docs/dissertation/manuscript_draft/` |
@@ -85,7 +86,11 @@ The final evidence package includes:
 
 Main result: Mahalanobis feature distance is the strongest quantitative gatekeeper on dataset v1. PatchCore L3 remains useful as a heatmap/localization companion.
 
-Optional Phase 2 result: `linear_svm` is the selected reason-family method with test accuracy 0.9881 and macro-F1 0.9901; the non-oracle `hierarchical_classifier` is the selected subtype method with subtype accuracy 0.9238 and macro-F1 0.9059.
+Optional Phase 2 result: on the final parent-grouped split,
+`feature_statistics_fusion` is selected by validation family macro-F1
+(0.9924836011792534) and reaches grouped test accuracy/macro-F1 1.0000/1.0000.
+The non-oracle `hierarchical_classifier` is selected by validation subtype macro-F1
+(0.9058507271445498) and reaches grouped test accuracy 0.9357 and macro-F1 0.9176.
 
 ## Where To Find Final Figures
 
@@ -93,14 +98,16 @@ Optional Phase 2 result: `linear_svm` is the selected reason-family method with 
 - Generated final figure index: `reports/dissertation_final/final_figure_index.md`
 - Polished figure inventory: `reports/dissertation_final/polished_figure_inventory.md`
 - Existing figure directory: `reports/dissertation_figures/`
-- Phase 2 reason-attribution figures: `reports/dissertation_figures/reason_attribution_method_comparison/`
+- Final grouped Phase 2 figures: `reports/dissertation_figures/stage2_grouped/`
+- Legacy row-level Phase 2 figures: `reports/dissertation_figures/reason_attribution_method_comparison/`
 
 ## Where To Find Final Tables
 
 - Main table shortlist: `docs/dissertation/final_table_shortlist.md`
 - Generated final table index: `reports/dissertation_final/final_table_index.md`
 - Existing result directory: `reports/dissertation_results/`
-- Phase 2 reason-attribution tables: `reports/dissertation_results/reason_attribution_method_comparison/`
+- Final grouped Phase 2 tables: `reports/stage2_grouped/`
+- Legacy row-level Phase 2 tables: `reports/dissertation_results/reason_attribution_method_comparison/`
 
 ## How To Reproduce
 
@@ -139,5 +146,8 @@ This UI is a local software prototype. It is not a clinical device and does not 
 - Synthetic ID fallback is not real clinical FAF validation.
 - Stage 2 reason labels are likely explanations, not clinical diagnoses.
 - OOD labels are used for Stage 2 explanation targets only, not Stage 1 fitting.
-- Stage 2 reason splits are image-path disjoint but not parent-image-hash disjoint for generated sensory artifacts.
+- Final Stage 2 grouped splits are disjoint by image path and group ID, including
+  `parent_image_hash` for generated sensory artifacts. Variants from a common parent remain
+  dependent within their assigned split. This remains a controlled, synthetic-backed benchmark
+  and is not patient-independent clinical validation.
 - Real clinical FAF validation is required before any clinical use.

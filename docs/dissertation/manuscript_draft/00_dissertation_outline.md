@@ -66,7 +66,7 @@ Describe the optional Stage 2 module separately. Stage 2 is invoked only after S
 
 Report the multi-scheme Stage 1 comparison, threshold analysis, robustness analysis, and failure analysis. Mahalanobis is the strongest quantitative Stage 1 model on dataset v1, while PatchCore L3 provides useful heatmap/localisation evidence.
 
-Report the optional Phase 2 method comparison as a separate post-rejection explanation experiment. The selected reason-family method is `linear_svm`; the selected subtype method is the non-oracle `hierarchical_classifier`.
+Report the optional Phase 2 method comparison as a separate post-rejection explanation experiment. Under the final parent-grouped protocol, grouped validation selects `feature_statistics_fusion` for reason-family attribution and the non-oracle `hierarchical_classifier` for subtype attribution.
 
 ### Chapter 6: Discussion
 
@@ -74,6 +74,6 @@ Discuss why global feature-distance methods perform strongly, why local artifact
 
 ### Chapter 7: Limitations and Future Work
 
-Limitations include synthetic ID fallback, curated OOD stress-test distributions, lack of real clinical FAF validation, no prospective threshold calibration, and parent-image-hash overlap in Stage 2 reason splits for generated sensory artifacts.
+Limitations include synthetic ID fallback, curated OOD stress-test distributions, lack of real clinical FAF validation, no prospective threshold calibration, and a controlled closed-set Stage 2 taxonomy. Parent grouping eliminates cross-partition parent/group overlap, but variants from a common synthetic parent remain dependent within one split; this is not patient-, device-, or site-independent validation.
 
-Future work should validate on real clinical FAF data, calibrate thresholds prospectively, expand subtle local artifact coverage, and regenerate Stage 2 reason splits grouped by `parent_image_hash`.
+Future work should validate on real clinical FAF data, calibrate thresholds prospectively, expand subtle local artifact coverage, repeat grouped Stage 2 evaluation across seeds, and assess explanations on real rejection cases.

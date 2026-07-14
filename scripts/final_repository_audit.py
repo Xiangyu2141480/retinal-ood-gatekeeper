@@ -63,8 +63,18 @@ REQUIRED_SOURCE_EVIDENCE = [
     Path("datasets/dissertation_v1/manifests/test_id_synthetic_fallback.csv"),
 ]
 
-PRIVATE_PATH_TOKENS = ["C:" + "\\Users\\", "/" + "Users/", "Documents" + "/Codex"]
-PRIVATE_PATH_RE = re.compile("|".join(re.escape(token) for token in PRIVATE_PATH_TOKENS))
+WINDOWS_ABSOLUTE_PATH_RE = r"(?<![a-z])[a-z]:(?:\\+|/(?!/))"
+PRIVATE_PATH_TOKENS = ["/" + "Users/", "Documents" + "/Codex"]
+PRIVATE_OVERLEAF_RE = "git\\.overleaf\\.com/" + "[a-z0-9]+"
+PRIVATE_PATH_RE = re.compile(
+    "(?i)(?:"
+    + WINDOWS_ABSOLUTE_PATH_RE
+    + "|"
+    + "|".join(re.escape(token) for token in PRIVATE_PATH_TOKENS)
+    + "|"
+    + PRIVATE_OVERLEAF_RE
+    + ")"
+)
 SECRET_RE = re.compile(
     r"(?i)((api[_-]?key|secret|password|token)\s*[:=]\s*\S+|"
     r"gh[opsu]_[A-Za-z0-9_]+|sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|"

@@ -304,6 +304,14 @@ def test_final_repository_audit_passes_clean_fixture_and_fails_private_path(tmp_
     assert not dirty.passed
     assert any("private path" in failure.lower() for failure in dirty.failures)
 
+    (tmp_path / "docs/dissertation/private_note.md").unlink()
+    private_drive_path = "D:" + "\\research\\private\\manuscript"
+    _write(tmp_path / "docs/dissertation/private_drive_note.md", private_drive_path)
+    dirty_drive = module.run_audit(repo_root=tmp_path)
+
+    assert not dirty_drive.passed
+    assert any("private path" in failure.lower() for failure in dirty_drive.failures)
+
 
 def test_final_repository_audit_cli_writes_json(tmp_path: Path):
     module = _load_script("scripts/final_repository_audit.py", "final_repository_audit")

@@ -1,0 +1,4 @@
+,modality_shift,sensory_artifact,semantic_outlier
+modality_shift,80,0,0
+sensory_artifact,0,240,0
+semantic_outlier,0,0,100

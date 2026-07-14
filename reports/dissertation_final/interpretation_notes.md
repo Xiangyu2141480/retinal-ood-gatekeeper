@@ -114,15 +114,43 @@ Interpretation: Stage 2 explains possible rejection reasons after the Stage 1 de
 
 Why it matters: Prevents leakage or disease-classifier misinterpretation.
 
+## figure_grouped_stage2_method_comparison.png
+
+Interpretation: Grouped validation selects `feature_statistics_fusion` for family attribution and the non-oracle `hierarchical_classifier` for subtype attribution. The grouped test scores are retrospective and were not used for selection.
+
+Why it matters: This is the canonical Stage 2 model-comparison figure; Stage 1 remains the sole ID-only unsupervised rejection gate.
+
+## figure_grouped_family_confusion_matrix.png
+
+Interpretation: The selected family method separates all 420 grouped test cases correctly. All three family F1 values are 1.0000, so there is no unique hardest family.
+
+Why it matters: It shows the controlled benchmark result and its fixed sample size, while the synthetic-backed setting prevents a clinical-generalisation claim.
+
+## figure_grouped_subtype_confusion_matrix.png
+
+Interpretation: The non-oracle hierarchy reaches grouped test accuracy 0.9357 and macro-F1 0.9176; `text_watermark` is the weakest subtype at F1 0.7742.
+
+Why it matters: It exposes the remaining fine-grained errors after parent groups are kept within one partition.
+
+## figure_legacy_vs_grouped_stage2_metrics.png
+
+Interpretation: Grouped metrics are slightly higher than legacy row-level metrics in this deterministic allocation. Parent grouping eliminates cross-partition overlap but does not make variants within a split independent.
+
+Why it matters: It frames the rerun as split-sensitivity evidence, not proof of clinical or patient-independent generalisation.
+
+## Legacy row-level Stage 2 figures
+
+The notes below refer to the preserved row-level package and are retained only for historical sensitivity analysis.
+
 ## figure_reason_method_family_macro_f1.png
 
-Interpretation: `linear_svm` is selected as the final family attribution method by validation macro-F1 and holds strong test macro-F1.
+Interpretation: `linear_svm` was selected within the legacy row-level family-attribution protocol; it is not the final grouped family method.
 
 Why it matters: Main Stage 2 quantitative comparison.
 
 ## figure_stage2_method_comparison_combined.png
 
-Interpretation: The combined Stage 2 figure presents explanation performance without changing the Stage 1 ID-only OOD gatekeeper boundary.
+Interpretation: The legacy combined Stage 2 figure preserves the earlier row-level comparison without changing the Stage 1 ID-only OOD gatekeeper boundary.
 
 Why it matters: Recommended main-text Stage 2 comparison figure.
 
@@ -140,7 +168,7 @@ Why it matters: Main Stage 2 subtype-selection figure.
 
 ## figure_best_reason_family_confusion_matrix.png
 
-Interpretation: Most family-level errors occur for semantic outliers, the hardest reason family.
+Interpretation: In the legacy row-level result, family-level errors were concentrated among semantic outliers; this is not the final grouped error structure.
 
 Why it matters: Shows error structure rather than only aggregate performance.
 
@@ -152,7 +180,7 @@ Why it matters: Useful when discussing family-level error rates rather than coun
 
 ## figure_best_subtype_confusion_matrix.png
 
-Interpretation: The subtype classifier performs strongly overall but leaves rectangle annotation as the hardest subtype.
+Interpretation: In the legacy row-level result, rectangle annotation was the hardest subtype; the grouped protocol instead identifies `text_watermark` as weakest.
 
 Why it matters: Best figure for fine-grained Stage 2 limitations.
 

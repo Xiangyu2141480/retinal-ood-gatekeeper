@@ -1,8 +1,8 @@
 {
-  "root_dir": "C:\\Users\\cuixi\\Documents\\Codex\\2026-06-15\\goal-github-superpowers-goal-train-the\\work\\retinal-ood-gatekeeper\\data",
+  "root_dir": "data",
   "manifests": [
     {
-      "path": "C:\\Users\\cuixi\\Documents\\Codex\\2026-06-15\\goal-github-superpowers-goal-train-the\\work\\retinal-ood-gatekeeper\\datasets\\dissertation_v1\\manifests\\train_id.csv",
+      "path": "datasets/dissertation_v1/manifests/train_id.csv",
       "rows": 700,
       "counts": {
         "label": {
@@ -27,7 +27,7 @@
       "recommended_missing_columns": []
     },
     {
-      "path": "C:\\Users\\cuixi\\Documents\\Codex\\2026-06-15\\goal-github-superpowers-goal-train-the\\work\\retinal-ood-gatekeeper\\datasets\\dissertation_v1\\manifests\\val_id.csv",
+      "path": "datasets/dissertation_v1/manifests/val_id.csv",
       "rows": 150,
       "counts": {
         "label": {
@@ -52,7 +52,7 @@
       "recommended_missing_columns": []
     },
     {
-      "path": "C:\\Users\\cuixi\\Documents\\Codex\\2026-06-15\\goal-github-superpowers-goal-train-the\\work\\retinal-ood-gatekeeper\\datasets\\dissertation_v1\\manifests\\test_id_synthetic_fallback.csv",
+      "path": "datasets/dissertation_v1/manifests/test_id_synthetic_fallback.csv",
       "rows": 150,
       "counts": {
         "label": {
@@ -77,7 +77,7 @@
       "recommended_missing_columns": []
     },
     {
-      "path": "C:\\Users\\cuixi\\Documents\\Codex\\2026-06-15\\goal-github-superpowers-goal-train-the\\work\\retinal-ood-gatekeeper\\datasets\\dissertation_v1\\manifests\\test_ood_balanced_by_subtype.csv",
+      "path": "datasets/dissertation_v1/manifests/test_ood_balanced_by_subtype.csv",
       "rows": 1650,
       "counts": {
         "label": {

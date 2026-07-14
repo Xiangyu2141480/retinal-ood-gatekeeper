@@ -30,6 +30,7 @@ from retinal_ood.visualization.dissertation_style import (  # noqa: E402
 FINAL_DIR = ROOT / "reports" / "dissertation_final"
 FIG_DIR = ROOT / "reports" / "dissertation_figures"
 RESULTS_DIR = ROOT / "reports" / "dissertation_results"
+GROUPED_STAGE2_DIR = ROOT / "reports" / "stage2_grouped"
 MANIFEST_DIR = ROOT / "datasets" / "dissertation_v1" / "manifests"
 GENERATED_RUNS_DIR = ROOT / "reports" / "generated" / "dissertation_runs"
 
@@ -174,23 +175,17 @@ def _load_tables() -> dict[str, pd.DataFrame]:
         "threshold": _read_csv(RESULTS_DIR / "robustness_analysis" / "threshold_policy_sweep.csv"),
         "pca": _read_csv(RESULTS_DIR / "robustness_analysis" / "feature_space_projection.csv"),
         "stage2_family": _read_csv(
-            RESULTS_DIR / "reason_attribution_method_comparison" / "family_metrics_by_method.csv"
+            GROUPED_STAGE2_DIR / "family_metrics.csv"
         ),
         "stage2_subtype": _read_csv(
-            RESULTS_DIR / "reason_attribution_method_comparison" / "subtype_metrics_by_method.csv"
+            GROUPED_STAGE2_DIR / "subtype_metrics.csv"
         ),
-        "stage2_best": _read_csv(
-            RESULTS_DIR / "reason_attribution_method_comparison" / "best_method_summary.csv"
-        ),
+        "stage2_best": _read_csv(GROUPED_STAGE2_DIR / "best_method_summary.csv"),
         "family_cm": _read_csv(
-            RESULTS_DIR
-            / "reason_attribution_method_comparison"
-            / "best_reason_family_confusion_matrix.csv"
+            GROUPED_STAGE2_DIR / "family_confusion_matrix.csv"
         ),
         "subtype_cm": _read_csv(
-            RESULTS_DIR
-            / "reason_attribution_method_comparison"
-            / "best_subtype_confusion_matrix.csv"
+            GROUPED_STAGE2_DIR / "subtype_confusion_matrix.csv"
         ),
     }
 
@@ -255,7 +250,9 @@ def _stage2_method_summary(family: pd.DataFrame, subtype: pd.DataFrame) -> pd.Da
         how="left",
     )
     table["selected_role"] = ""
-    table.loc[table["method"].eq("linear_svm"), "selected_role"] = "Selected family method"
+    table.loc[
+        table["method"].eq("feature_statistics_fusion"), "selected_role"
+    ] = "Selected family method"
     table.loc[
         table["method"].eq("hierarchical_classifier"),
         "selected_role",
@@ -296,23 +293,17 @@ def _recommended_model_summary() -> pd.DataFrame:
         },
         {
             "stage": "Stage 2",
-            "recommendation": "linear_svm",
+            "recommendation": "feature_statistics_fusion",
             "role": "Best reason-family attribution method",
-            "key_metric": "Family accuracy 0.9881; macro-F1 0.9901",
-            "evidence": (
-                "reports/dissertation_results/reason_attribution_method_comparison/"
-                "best_method_summary.csv"
-            ),
+            "key_metric": "Grouped test accuracy 1.0000; macro-F1 1.0000",
+            "evidence": "reports/stage2_grouped/selected_models.json",
         },
         {
             "stage": "Stage 2",
             "recommendation": "hierarchical_classifier",
             "role": "Best reason-subtype attribution method",
-            "key_metric": "Subtype accuracy 0.9238; macro-F1 0.9059",
-            "evidence": (
-                "reports/dissertation_results/reason_attribution_method_comparison/"
-                "best_method_summary.csv"
-            ),
+            "key_metric": "Grouped test accuracy 0.9357; macro-F1 0.9176",
+            "evidence": "reports/stage2_grouped/selected_models.json",
         },
     ]
     return pd.DataFrame(rows)
@@ -341,9 +332,9 @@ def _limitations_summary() -> pd.DataFrame:
             "safe_wording": "Likely explanations, not clinical diagnoses.",
         },
         {
-            "limitation": "Parent-image-hash overlap",
-            "why_it_matters": "Generated artifact variants share parents across Stage 2 splits.",
-            "safe_wording": "Stage 2 scores may be optimistic for parent-independent generalization.",
+            "limitation": "Within-split derived-variant dependence",
+            "why_it_matters": "Parent grouping removes cross-partition overlap, not dependence within a split.",
+            "safe_wording": "Grouped Stage 2 is not patient-independent clinical validation.",
         },
     ]
     return pd.DataFrame(rows)
@@ -374,27 +365,21 @@ def _claim_evidence_matrix() -> pd.DataFrame:
         },
         {
             "claim": "Stage 2 is optional post-rejection reason attribution.",
-            "evidence": "docs/experiments/reason_attribution_method_comparison.md",
+            "evidence": "docs/experiments/reason_attribution_parent_grouped.md",
             "figure_or_table": "figure_two_stage_updated_pipeline.png",
             "limitation": "Supervised explanation layer; not Stage 1 training.",
         },
         {
-            "claim": "linear_svm is the best reason-family method.",
-            "evidence": (
-                "reports/dissertation_results/reason_attribution_method_comparison/"
-                "best_method_summary.csv"
-            ),
-            "figure_or_table": "figure_reason_method_family_macro_f1.png",
+            "claim": "feature_statistics_fusion is the grouped-validation reason-family method.",
+            "evidence": "reports/stage2_grouped/selected_models.json",
+            "figure_or_table": "figure_grouped_stage2_method_comparison.png",
             "limitation": "Scores are not clinical diagnosis performance.",
         },
         {
             "claim": "hierarchical_classifier is the best reason-subtype method.",
-            "evidence": (
-                "reports/dissertation_results/reason_attribution_method_comparison/"
-                "best_method_summary.csv"
-            ),
-            "figure_or_table": "figure_best_subtype_confusion_matrix.png",
-            "limitation": "Parent-image-hash overlap remains documented.",
+            "evidence": "reports/stage2_grouped/selected_models.json",
+            "figure_or_table": "figure_grouped_subtype_confusion_matrix.png",
+            "limitation": "Closed-set synthetic-backed attribution, not clinical diagnosis.",
         },
     ]
     return pd.DataFrame(rows)
@@ -538,7 +523,7 @@ def _write_polished_figures(tables: dict[str, pd.DataFrame], *, dpi: int) -> Non
         tables["family_cm"],
         reason_dir / "figure_best_reason_family_confusion_matrix.png",
         title="Stage 2 reason-family attribution confusion matrix",
-        subtitle="Method: linear_svm; counts",
+        subtitle="Method: feature_statistics_fusion; counts",
         label_mode="family",
         normalize=False,
         dpi=dpi,
@@ -547,7 +532,7 @@ def _write_polished_figures(tables: dict[str, pd.DataFrame], *, dpi: int) -> Non
         tables["family_cm"],
         reason_dir / "figure_best_reason_family_confusion_matrix_normalized.png",
         title="Stage 2 reason-family attribution confusion matrix",
-        subtitle="Method: linear_svm; row-normalized percentages",
+        subtitle="Method: feature_statistics_fusion; row-normalized percentages",
         label_mode="family",
         normalize=True,
         dpi=dpi,
@@ -1059,10 +1044,10 @@ def _plot_stage2_method_comparison_combined(
         ax_family,
         family,
         metric="family_macro_f1",
-        selected_method="linear_svm",
+        selected_method="feature_statistics_fusion",
         title="(a) Reason-family macro-F1",
         xlim=(0.70, 1.01),
-        note="Linear SVM selected\nby validation rule",
+        note="Feature+stats fusion selected\nby grouped validation",
         baseline=0.8947,
     )
     _plot_stage2_split_lollipop(
@@ -1400,7 +1385,9 @@ def _plot_stage2_method_comparison(family: pd.DataFrame, path: Path, *, dpi: int
     table = family[family["split"].astype(str).eq("test")].copy()
     table = table.sort_values("family_macro_f1", ascending=True)
     labels = table["method"].map(_short_reason_method_label)
-    colors = [GREEN if method == "linear_svm" else BLUE for method in table["method"]]
+    colors = [
+        GREEN if method == "feature_statistics_fusion" else BLUE for method in table["method"]
+    ]
     fig, ax = plt.subplots(figsize=(8.2, 5.0))
     bars = ax.barh(np.arange(len(table)), table["family_macro_f1"], color=colors)
     ax.axvline(0.8947, linestyle="--", color=GRAY, linewidth=1.2, label="PR #24 baseline")
@@ -2052,13 +2039,13 @@ def _write_caption_and_interpretation_notes() -> None:
         {
             "file": "figure_reason_method_family_macro_f1.png",
             "caption": (
-                "Stage 2 reason-family method comparison with the PR #24 baseline shown. Linear SVM was "
-                "selected using validation macro-F1 and the predefined simplicity/tie-breaking rule, rather "
-                "than by selecting the largest test-set score."
+                "Parent-grouped Stage 2 reason-family method comparison. Feature-statistics "
+                "fusion was selected using grouped-validation macro-F1 and the predefined "
+                "complexity/name tie-breaking rule before grouped-test evaluation."
             ),
             "interpretation": (
-                "`linear_svm` is selected as the final family attribution method by validation "
-                "macro-F1 and holds strong test macro-F1."
+                "`feature_statistics_fusion` is the grouped-validation family attribution "
+                "method and reaches grouped-test accuracy and macro-F1 of 1.0000."
             ),
             "why": "Main Stage 2 quantitative comparison.",
         },
@@ -2067,8 +2054,8 @@ def _write_caption_and_interpretation_notes() -> None:
             "caption": (
                 "Stage 2 reason-attribution method comparison for rejected inputs. Panel (a) shows "
                 "reason-family macro-F1 and panel (b) shows reason-subtype macro-F1; the selected "
-                "methods are linear SVM for family attribution and the non-oracle hierarchical "
-                "classifier for subtype attribution."
+                "methods are feature-statistics fusion for family attribution and the non-oracle "
+                "hierarchical classifier for subtype attribution."
             ),
             "interpretation": (
                 "The combined Stage 2 figure presents explanation performance without changing the "
@@ -2096,16 +2083,23 @@ def _write_caption_and_interpretation_notes() -> None:
         },
         {
             "file": "figure_best_reason_family_confusion_matrix.png",
-            "caption": "Count confusion matrix for Stage 2 reason-family attribution using `linear_svm`.",
+            "caption": (
+                "Count confusion matrix for parent-grouped Stage 2 reason-family attribution "
+                "using `feature_statistics_fusion`."
+            ),
             "interpretation": (
-                "Most family-level errors occur for semantic outliers, the hardest reason family."
+                "All three reason families have grouped-test F1 of 1.0000, so there is no unique "
+                "hardest family in this split."
             ),
             "why": "Shows error structure rather than only aggregate performance.",
         },
         {
             "file": "figure_best_reason_family_confusion_matrix_normalized.png",
-            "caption": "Row-normalized confusion matrix for Stage 2 reason-family attribution using `linear_svm`.",
-            "interpretation": "Percentages make the rare family-level errors easier to compare across rows.",
+            "caption": (
+                "Row-normalized confusion matrix for parent-grouped Stage 2 reason-family "
+                "attribution using `feature_statistics_fusion`."
+            ),
+            "interpretation": "Every family row is classified correctly in the grouped test split.",
             "why": "Useful when discussing family-level error rates rather than counts.",
         },
         {
@@ -2115,8 +2109,8 @@ def _write_caption_and_interpretation_notes() -> None:
                 "`hierarchical_classifier`. Short labels are defined in `subtype_label_mapping.md`."
             ),
             "interpretation": (
-                "The subtype classifier performs strongly overall but leaves rectangle annotation as "
-                "the hardest subtype."
+                "The subtype classifier performs strongly overall but leaves text watermark as "
+                "the hardest grouped-test subtype."
             ),
             "why": "Best figure for fine-grained Stage 2 limitations.",
         },
@@ -2351,7 +2345,7 @@ def _final_figure_rows() -> list[dict[str, str]]:
             "main text",
             "must_include",
             "Shows selected family and subtype attribution methods without changing the Stage 1 boundary.",
-            "Stage 2 reason-attribution method comparison. Linear SVM is selected for family attribution by the validation rule and simplicity/tie-breaking; the non-oracle hierarchical classifier is selected for subtype attribution.",
+            "Parent-grouped Stage 2 reason-attribution method comparison. Feature-statistics fusion is selected for family attribution by grouped validation; the non-oracle hierarchical classifier is selected for subtype attribution.",
         ),
         _figure_row(
             "reports/dissertation_figures/reason_attribution_method_comparison/figure_best_reason_family_confusion_matrix.png",
@@ -2359,8 +2353,8 @@ def _final_figure_rows() -> list[dict[str, str]]:
             "Experiments and Results",
             "main text",
             "must_include",
-            "Shows family-level attribution errors, all originating from semantic outlier samples.",
-            "Count confusion matrix for Stage 2 reason-family attribution using `linear_svm`. All three family-level errors originate from semantic outlier samples.",
+            "Shows perfect grouped-test family attribution across the three reason families.",
+            "Count confusion matrix for parent-grouped Stage 2 family attribution using `feature_statistics_fusion`; every family has test F1 1.0000.",
         ),
         _figure_row(
             "reports/dissertation_figures/figure_score_distribution_with_threshold.png",
@@ -2475,9 +2469,9 @@ def _write_figure_revision_report() -> None:
         ("06+07 PatchCore ablation", "combined", "New two-panel layer-ablation figure with detection and safety-oriented metrics.", "reports/dissertation_figures/figure_patchcore_layer_ablation_combined.png", "reports/dissertation_results/primary_balanced_by_subtype_10k/layer_ablation_table.csv"),
         ("08 Threshold trade-off", "regenerated", "Deployment and research thresholds use different markers; ID-validation-only note added.", "reports/dissertation_figures/robustness/figure_threshold_policy_tradeoff.png", "reports/dissertation_results/robustness_analysis/threshold_policy_sweep.csv"),
         ("09 PCA", "moved_to_appendix", "Marked as qualitative two-dimensional projection only.", "reports/dissertation_figures/robustness/figure_feature_space_pca_by_ood_type.png", "reports/dissertation_results/robustness_analysis/feature_space_projection.csv"),
-        ("11+12 Stage 2 methods", "combined", "New two-panel validation/test macro-F1 figure preserving validation-rule family selection.", "reports/dissertation_figures/reason_attribution_method_comparison/figure_stage2_method_comparison_combined.png", "family_metrics_by_method.csv; subtype_metrics_by_method.csv"),
-        ("13 Family confusion", "regenerated", "British-English display labels retained with raw counts.", "reports/dissertation_figures/reason_attribution_method_comparison/figure_best_reason_family_confusion_matrix.png", "best_reason_family_confusion_matrix.csv"),
-        ("14 Subtype confusion", "moved_to_appendix", "Short labels CF/OCT/TXT/RECT/etc. replace opaque S1-S11 labels.", "reports/dissertation_figures/reason_attribution_method_comparison/figure_best_subtype_confusion_matrix.png", "best_subtype_confusion_matrix.csv; subtype_label_mapping.md"),
+        ("11+12 Stage 2 methods", "combined", "Two-panel grouped validation/test macro-F1 figure preserving validation-only selection.", "reports/dissertation_figures/reason_attribution_method_comparison/figure_stage2_method_comparison_combined.png", "reports/stage2_grouped/family_metrics.csv; reports/stage2_grouped/subtype_metrics.csv"),
+        ("13 Family confusion", "regenerated", "British-English display labels retained with grouped-test raw counts.", "reports/dissertation_figures/reason_attribution_method_comparison/figure_best_reason_family_confusion_matrix.png", "reports/stage2_grouped/family_confusion_matrix.csv"),
+        ("14 Subtype confusion", "moved_to_appendix", "Short labels CF/OCT/TXT/RECT/etc. replace opaque S1-S11 labels.", "reports/dissertation_figures/reason_attribution_method_comparison/figure_best_subtype_confusion_matrix.png", "reports/stage2_grouped/subtype_confusion_matrix.csv; subtype_label_mapping.md"),
         ("15/16 ROC/PR", "regenerated", "Full eight-method ROC/PR curves regenerated from per-sample score files.", "reports/dissertation_figures/figure_roc_overall_model_comparison.png; reports/dissertation_figures/figure_pr_overall_model_comparison.png", "reports/generated/dissertation_runs/*/runs/*/evaluation/scores.csv"),
         ("17 Per-family comparison", "regenerated", "Full eight-method family-level AUROC heatmap regenerated from committed CSV.", "reports/dissertation_figures/figure_per_ood_type_comparison.png", "reports/dissertation_results/multi_scheme_comparison/per_ood_type_by_scheme.csv"),
         ("18 Per-subtype heatmap", "appendix_retained", "Retained as detailed appendix diagnostic heatmap.", "reports/dissertation_figures/figure_per_ood_subtype_by_scheme.png", "reports/dissertation_results/multi_scheme_comparison/per_ood_subtype_by_scheme.csv"),
