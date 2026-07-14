@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
+import shutil
 
 import pandas as pd
 import pytest
@@ -186,30 +187,68 @@ def _write_fixture_outputs(out_dir: Path, legacy_dir: Path) -> None:
     legacy_subtype.to_csv(legacy_dir / "subtype_metrics_by_method.csv", index=False)
 
 
-def test_report_package_uses_generated_evidence_and_preserves_legacy(tmp_path: Path):
+def test_report_package_uses_generated_evidence_and_preserves_legacy(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
     module = _load_report_module()
     out_dir = tmp_path / "grouped"
     legacy_dir = tmp_path / "legacy"
     figures_dir = tmp_path / "figures"
-    _write_fixture_outputs(out_dir, legacy_dir)
+    fixture_dir = tmp_path / "fixture"
+    _write_fixture_outputs(fixture_dir, legacy_dir)
     hashes_before = module.snapshot_tree_hashes(legacy_dir)
+    repository = Path(__file__).resolve().parents[1]
+    manifests = repository / "datasets" / "dissertation_v1" / "manifests"
 
-    result = module.finalize_grouped_report(
+    def _fake_grouped_evaluation(**kwargs: object) -> None:
+        shutil.copytree(fixture_dir, Path(kwargs["out_dir"]), dirs_exist_ok=True)
+
+    monkeypatch.setattr(module, "run_grouped_evaluation", _fake_grouped_evaluation)
+
+    result = module.generate_stage2_grouped_report(
+        root_dir=repository / "data",
+        input_manifest=manifests / "test_ood_full.csv",
+        train_manifest=manifests / "reason_grouped_train.csv",
+        val_manifest=manifests / "reason_grouped_val.csv",
+        test_manifest=manifests / "reason_grouped_test.csv",
         out_dir=out_dir,
         legacy_dir=legacy_dir,
         figures_dir=figures_dir,
-        overlap_summary=pd.DataFrame(
-            {
-                "overlap_scope": ["train-val", "train-test", "val-test", "all-three"],
-                "image_path_overlap_count": [0, 0, 0, 0],
-                "group_id_overlap_count": [0, 0, 0, 0],
-            }
-        ),
+        seed=42,
     )
 
     assert module.snapshot_tree_hashes(legacy_dir) == hashes_before
     assert result.selected_family_method == "linear_svm"
     assert result.selected_subtype_method == "hierarchical_classifier"
+    overlap = pd.read_csv(out_dir / "group_overlap_summary.csv")
+    assert overlap["image_path_overlap_count"].tolist() == [0, 0, 0, 0]
+    assert overlap["group_id_overlap_count"].tolist() == [0, 0, 0, 0]
+    provenance = json.loads((out_dir / "generation_provenance.json").read_text(encoding="utf-8"))
+    assert provenance["train_manifest"] == (
+        "datasets/dissertation_v1/manifests/reason_grouped_train.csv"
+    )
+    assert provenance["image_root"] == "data"
+    assert not any(":\\" in str(value) for value in provenance.values())
+
+    bad_val = tmp_path / "reason_grouped_val_with_overlap.csv"
+    train_frame = pd.read_csv(manifests / "reason_grouped_train.csv")
+    val_frame = pd.read_csv(manifests / "reason_grouped_val.csv")
+    val_frame.loc[0] = train_frame.loc[0]
+    val_frame.loc[0, "split"] = "val"
+    val_frame.to_csv(bad_val, index=False)
+    with pytest.raises(ValueError, match="overlap"):
+        module.generate_stage2_grouped_report(
+            root_dir=repository / "data",
+            input_manifest=manifests / "test_ood_full.csv",
+            train_manifest=manifests / "reason_grouped_train.csv",
+            val_manifest=bad_val,
+            test_manifest=manifests / "reason_grouped_test.csv",
+            out_dir=tmp_path / "bad_grouped",
+            legacy_dir=legacy_dir,
+            figures_dir=tmp_path / "bad_figures",
+            seed=42,
+        )
 
     comparison = pd.read_csv(out_dir / "legacy_vs_grouped_comparison.csv")
     assert comparison.columns.tolist() == [

@@ -11,6 +11,7 @@ import sys
 from time import perf_counter
 from typing import NamedTuple
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import matplotlib
@@ -22,8 +23,10 @@ import numpy as np
 import pandas as pd
 
 from retinal_ood.evaluation.report_tables import dataframe_to_markdown
+from audit_stage2_grouped import audit_grouped_manifests
 from retinal_ood.reason_attribution.comparison import (
     ComparisonConfig,
+    portable_artifact_path,
     run_reason_attribution_method_comparison,
     select_best_method,
 )
@@ -138,7 +141,7 @@ def run_grouped_evaluation(
     )
     selected_path = Path(out_dir) / "selected_models.json"
     selected = json.loads(selected_path.read_text(encoding="utf-8"))
-    selected["image_root"] = str(image_root)
+    selected["image_root"] = portable_artifact_path(image_root)
     selected["image_path_resolution"] = (
         "Manifest image_path is resolved relative to root_dir: "
         "images/... -> data/images/..."
@@ -241,6 +244,7 @@ def finalize_grouped_report(
 def generate_stage2_grouped_report(
     *,
     root_dir: str | Path,
+    input_manifest: str | Path,
     train_manifest: str | Path,
     val_manifest: str | Path,
     test_manifest: str | Path,
@@ -252,6 +256,14 @@ def generate_stage2_grouped_report(
     """Run the grouped experiment and create its complete evidence package."""
     legacy_hashes = snapshot_tree_hashes(legacy_dir)
     start = perf_counter()
+    audit = audit_grouped_manifests(
+        input_manifest=input_manifest,
+        train_manifest=train_manifest,
+        val_manifest=val_manifest,
+        test_manifest=test_manifest,
+        out_dir=out_dir,
+        seed=seed,
+    )
     run_grouped_evaluation(
         root_dir=root_dir,
         train_manifest=train_manifest,
@@ -265,6 +277,7 @@ def generate_stage2_grouped_report(
         out_dir=out_dir,
         legacy_dir=legacy_dir,
         figures_dir=figures_dir,
+        overlap_summary=pd.read_csv(audit.group_overlap_summary_path),
     )
     legacy_hashes_after = snapshot_tree_hashes(legacy_dir)
     if legacy_hashes_after != legacy_hashes:
@@ -275,11 +288,14 @@ def generate_stage2_grouped_report(
         "global_image_size": 24,
         "statistics_image_size": 224,
         "required_methods": list(REQUIRED_METHODS),
-        "image_root": str(Path(root_dir)),
+        "image_root": portable_artifact_path(root_dir),
         "image_path_resolution": "images/... -> data/images/...",
-        "train_manifest": str(Path(train_manifest)),
-        "validation_manifest": str(Path(val_manifest)),
-        "test_manifest": str(Path(test_manifest)),
+        "input_manifest": portable_artifact_path(input_manifest),
+        "train_manifest": portable_artifact_path(train_manifest),
+        "validation_manifest": portable_artifact_path(val_manifest),
+        "test_manifest": portable_artifact_path(test_manifest),
+        "input_manifest_sha256": audit.input_sha256,
+        "grouped_manifest_sha256": audit.manifest_sha256,
         "runtime_seconds": perf_counter() - start,
         "legacy_hashes_before": legacy_hashes,
         "legacy_hashes_after": legacy_hashes_after,
@@ -674,13 +690,16 @@ def _save_figure(figure: plt.Figure, output_stem: Path) -> list[Path]:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    repository = Path(__file__).resolve().parents[1]
-    manifests = repository / "datasets" / "dissertation_v1" / "manifests"
+    manifests = Path("datasets/dissertation_v1/manifests")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--root-dir",
-        default=str(repository / "data"),
+        default="data",
         help="Image root; manifest images/... paths resolve under this data directory.",
+    )
+    parser.add_argument(
+        "--input-manifest",
+        default=str(manifests / "test_ood_full.csv"),
     )
     parser.add_argument(
         "--train-manifest",
@@ -696,17 +715,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--legacy-dir",
-        default=str(
-            repository
-            / "reports"
-            / "dissertation_results"
-            / "reason_attribution_method_comparison"
-        ),
+        default="reports/dissertation_results/reason_attribution_method_comparison",
     )
-    parser.add_argument("--out-dir", default=str(repository / "reports" / "stage2_grouped"))
+    parser.add_argument("--out-dir", default="reports/stage2_grouped")
     parser.add_argument(
         "--figures-dir",
-        default=str(repository / "reports" / "dissertation_figures" / "stage2_grouped"),
+        default="reports/dissertation_figures/stage2_grouped",
     )
     parser.add_argument("--seed", type=int, default=42)
     return parser
@@ -716,6 +730,7 @@ def main() -> None:
     args = _build_parser().parse_args()
     result = generate_stage2_grouped_report(
         root_dir=args.root_dir,
+        input_manifest=args.input_manifest,
         train_manifest=args.train_manifest,
         val_manifest=args.val_manifest,
         test_manifest=args.test_manifest,

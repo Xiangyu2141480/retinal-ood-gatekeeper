@@ -1,7 +1,14 @@
 {
   "global_image_size": 24,
+  "grouped_manifest_sha256": {
+    "test": "0f53228034975967e1ed15dba214e71bc89e2d770ea0e8f087f10aaaef059367",
+    "train": "7c4ccfce72d1e169351633c341af68b69e1e65a6a9c28b9cb2f45dfe243a4b55",
+    "val": "2250c2694b6f8479523b7fce62cf63476cb0881abb20878946a1b76194644f61"
+  },
   "image_path_resolution": "images/... -> data/images/...",
   "image_root": "data",
+  "input_manifest": "datasets/dissertation_v1/manifests/test_ood_full.csv",
+  "input_manifest_sha256": "5e2f94755ea052bb46f025384ab81d51d64af4d089708d4212ce6fbeb05a8a63",
   "legacy_hashes_after": {
     "best_method_summary.csv": "597cb719088c7b992c028ac507195e5c69e298f27a2d893fb31ae547e6ddaa2c",
     "best_method_summary.md": "c80b50c9bb013d3744ac221c21e59a9aa5d854dfd88c2434b7c4b90045f783fd",
@@ -55,8 +62,8 @@
   "runtime_seconds": 82.97843790007755,
   "seed": 42,
   "statistics_image_size": 224,
-  "test_manifest": "datasets\\dissertation_v1\\manifests\\reason_grouped_test.csv",
-  "train_manifest": "datasets\\dissertation_v1\\manifests\\reason_grouped_train.csv",
+  "test_manifest": "datasets/dissertation_v1/manifests/reason_grouped_test.csv",
+  "train_manifest": "datasets/dissertation_v1/manifests/reason_grouped_train.csv",
   "unknown_threshold": 0.5,
-  "validation_manifest": "datasets\\dissertation_v1\\manifests\\reason_grouped_val.csv"
+  "validation_manifest": "datasets/dissertation_v1/manifests/reason_grouped_val.csv"
 }

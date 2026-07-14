@@ -47,6 +47,18 @@ from retinal_ood.reason_attribution.methods import (
 BASELINE_PR24_FAMILY_MACRO_F1 = 0.8947
 BASELINE_PR24_SUBTYPE_MACRO_F1 = 0.6724
 DEFAULT_THRESHOLDS = tuple(float(value) for value in np.linspace(0.0, 1.0, 21))
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+
+
+def portable_artifact_path(path: str | Path) -> str:
+    """Serialize a path without exposing a machine-specific absolute prefix."""
+    candidate = Path(path)
+    if not candidate.is_absolute():
+        return candidate.as_posix()
+    try:
+        return candidate.resolve().relative_to(REPOSITORY_ROOT.resolve()).as_posix()
+    except ValueError:
+        return f"<external>/{candidate.name}"
 
 
 @dataclass(frozen=True)
@@ -679,9 +691,9 @@ def _selected_models_payload(
             "validation and test curves are descriptive only."
         ),
         "manifests": {
-            "train": str(Path(config.train_manifest)),
-            "val": str(Path(config.val_manifest)),
-            "test": str(Path(config.test_manifest)),
+            "train": portable_artifact_path(config.train_manifest),
+            "val": portable_artifact_path(config.val_manifest),
+            "test": portable_artifact_path(config.test_manifest),
         },
         "split_sizes": {split: int(size) for split, size in split_sizes.items()},
         "test_evaluation_started_after_selection": True,

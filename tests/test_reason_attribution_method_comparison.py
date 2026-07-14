@@ -704,6 +704,12 @@ def test_comparison_writes_canonical_outputs_with_consistent_selection(tmp_path:
     assert selected_models["selection_metric_subtype"] == "subtype_macro_f1"
     assert selected_models["test_evaluation_started_after_selection"] is True
     assert selected_models["split_sizes"] == result.split_sizes
+    assert selected_models["manifests"] == {
+        "train": "<external>/reason_train.csv",
+        "val": "<external>/reason_val.csv",
+        "test": "<external>/reason_test.csv",
+    }
+    assert not any(Path(value).is_absolute() for value in selected_models["manifests"].values())
 
     family_metrics = pd.read_csv(canonical_paths["family_metrics"])
     subtype_metrics = pd.read_csv(canonical_paths["subtype_metrics"])

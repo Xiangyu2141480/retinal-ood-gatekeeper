@@ -2,9 +2,9 @@
   "image_path_resolution": "Manifest image_path is resolved relative to root_dir: images/... -> data/images/...",
   "image_root": "data",
   "manifests": {
-    "test": "datasets\\dissertation_v1\\manifests\\reason_grouped_test.csv",
-    "train": "datasets\\dissertation_v1\\manifests\\reason_grouped_train.csv",
-    "val": "datasets\\dissertation_v1\\manifests\\reason_grouped_val.csv"
+    "test": "datasets/dissertation_v1/manifests/reason_grouped_test.csv",
+    "train": "datasets/dissertation_v1/manifests/reason_grouped_train.csv",
+    "val": "datasets/dissertation_v1/manifests/reason_grouped_val.csv"
   },
   "seed": 42,
   "selected_family_method": "feature_statistics_fusion",

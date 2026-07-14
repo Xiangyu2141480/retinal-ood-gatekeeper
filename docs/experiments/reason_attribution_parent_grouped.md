@@ -129,7 +129,7 @@ controlled benchmark, not that clinical generalisation was established.
 ```bash
 python scripts/build_reason_attribution_manifests.py --input datasets/dissertation_v1/manifests/test_ood_full.csv --out-dir datasets/dissertation_v1/manifests --split-mode grouped --output-prefix reason_grouped --seed 42
 python scripts/audit_stage2_grouped.py --input datasets/dissertation_v1/manifests/test_ood_full.csv --train datasets/dissertation_v1/manifests/reason_grouped_train.csv --val datasets/dissertation_v1/manifests/reason_grouped_val.csv --test datasets/dissertation_v1/manifests/reason_grouped_test.csv --out-dir reports/stage2_grouped --seed 42
-python scripts/generate_stage2_grouped_report.py --root-dir data --train-manifest datasets/dissertation_v1/manifests/reason_grouped_train.csv --val-manifest datasets/dissertation_v1/manifests/reason_grouped_val.csv --test-manifest datasets/dissertation_v1/manifests/reason_grouped_test.csv --legacy-dir reports/dissertation_results/reason_attribution_method_comparison --out-dir reports/stage2_grouped --figures-dir reports/dissertation_figures/stage2_grouped --seed 42
+python scripts/generate_stage2_grouped_report.py --root-dir data --input-manifest datasets/dissertation_v1/manifests/test_ood_full.csv --train-manifest datasets/dissertation_v1/manifests/reason_grouped_train.csv --val-manifest datasets/dissertation_v1/manifests/reason_grouped_val.csv --test-manifest datasets/dissertation_v1/manifests/reason_grouped_test.csv --legacy-dir reports/dissertation_results/reason_attribution_method_comparison --out-dir reports/stage2_grouped --figures-dir reports/dissertation_figures/stage2_grouped --seed 42
 ```
 
 ## Evidence and figures

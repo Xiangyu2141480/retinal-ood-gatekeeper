@@ -266,7 +266,7 @@ def test_builder_rejects_duplicate_content_across_id_splits(tmp_path: Path):
         ("disease_label", "ABCA4", "banned clinical/private column"),
         ("clinical_label", "diagnosis", "banned clinical/private column"),
         ("biomarker_label", "lesion", "banned clinical/private column"),
-        ("image_path", r"C:\\Users\\someone\\private\\image.png", "private/absolute"),
+        ("image_path", "C:" + r"\\Users\\someone\\private\\image.png", "private/absolute"),
     ],
 )
 def test_manifest_validator_rejects_private_or_clinical_metadata(column: str, value: str, message: str):
