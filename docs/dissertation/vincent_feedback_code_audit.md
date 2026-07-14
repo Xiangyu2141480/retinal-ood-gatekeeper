@@ -3,7 +3,15 @@
 Audit target: the dissertation manuscript repository associated with this evidence package.
 Evidence source: local `Xiangyu2141480/retinal-ood-gatekeeper` checkout, `main` at commit `cb4b975`.
 
-> Scope: this audit only adds this Markdown report and two audit CSV files. It does not modify formal manifests, model code, committed experiment outputs, or `main.tex`.
+> Status note: this document is the original pre-grouped audit that identified the Stage 2
+> parent-overlap issue. The issue has since been addressed by the parent-grouped Stage 2
+> protocol in `docs/experiments/reason_attribution_parent_grouped.md` and
+> `reports/stage2_grouped/`. Treat any row-level Stage 2 metrics below as historical
+> diagnostic evidence, not the final dissertation headline result.
+>
+> Scope: this audit only adds this Markdown report and two audit CSV files. It did not
+> modify formal manifests, model code, committed experiment outputs, or `main.tex` at
+> the time it was created.
 
 ## 1. Executive summary
 
@@ -11,9 +19,9 @@ Evidence source: local `Xiangyu2141480/retinal-ood-gatekeeper` checkout, `main` 
 - OOD labels are evaluation-only for Stage 1 and supervised targets only for optional Stage 2 explanation. Evidence: `main.tex:1473-1477`, `main.tex:3012-3018`, and `src/retinal_ood/reason_attribution/comparison.py:131-145,151-190`.
 - Principal package counts match the dissertation: 1,000 synthetic FAF-like ID images plus 2,100 OOD images, with Stage 2 manifests reusing OOD rows rather than adding new unique images.
 - The OOD taxonomy is exactly 3 families and 11 subtypes. Sensory artifacts are derived from parent synthetic FAF images; modality and semantic rows do not carry parent hashes in the final manifests.
-- Stage 2 reason splits are disjoint by `image_path` but not by `parent_image_hash`: train-val 127 shared parent hashes, train-test 128, val-test 108, and 108 shared by all three splits. This can make Stage 2 artifact-family and artifact-subtype metrics optimistic.
+- The legacy row-level Stage 2 reason splits are disjoint by `image_path` but not by `parent_image_hash`: train-val 127 shared parent hashes, train-test 128, val-test 108, and 108 shared by all three splits. This finding motivated the final parent-grouped Stage 2 protocol, where cross-partition image-path and group overlaps are zero.
 - `k=1` is used by both global feature kNN and all final PatchCore configs. No committed k-ablation was found, so k=1 should be described as a fixed setting, not an empirically optimal value.
-- Stage 2 family selection is validation-driven: `linear_svm` is selected for family attribution; `hierarchical_classifier` is selected for subtype attribution and is non-oracle because it routes by predicted family.
+- Final Stage 2 family selection is validation-driven on the parent-grouped split: `feature_statistics_fusion` is selected for family attribution; `hierarchical_classifier` is selected for subtype attribution and is non-oracle because it routes by predicted family.
 
 ## 2. Dataset lineage and revised Table 3
 
@@ -33,6 +41,12 @@ Primary image split means a manifest row whose image is copied/imported as a sta
 | Stage 2 reason-attribution test set | Stage 2 | Derived manifest view of OOD rows | 240 rows with parent_image_hash; source_dataset=derived_from_synthetic_faf=240; subtypes=arrow_annotation=30; blur_artifact=30; border_crop=30; composite_layout=30; gaussian_noise=30; jpeg_compression=30; rectangle_annotation=30; text_watermark=30 | Held-out standalone Stage 2 evaluation | ood_type and ood_subtype are final test targets | 420 |
 
 ### Full manifest audit
+
+The `reason_train.csv`, `reason_val.csv`, and `reason_test.csv` rows below are the
+legacy row-level manifests audited before the grouped fix. The final dissertation Stage 2
+manifests are `reason_grouped_train.csv`, `reason_grouped_val.csv`, and
+`reason_grouped_test.csv`.
+
 | dataset_split | manifest | rows | label | ood_family | ood_subtype | source_dataset | primary_or_derived | role |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Stage 1 nominal training set | datasets/dissertation_v1/manifests/train_id.csv | 700 | 0=700 | id=700 | id=700 | UCL SynthEye synthetic FAF=700 | Primary image split | Fits Stage 1 nominal references only |
@@ -143,7 +157,7 @@ Judgement: Stage 2 attribution metrics may be optimistic for generated sensory a
 
 ## 6. Parent-grouped split recommendation
 
-Do not overwrite current results during this audit. Add a grouped Stage 2 split option in a future change, using `parent_image_hash` as the group id when present and `image_path` as the group id for rows without parents. Keep seed 42 and keep test isolated from model selection.
+Historical audit recommendation: at the time this report was created, grouped Stage 2 splitting had not yet replaced the row-level reason manifests. The recommendation below has since been implemented. The final dissertation Stage 2 protocol now uses `reason_grouped_train.csv`, `reason_grouped_val.csv`, and `reason_grouped_test.csv`, with group id defined as `parent_image_hash` when present and `image_path` otherwise. The grouped audit reports train-val, train-test, val-test, and all-three group overlaps of 0.
 
 Recommended approach: custom grouped stratification. `GroupShuffleSplit` enforces grouping but not subtype balance; `StratifiedGroupKFold` is less suitable because sensory parent groups are multi-label across eight artifact subtypes and the desired protocol is 60/20/20 rather than k-fold CV.
 
@@ -202,36 +216,35 @@ Replacement English for Section 5.8:
 
 > All Stage 1 methods output scalar anomaly scores for which larger values indicate stronger evidence of OOD. The image-statistics baseline computes a 24-dimensional descriptor and scores the root-mean-square z-normalised deviation from the ID-training descriptor mean. The autoencoder score is the mean squared pixel reconstruction error. The global feature kNN detector extracts frozen ResNet-50 layer-3 feature maps, average-pools them to an image embedding, and scores the Euclidean distance to the nearest ID-training embedding. The Mahalanobis detector uses the same pooled embedding but scores the regularised covariance-normalised distance from the ID mean. PatchCore stores ID patch embeddings from the selected ResNet layer(s), scores each query patch by nearest-memory Euclidean distance, and aggregates to image level by the maximum patch score; the patch-distance map is used only for localisation-oriented visualisation. Validation data are used only for threshold calibration, and test/OOD labels are not used inside any Stage 1 scoring function.
 
-## 9. Stage 2 SVM selection evidence
+## 9. Stage 2 selection evidence
 
-The selected family `linear_svm` uses deterministic pooled-pixel global features, not metadata and not Stage 1 anomaly scores (`src/retinal_ood/reason_attribution/methods.py:321-351`; `main.tex:2691-2738`). Its sklearn pipeline fits `StandardScaler` and `LinearSVC` on the training matrix only; `LinearSVC` uses `class_weight="balanced"`, `dual="auto"`, `max_iter=5000`, `random_state=seed`, and default `C=1.0` (`src/retinal_ood/reason_attribution/methods.py:476-489,518-519`).
+Historical note: this audit originally examined the legacy row-level reason-attribution split, where the validation-selected family method was `linear_svm`. That finding is now superseded for dissertation headline reporting by the parent-grouped evaluation in `reports/stage2_grouped/selected_models.json`.
 
-Selection uses validation macro-F1, then lower complexity and method name for ties; test performance is retrospective (`src/retinal_ood/reason_attribution/comparison.py:205-206,279-302`; `main.tex:3209-3217`). The selected family method is `linear_svm`; the selected subtype method is `hierarchical_classifier`, which routes by predicted family and is non-oracle (`src/retinal_ood/reason_attribution/methods.py:102-123`; `main.tex:2835-2837,3248-3251`).
+In the final parent-grouped protocol, selection still uses validation macro-F1, then lower complexity and method name for ties; test performance is retrospective (`src/retinal_ood/reason_attribution/comparison.py:205-206,279-302`). The selected family method is `feature_statistics_fusion`, and the selected subtype method is the non-oracle `hierarchical_classifier`, which routes by predicted family (`src/retinal_ood/reason_attribution/methods.py:102-123`).
 | item | value |
 | --- | --- |
-| best_reason_family_method | linear_svm |
-| best_reason_family_validation_macro_f1 | 0.9908 |
-| best_reason_family_test_accuracy | 0.9881 |
-| best_reason_family_test_macro_f1 | 0.9901 |
-| best_reason_family_test_balanced_accuracy | 0.9872 |
-| family_macro_f1_delta_vs_pr24_baseline | +0.0954 |
-| family_improves_over_pr24_baseline | True |
+| final_stage2_split | parent-grouped |
+| best_reason_family_method | feature_statistics_fusion |
+| best_reason_family_validation_macro_f1 | 0.9925 |
+| best_reason_family_test_accuracy | 1.0000 |
+| best_reason_family_test_macro_f1 | 1.0000 |
+| legacy_family_test_macro_f1 | 0.9901 |
+| grouped_minus_legacy_family_test_macro_f1 | +0.0099 |
 | unknown_threshold_gamma | 0.50 |
-| known_coverage_at_gamma | 0.9952 |
-| unknown_rate_at_gamma | 0.0048 |
-| accuracy_excluding_unknown | 0.9928 |
 | best_subtype_method | hierarchical_classifier |
-| best_subtype_validation_macro_f1 | 0.8671 |
-| best_subtype_test_macro_f1 | 0.9059 |
-| subtype_macro_f1_delta_vs_pr24_baseline | 0.2335 |
-| hardest_family | semantic_outlier (F1=0.9848) |
-| hardest_subtype | rectangle_annotation (F1=0.7241) |
-| selected_final_method | linear_svm |
-| selection_rationale | Selected by validation reason-family macro-F1, with simpler methods preferred on ties. |
+| best_subtype_validation_macro_f1 | 0.9059 |
+| best_subtype_test_accuracy | 0.9357 |
+| best_subtype_test_macro_f1 | 0.9176 |
+| legacy_subtype_test_macro_f1 | 0.9059 |
+| grouped_minus_legacy_subtype_test_macro_f1 | +0.0116 |
+| hardest_family | none; all grouped-test family F1 scores are 1.0000 |
+| hardest_subtype | text_watermark (F1=0.7742) |
+| selected_final_family_method | feature_statistics_fusion |
+| selection_rationale | Selected by grouped-validation reason-family macro-F1, with lower complexity and method name used only for ties. |
 | conceptual_boundary | Stage 1 remains ID-only unsupervised OOD detection; Stage 2 is post-hoc explanation. |
 | clinical_scope | Reason labels are likely rejection explanations, not disease predictions. |
 
-Family metrics by method:
+Legacy row-level family metrics by method, retained only as superseded sensitivity evidence:
 | method | split | feature_set | estimator | family_accuracy | family_macro_f1 | family_balanced_accuracy | known_coverage_at_gamma | unknown_rate_at_gamma |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | image_statistics_logreg | val | statistics | logistic_regression | 0.9643 | 0.9619 | 0.9736 | 0.9976 | 0.0024 |
@@ -251,7 +264,7 @@ Family metrics by method:
 | hierarchical_classifier | val | fusion | hierarchical_logistic | 0.9905 | 0.9877 | 0.9867 | 1.0000 | 0.0000 |
 | hierarchical_classifier | test | fusion | hierarchical_logistic | 0.9952 | 0.9939 | 0.9933 | 1.0000 | 0.0000 |
 
-Subtype metrics by method:
+Legacy row-level subtype metrics by method, retained only as superseded sensitivity evidence:
 | method | split | feature_set | estimator | subtype_accuracy | subtype_macro_f1 |
 | --- | --- | --- | --- | --- | --- |
 | image_statistics_logreg | val | statistics | logistic_regression | 0.8905 | 0.8603 |
@@ -272,7 +285,7 @@ Subtype metrics by method:
 | hierarchical_classifier | test | fusion | hierarchical_logistic | 0.9238 | 0.9059 |
 
 
-The high family scores are plausible because the three reason families are visually separable in this controlled taxonomy; the selected family confusion matrix has only three class-to-class errors, all from semantic outliers. The hierarchy reaches stronger subtype performance because broad family routing decomposes the 11-way problem into within-family decisions. The limitation is that generated artifact parent overlap can inflate artifact-subtype performance.
+The grouped family scores are plausible because the three reason families are visually separable in this controlled taxonomy; the final grouped family confusion matrix has no class-to-class errors. The hierarchy reaches stronger subtype performance because broad family routing decomposes the 11-way problem into within-family decisions. The remaining limitation is controlled, closed-set, synthetic-backed attribution; parent grouping removes cross-partition parent overlap but does not establish patient-independent clinical validation.
 
 ## 10. Inconsistencies between code, manifests and dissertation
 
@@ -282,19 +295,19 @@ No direct numeric contradiction was found for the headline counts and metrics ch
 2. `main.tex:1650-1710` Figure 8 currently has four broad examples; it does not display all 11 subtypes.
 3. `main.tex:2384-2401` and `main.tex:2571-2573` should explicitly say no k-ablation was performed.
 4. `main.tex:2736-2738` should enumerate excluded Stage 2 metadata fields from `docs/experiments/reason_attribution_method_comparison.md:44-50`.
-5. `main.tex:1722-1733`, `main.tex:1758-1762`, and `main.tex:4167-4172` accurately state parent overlap; add that Stage 1 is unaffected while Stage 2 artifact metrics may be optimistic.
+5. The original row-level Stage 2 parent-overlap wording has been superseded by the grouped protocol. Dissertation text should state that Stage 1 is unaffected, cross-partition Stage 2 parent/group overlap is now zero, and grouped Stage 2 is still not patient-independent clinical validation.
 6. Keep the nuance in `main.tex:2848-2853` and `main.tex:3915-3918`: Stage 2 standalone evaluation is on all labelled OOD test rows, not only the subset rejected by a specific Stage 1 threshold.
 
 ## 11. Exact dissertation sections and sentences that should be revised
 
 - Section 4.2 / Table 3 (`main.tex:1482-1574`): expand columns to include primary/derived status, parent/source, label usage, and role.
 - Section 4.5 / Figure 8 (`main.tex:1588-1711`): replace the four-panel example with a 12-panel taxonomy grid or move the full grid to the appendix.
-- Section 4.6/4.7 (`main.tex:1722-1733`, `main.tex:1758-1762`): add root cause: subtype-stratified row splitting without parent grouping in `scripts/build_reason_attribution_manifests.py:157-188`.
+- Section 4.6/4.7: describe the legacy root cause, then state the final parent-grouped split rule and zero cross-partition overlap.
 - Section 5.6.1 (`main.tex:2384-2401`, `main.tex:2571-2573`): add the k=1 wording above.
 - Section 5.8 (`main.tex:1905-1971`, `main.tex:2681-2685`): replace vague scoring language with the formal paragraph above.
 - Section 5 Stage 2 features (`main.tex:2691-2738`): add that Stage 1 anomaly scores are not used as Stage 2 features and enumerate excluded metadata fields.
-- Section 6 Stage 2 results (`main.tex:3780-3918`): keep `linear_svm` as validation-selected family method and `hierarchical_classifier` as validation-selected subtype method; do not imply the family method is the highest retrospective test row.
-- Discussion (`main.tex:4093-4123`, `main.tex:4154-4210`): retain proof-of-concept, parent-overlap, non-clinical, and non-disease-classifier limitations.
+- Section 6 Stage 2 results: use `feature_statistics_fusion` as the grouped-validation family method and `hierarchical_classifier` as the grouped-validation subtype method; keep legacy row-level numbers only as marked sensitivity comparison.
+- Discussion: retain proof-of-concept, synthetic-backed, closed-set, non-clinical, and non-disease-classifier limitations; phrase the parent issue as resolved for cross-partition grouped overlap but not as patient-independent validation.
 
 ## 12. List of outputs generated
 
@@ -314,7 +327,7 @@ Commands were run after generating the audit files. No formal manifests, model o
 | `git diff --check` | dissertation project | Passed after final report update; no whitespace errors. |
 | `git status --short` | dissertation project | Shows only the allowed new audit paths: `docs/` and `reports/audit/`. |
 
-Could not verify: external clinical FAF validity, license clearance of prepared public OOD sources, patient/source-grouped generalisation, and parent-independent Stage 2 attribution performance. These require new data or regenerated grouped splits and are intentionally outside this audit.
+Could not verify: external clinical FAF validity, license clearance of prepared public OOD sources, and patient/source-grouped generalisation. Parent-grouped Stage 2 attribution performance was later generated in `reports/stage2_grouped/` and supersedes the row-level performance tables retained in this audit.
 
 Repository files modified by this audit: only `docs/dissertation/vincent_feedback_code_audit.md`, `reports/audit/parent_overlap_summary.csv`, and `reports/audit/parent_overlap_examples.csv`.
 
