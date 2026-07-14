@@ -5,8 +5,8 @@
 The dissertation manuscript is maintained in a separate Git repository from
 the GitHub code and evidence package:
 
-- manuscript remote: `https://git.overleaf.com/6a31238a019dd712e3417241`;
-- manuscript branch: `codex/stage2-parent-grouped-evaluation`;
+- manuscript remote: private Overleaf Git remote (locator omitted);
+- working branch before synchronization: `codex/stage2-parent-grouped-evaluation`;
 - original manuscript base: `822c99a`;
 - latest Overleaf change integrated before delivery: `01a572f2a7381db17ee9105b40ffa08ec84bb78e`;
 - rebased manuscript content commit: `116eac6`;

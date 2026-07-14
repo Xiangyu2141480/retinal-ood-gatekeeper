@@ -65,7 +65,9 @@ do not imply that variants within a partition are independent.
 
 ## Audit artifact copies
 
-Source and destination SHA-256 values matched byte-for-byte:
+The three artifacts initially matched their source SHA-256 values byte-for-byte.
+Before publication, the Markdown audit was sanitized to remove its local checkout
+locator; its evidence content and both CSV files were unchanged. Source hashes:
 
 - `docs/dissertation/vincent_feedback_code_audit.md`:
   `917d9341bc3c3814b95963e1893ace916a2395182c840b433491ed30cf97a58a`;
@@ -73,6 +75,9 @@ Source and destination SHA-256 values matched byte-for-byte:
   `3057e4d76c93eca02f7c6120c3de33576ed64db163dd019ebca92ac1dfb107b7`;
 - `reports/audit/parent_overlap_examples.csv`:
   `f1baba775d9648b05548e67326b16e0fcbb6cd71324b3b28c7fc202233928b64`.
+
+The committed Markdown hash after path sanitization is
+`a847a29212f336745fdf47a04f9c246c4a47d7571f00668b5c6df1193fade4ea`.
 
 ## Current grouped output hashes
 
@@ -83,7 +88,9 @@ Source and destination SHA-256 values matched byte-for-byte:
 - `subtype_metrics.csv`:
   `eb415349ce6f5266aaedc6d3a68a111ad01cc45e925708a447ee6fb9dd27f0b0`;
 - `selected_models.json`:
-  `12f3f625a1f1891fd93f084f028c79f6af5db23481e9e395599d97d71406ab24`;
+  `ef8e0e5b0a4d44671e35d88960f1a36f75024637b35da149ad66224d110b6cf6`;
+- `generation_provenance.json`:
+  `03d055523038f645ebba1837c5caf8f4b0dafcd6a645eca27c7d16cd608cbf33`;
 - `predictions_test.csv`:
   `e608bcfd115fbbe3134992c940d9ff933ff37278982e98a27b82b18b242f865d`;
 - `legacy_vs_grouped_comparison.csv`:

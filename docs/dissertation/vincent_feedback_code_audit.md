@@ -1,6 +1,6 @@
 # Vincent Feedback Code, Split, and Dissertation Consistency Audit
 
-Audit target dissertation project: `D:/UCL-Dissertation`.
+Audit target: the dissertation manuscript repository associated with this evidence package.
 Evidence source: local `Xiangyu2141480/retinal-ood-gatekeeper` checkout, `main` at commit `cb4b975`.
 
 > Scope: this audit only adds this Markdown report and two audit CSV files. It does not modify formal manifests, model code, committed experiment outputs, or `main.tex`.

@@ -286,7 +286,7 @@ git commit -m "feat: rerun stage2 attribution on grouped splits"
 
 - [ ] **Step 1: Import the completed audit artifacts mechanically**
 
-Copy the three existing untracked audit outputs from `D:\UCL-Dissertation`
+Copy the three existing untracked audit outputs from the manuscript repository
 into the corresponding GitHub paths without changing their contents.
 
 - [ ] **Step 2: Update documentation from generated metrics**
@@ -460,4 +460,3 @@ manifests, reports, figures, and paper patch are present in the merge commit.
   consistent across tasks.
 - The plan preserves separate Git histories while making the dissertation
   changes exactly reviewable from the GitHub PR.
-

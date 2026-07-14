@@ -13,7 +13,7 @@ The implementation repository and dissertation source are separate Git
 repositories. The GitHub pull request contains code, manifests, generated
 results, figures, documentation, and an exact patch of the dissertation
 changes. The authoritative `main.tex` is updated and compiled in an isolated
-worktree of `D:\UCL-Dissertation`, whose remote is Overleaf rather than GitHub.
+manuscript worktree whose remote is Overleaf rather than GitHub.
 The two histories are not merged or rewritten.
 
 ## Split Design
@@ -85,4 +85,3 @@ validation checks file existence, corruption, duplicate content, and hashes.
 The dissertation is compiled from its isolated Overleaf worktree and checked
 for missing references, figures, and citations. Repository lint, tests,
 hygiene audit, PR checks, and mergeability must all pass before squash merge.
-
