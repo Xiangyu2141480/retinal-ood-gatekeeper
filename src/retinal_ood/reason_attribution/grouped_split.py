@@ -153,8 +153,8 @@ def _compute_partition_sizes(
 
 
 def _stable_profile_offset(profile: tuple[tuple[str, int], ...]) -> int:
-    token = "|".join(f"{subtype}:{count}" for subtype, count in profile)
-    return sum((index + 1) * ord(char) for index, char in enumerate(token))
+    profile_text = "|".join(f"{subtype}:{count}" for subtype, count in profile)
+    return sum((index + 1) * ord(char) for index, char in enumerate(profile_text))
 
 
 def _validate_split_disjointness(split_frames: dict[str, pd.DataFrame]) -> None:
