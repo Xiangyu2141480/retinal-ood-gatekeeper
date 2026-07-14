@@ -7,12 +7,16 @@ the GitHub code and evidence package:
 
 - manuscript remote: `https://git.overleaf.com/6a31238a019dd712e3417241`;
 - manuscript branch: `codex/stage2-parent-grouped-evaluation`;
-- manuscript base: `822c99a`;
-- manuscript content commit: `e14e24b51e8600133094e466240eabd136d862ec`;
-- canonical-figure sync commit: `d2f590a9c58c42c90539f03d930adf1c7a5f52d2`.
+- original manuscript base: `822c99a`;
+- latest Overleaf change integrated before delivery: `01a572f2a7381db17ee9105b40ffa08ec84bb78e`;
+- rebased manuscript content commit: `116eac6`;
+- canonical-figure sync commit: `83c8605`;
+- final figure-placement commit and Overleaf `main`: `d849484bbca037c15a3352ff083f6e19611a1f27`.
 
 The repositories have different remotes and histories. No cross-repository
-cherry-pick was used.
+cherry-pick was used. Overleaf rejected creation of a feature branch, so the
+manuscript commits were rebased onto its latest `main`, rebuilt, and then
+published by a normal fast-forward push without force.
 
 ## Manuscript changes
 
@@ -60,7 +64,7 @@ latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
 Outcome:
 
 - exit status 0;
-- 62-page PDF;
+- 73-page PDF including the expanded Overleaf front matter;
 - no undefined references;
 - no undefined citations;
 - no missing figures;
@@ -70,7 +74,7 @@ Outcome:
   overfull box found during the first final build.
 
 Remaining overfull warnings are pre-existing long equations/paragraphs; none
-is attached to the grouped result tables. Key pages 25, 26, 48, 49, 50, and 56
+is attached to the grouped result tables. Key pages 36, 37, 58, 59, 60, 61, and 67
 were rendered to PNG and visually checked for clipping, overlap, table width,
 legend readability, figure placement, and manifest-path wrapping.
 
