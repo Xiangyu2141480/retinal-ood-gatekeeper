@@ -58,7 +58,7 @@ def test_final_figure_docs_prefer_combined_main_text_figures():
     main_text = shortlist.split("## Appendix Figures", maxsplit=1)[0]
     assert "figure_stage1_overall_comparison_combined.png" in main_text
     assert "figure_patchcore_layer_ablation_combined.png" in main_text
-    assert "figure_stage2_method_comparison_combined.png" in main_text
+    assert "figure_grouped_stage2_method_comparison.png" in main_text
     assert "figure_system_pipeline_overview.png" not in main_text
 
     revision_report = (
@@ -72,7 +72,7 @@ def test_final_figure_docs_prefer_combined_main_text_figures():
     )
     assert "figure_stage1_overall_comparison_combined.png" in captions
     assert "figure_patchcore_layer_ablation_combined.png" in captions
-    assert "figure_stage2_method_comparison_combined.png" in captions
+    assert "figure_grouped_stage2_method_comparison.png" in captions
     assert "synthetic FAF fallback" in captions
     assert "not clinical diagnoses" in captions
 
