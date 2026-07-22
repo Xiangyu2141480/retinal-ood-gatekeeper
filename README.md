@@ -1,110 +1,164 @@
 # Retinal FAF OOD Gatekeeper
 
-Unsupervised out-of-distribution detection for quality control in retinal imaging.
+**Unsupervised out-of-distribution detection for quality control in retinal imaging**
 
-This repository is a final-year project codebase for building a **pre-diagnostic quality-control gatekeeper** for Fundus Autofluorescence (FAF) images. The detector is trained only on valid/normal FAF images and rejects invalid clinical inputs before they reach a downstream diagnostic model.
+This repository contains the research code, benchmark package, experiment outputs, figures, and reproducibility material for the UCL MSc dissertation:
+
+> **Unsupervised Out-of-Distribution Detection for Quality Control in Retinal Imaging**
+
+The project develops a pre-diagnostic gatekeeper for fundus autofluorescence (FAF) imaging. Its purpose is to identify unsupported or invalid inputs before they reach a downstream analysis system.
+
+The gatekeeper is an input-validity model, not a disease classifier. In-distribution (ID) means supported by the intended FAF input domain; it does not mean healthy. Rejection indicates insufficient support from the learned reference distribution and does not imply disease.
+
+## Project at a Glance
+
+The completed prototype has two separate stages:
+
+1. **Stage 1 — ID-only OOD detection**  
+   Fits only nominal synthetic FAF-like images and produces an anomaly score followed by an `ACCEPT` or `REJECT` decision.
+
+2. **Stage 2 — post-rejection attribution**  
+   Optionally assigns a rejected image to a known OOD family and subtype. Stage 2 is supervised, closed-set, and cannot alter the Stage 1 decision.
+
+```text
+Input image
+    |
+    v
+Stage 1: ID-only anomaly detector
+    |
+    +-- ACCEPT --> external downstream analysis
+    |
+    +-- REJECT --> optional Stage 2 family/subtype attribution
+```
+
+### Selected methods
+
+- **Primary Stage 1 detector:** Mahalanobis feature distance
+- **Localisation-oriented companion:** PatchCore L3
+- **Stage 2 family model:** `feature_statistics_fusion`
+- **Stage 2 subtype model:** non-oracle `hierarchical_classifier`
+
+## Main Results
+
+### Stage 1: binary input-validity detection
+
+| Method | AUROC | AUPRC | FPR@95% TPR | OOD recall at ID-calibrated `tau_95` |
+| --- | ---: | ---: | ---: | ---: |
+| **Mahalanobis feature distance** | **0.9724** | **0.9975** | **0.2000** | **0.9079** |
+| Global feature kNN | 0.9458 | 0.9949 | 0.3800 | 0.8024 |
+| PatchCore L3 | 0.8819 | 0.9880 | 0.6333 | 0.7097 |
+
+At the 95th-percentile ID-validation threshold, Mahalanobis rejected **90.79%** of the OOD benchmark while falsely rejecting **4.67%** of the synthetic ID fallback set.
+
+Subtype analysis showed complementary detector behaviour:
+
+- Mahalanobis was strongest for broad modality shifts, semantic outliers, and several diffuse corruptions.
+- PatchCore L3 was more sensitive to local overlays, especially text watermarks, and produced spatial anomaly maps.
+- Text watermark was the main Stage 1 weakness for globally pooled feature methods.
+- Mild blur and high-quality JPEG compression were difficult for maximum-patch scoring.
+
+### Stage 2: post-rejection reason attribution
+
+| Task | Validation-selected method | Validation macro-F1 | Grouped-test accuracy | Grouped-test macro-F1 |
+| --- | --- | ---: | ---: | ---: |
+| OOD family | `feature_statistics_fusion` | 0.9925 | 1.0000 | 1.0000 |
+| OOD subtype | `hierarchical_classifier` | 0.9059 | 0.9357 | 0.9176 |
+
+The hardest Stage 2 subtype was `text_watermark`, with test F1 **0.7742**. These results describe closed-set attribution on labelled OOD data and are not end-to-end clinical performance estimates.
+
+## Benchmark
+
+The manifest-defined benchmark contains **3,100 unique images**:
+
+| Component | Images | Role |
+| --- | ---: | --- |
+| Synthetic FAF-like ID | 1,000 | Stage 1 fitting, threshold calibration, and fallback ID testing |
+| Imported modality-shift OOD | 400 | 200 colour fundus images and 200 OCT screenshots |
+| Imported semantic-outlier OOD | 500 | Natural-image stress tests |
+| Derived sensory artefacts | 1,200 | Eight artefact subtypes generated from held-out synthetic parents |
+
+The OOD taxonomy contains three operational families and 11 subtypes:
+
+- **Modality shift:** colour fundus, OCT screenshot
+- **Sensory artefact:** text watermark, rectangle annotation, arrow annotation, composite layout, blur, border crop, Gaussian noise, JPEG compression
+- **Semantic outlier:** natural image
+
+### Experimental views
+
+- **Stage 1 ID split:** 700 training, 150 validation, 150 fallback test images
+- **Primary Stage 1 benchmark:** 150 synthetic ID fallback images and 1,650 subtype-balanced OOD images
+- **Stage 2 grouped split:** 1,260 training, 420 validation, and 420 test OOD images
+
+Stage 2 grouping uses the parent-image hash where available and the image path otherwise. This removes cross-partition parent overlap, although transformed variants remain dependent within their assigned partition.
+
+## Methods Evaluated
+
+Stage 1 compares eight completed configurations across five method families:
+
+| Method family | Configuration(s) | Image-level anomaly score |
+| --- | --- | --- |
+| Image statistics | 24-dimensional descriptor | RMS standardised deviation from the ID centre |
+| Reconstruction | Convolutional autoencoder | Mean squared reconstruction error |
+| Global pretrained features | kNN | Distance to the nearest nominal pooled embedding |
+| Global pretrained features | Mahalanobis | Covariance-normalised distance from the nominal mean |
+| Local pretrained features | PatchCore L2, L3, L4, L2+L3 | Maximum nearest-memory distance over query patches |
+
+All Stage 1 methods are fitted using ID images only. OOD labels are reserved for held-out evaluation. The optional Stage 2 module uses labelled OOD examples only for post-rejection attribution.
+
+## Repository Structure
+
+| Location | Contents |
+| --- | --- |
+| `data/images/dissertation_v1/` | Versioned benchmark image assets managed through Git LFS |
+| `datasets/dissertation_v1/` | Dataset manifests, grouped splits, checksums, and metadata |
+| `src/retinal_ood/` | Core data, model, evaluation, and utility modules |
+| `scripts/` | Training, evaluation, auditing, reporting, and UI entry points |
+| `configs/` | Reproducible experiment configurations |
+| `reports/dissertation_results/` | Stage 1 comparison, robustness, and legacy Stage 2 results |
+| `reports/stage2_grouped/` | Final parent-grouped Stage 2 audit, metrics, and predictions |
+| `reports/dissertation_figures/` | Dissertation-ready figures and qualitative evidence |
+| `reports/dissertation_final/` | Final summary tables, interpretation notes, and claim mapping |
+| `docs/dissertation/` | Project overview, evidence index, runbooks, and limitations guidance |
 
 ## Start Here
 
-The project overview provides the research question, strategy, dataset, experiments, main
-results, selected figures, conclusions, and limitations in one location.
+For a concise understanding of the study, use the following documents:
 
-- **Supervisor / project overview:** [`docs/dissertation/project_overview.md`](docs/dissertation/project_overview.md)
-- **Progress log:** [`docs/dissertation/progress_log.md`](docs/dissertation/progress_log.md)
-- **Final evidence index:** [`docs/dissertation/final_evidence_index.md`](docs/dissertation/final_evidence_index.md)
-- **Final figure shortlist:** [`docs/dissertation/final_figure_shortlist.md`](docs/dissertation/final_figure_shortlist.md)
-- **Reproducibility guide:** [`docs/dissertation/reproducibility_runbook.md`](docs/dissertation/reproducibility_runbook.md)
+- [Project overview](docs/dissertation/project_overview.md)
+- [Final evidence index](docs/dissertation/final_evidence_index.md)
+- [Reproducibility runbook](docs/dissertation/reproducibility_runbook.md)
+- [Final figure shortlist](docs/dissertation/final_figure_shortlist.md)
+- [Final table shortlist](docs/dissertation/final_table_shortlist.md)
+- [Claims and limitations matrix](docs/dissertation/claims_and_limitations_matrix.md)
 
-## Concise project overview
+The evidence index links the principal dissertation claims to the corresponding manifests, scripts, tables, figures, and limitations.
 
-The completed dissertation project is a two-stage research prototype:
+## Quick Start
 
-1. **Stage 1:** an ID-only unsupervised FAF OOD gatekeeper that outputs `ACCEPT` or `REJECT`.
-2. **Stage 2:** an optional supervised post-rejection explanation layer that predicts likely rejection reasons; it never decides rejection.
-
-The recommended final methods are Mahalanobis feature distance for the Stage 1 quantitative
-gatekeeper, PatchCore L3 for localization-oriented heatmap evidence,
-`feature_statistics_fusion` for Stage 2 reason-family attribution, and the non-oracle
-`hierarchical_classifier` for Stage 2 subtype attribution.
-
-## Main findings
-
-- Mahalanobis is the best Stage 1 quantitative model: AUROC `0.9724`, AUPRC `0.9975`, FPR@95%TPR `0.2000`.
-- PatchCore L3 is the best Stage 1 localization-oriented companion for heatmaps and failure-case discussion.
-- On the final parent-grouped Stage 2 test split, `feature_statistics_fusion` is the
-  validation-selected family method: accuracy `1.0000`, macro-F1 `1.0000`.
-- The non-oracle `hierarchical_classifier` is the validation-selected subtype method: accuracy
-  `0.9357`, macro-F1 `0.9176`; `text_watermark` is the hardest subtype (F1 `0.7742`).
-- The final Stage 2 train/validation/test manifests have zero cross-partition image-path and
-  group-ID overlap. Variants from a common parent remain dependent within one split. The results
-  remain proof-of-concept because the benchmark is controlled, closed-set, and synthetic-backed;
-  parent grouping is not patient-independent clinical validation.
-
-## Repository map
-
-| location | purpose |
-| --- | --- |
-| `datasets/dissertation_v1/` | committed dissertation dataset package, manifests, checksums, and metadata |
-| `reports/dissertation_results/multi_scheme_comparison/` | Stage 1 method comparison tables |
-| `reports/dissertation_results/robustness_analysis/` | robustness, threshold, failure-analysis, and provenance tables |
-| `reports/dissertation_results/reason_attribution_method_comparison/` | legacy row-level Stage 2 sensitivity tables |
-| `reports/stage2_grouped/` | final parent-grouped Stage 2 split audit, metrics, predictions, and legacy sensitivity comparison |
-| `reports/dissertation_figures/` | polished Stage 1, taxonomy, pipeline, and method figures |
-| `reports/dissertation_figures/robustness/` | robustness, threshold, feature-space, and failure-analysis figures |
-| `reports/dissertation_figures/reason_attribution_method_comparison/` | legacy row-level Stage 2 figures plus the two-stage pipeline |
-| `reports/dissertation_figures/stage2_grouped/` | final grouped Stage 2 method, confusion, and legacy-comparison figures |
-| `reports/dissertation_final/` | final summary tables, caption suggestions, and interpretation notes |
-| `docs/dissertation/` | final evidence index, figure/table shortlist, runbooks, and manuscript draft blocks |
-
-## Recommended figures and tables
-
-Start with:
-
-- Figures: `docs/dissertation/final_figure_shortlist.md`
-- Tables: `docs/dissertation/final_table_shortlist.md`
-- Captions: `reports/dissertation_final/caption_suggestions.md`
-- Interpretation notes: `reports/dissertation_final/interpretation_notes.md`
-- Final summary tables: `reports/dissertation_final/stage1_method_summary.md`, `stage2_method_summary.md`, `recommended_model_summary.md`, `limitations_summary.md`, and `claim_evidence_matrix.md`
-
-## What this project builds
-
-The project builds a Python/PyTorch pipeline that:
-
-1. Loads valid **synthetic Heidelberg FAF** images for unsupervised training.
-2. Learns a normal-image feature manifold using a primary method such as **PatchCore**.
-3. Scores every incoming image with a continuous anomaly score `S(x)`.
-4. Applies a threshold `tau` to output either `ACCEPT: valid FAF` or `REJECT: OOD/anomaly`.
-5. Evaluates on a stress-test set containing:
-   - valid real FAF images,
-   - wrong-modality retinal images such as colour fundus or IR,
-   - FAF images with watermarks/text/annotations/composite artifacts,
-   - non-retinal semantic outliers.
-6. Reports clinical safety metrics: AUROC, AUPRC, FPR@95%TPR, confusion matrix at selected thresholds.
-7. Produces anomaly heatmaps for interpretability.
-8. Optionally explains rejected inputs with a post-rejection Stage 2 reason-attribution module.
-
-Stage 1 remains an ID-only unsupervised OOD gatekeeper. OOD labels are used only for held-out evaluation and, in the optional Stage 2 module, as explanation targets after rejection. The Stage 2 reason labels are likely explanations such as modality shift or sensory artifact, not disease diagnoses.
-
-The final Stage 2 evaluation uses `reason_grouped_train.csv`, `reason_grouped_val.csv`, and
-`reason_grouped_test.csv`. The older `reason_train.csv`, `reason_val.csv`, and `reason_test.csv`
-are retained as a labelled legacy row-stratified comparison only.
-
-Rebuild the final grouped Stage 2 package with the repository image-root convention:
+### 1. Clone the repository and retrieve Git LFS assets
 
 ```bash
-python scripts/build_reason_attribution_manifests.py --input datasets/dissertation_v1/manifests/test_ood_full.csv --out-dir datasets/dissertation_v1/manifests --split-mode grouped --output-prefix reason_grouped --seed 42
-python scripts/audit_stage2_grouped.py --input datasets/dissertation_v1/manifests/test_ood_full.csv --train datasets/dissertation_v1/manifests/reason_grouped_train.csv --val datasets/dissertation_v1/manifests/reason_grouped_val.csv --test datasets/dissertation_v1/manifests/reason_grouped_test.csv --out-dir reports/stage2_grouped --seed 42
-python scripts/generate_stage2_grouped_report.py --root-dir data --train-manifest datasets/dissertation_v1/manifests/reason_grouped_train.csv --val-manifest datasets/dissertation_v1/manifests/reason_grouped_val.csv --test-manifest datasets/dissertation_v1/manifests/reason_grouped_test.csv --legacy-dir reports/dissertation_results/reason_attribution_method_comparison --out-dir reports/stage2_grouped --figures-dir reports/dissertation_figures/stage2_grouped --seed 42
+git clone https://github.com/Xiangyu2141480/retinal-ood-gatekeeper.git
+cd retinal-ood-gatekeeper
+git lfs install
+git lfs pull
 ```
 
-Manifest paths beginning `images/...` resolve under `--root-dir data`, i.e.
-`data/images/...`.
+### 2. Create the environment
 
-## Repository status
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+```
 
-This repository includes runnable training, evaluation, reporting, and local UI entrypoints. It intentionally does **not** include medical image data, model weights, private manifests, or institutional files.
+On Windows PowerShell, activate the environment with:
 
-For a quick repository health check after cloning or pulling updates, run:
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+### 3. Run the repository checks
 
 ```bash
 pytest
@@ -112,216 +166,134 @@ ruff check .
 python scripts/final_repository_audit.py --repo-root .
 ```
 
-The audit checks the final dissertation evidence bundle, required documentation, and repository
-hygiene without rerunning the computationally expensive experiments.
+The final audit verifies the dissertation evidence bundle, required documentation, dataset metadata, and repository hygiene without repeating the most expensive experiments.
 
-## Recommended thesis contribution
+## Reproducing the Experiments
 
-Main question:
+The complete command sequence is documented in the [reproducibility runbook](docs/dissertation/reproducibility_runbook.md). The main entry points are summarised below.
 
-> Can an unsupervised feature-space OOD gatekeeper trained on synthetic FAF images reject true invalid clinical inputs while not falsely rejecting valid real FAF images affected only by the synthetic-to-real domain gap?
-
-Recommended implementation path:
-
-- MVP: PatchCore with ResNet/WideResNet mid-level features.
-- Baseline: convolutional autoencoder reconstruction error.
-- Ablation: compare feature layers `layer1`, `layer2`, `layer3`, `layer4`, and `layer2+layer3`.
-- Clinical evaluation: AUROC + AUPRC + FPR@95%TPR.
-- Interpretability: anomaly heatmaps and example failure-case grids.
-
-## Quick start
+### Stage 1 experiment grid
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-pytest
+python scripts/run_experiment_grid.py \
+  --grid-config configs/experiment_grid.yaml \
+  --root-dir data \
+  --out-dir reports/generated/grid_full \
+  --device auto \
+  --seed 42 \
+  --skip-existing
 ```
 
-Prepare a local data folder that is **not committed** to GitHub:
+The grid runner applies a common manifest audit, seed, device policy, and output structure across method comparisons. It produces aggregate metrics, per-family and per-subtype results, threshold analyses, heatmaps, and selected failure cases.
 
-```text
-data/
-  manifests/
-    train_synthetic_faf.csv
-    val_synthetic_faf.csv
-    test_real_id.csv
-    test_ood.csv
-  images/   # ignored by git
-```
-
-Prepare the SynthEye proof-of-concept FAF dataset from a private/local source folder:
+### Final parent-grouped Stage 2 evaluation
 
 ```bash
-python scripts/prepare_syntheye_dataset.py --input-dir "<path-to-syntheye_onefold_10class_100perclass>" --out-dir data/images/synthetic_faf --manifest-dir data/manifests --seed 42 --expected-classes 10 --expected-total 1000 --expected-per-class 100
+python scripts/build_reason_attribution_manifests.py \
+  --input datasets/dissertation_v1/manifests/test_ood_full.csv \
+  --out-dir datasets/dissertation_v1/manifests \
+  --split-mode grouped \
+  --output-prefix reason_grouped \
+  --seed 42
+
+python scripts/audit_stage2_grouped.py \
+  --input datasets/dissertation_v1/manifests/test_ood_full.csv \
+  --train datasets/dissertation_v1/manifests/reason_grouped_train.csv \
+  --val datasets/dissertation_v1/manifests/reason_grouped_val.csv \
+  --test datasets/dissertation_v1/manifests/reason_grouped_test.csv \
+  --out-dir reports/stage2_grouped \
+  --seed 42
+
+python scripts/generate_stage2_grouped_report.py \
+  --root-dir data \
+  --train-manifest datasets/dissertation_v1/manifests/reason_grouped_train.csv \
+  --val-manifest datasets/dissertation_v1/manifests/reason_grouped_val.csv \
+  --test-manifest datasets/dissertation_v1/manifests/reason_grouped_test.csv \
+  --legacy-dir reports/dissertation_results/reason_attribution_method_comparison \
+  --out-dir reports/stage2_grouped \
+  --figures-dir reports/dissertation_figures/stage2_grouped \
+  --seed 42
 ```
 
-Generate held-out sensory-artifact OOD images and build public OOD manifests:
+Manifest paths beginning with `images/...` resolve under `--root-dir data`.
+
+## Local Gatekeeper Demo
+
+After training or loading a compatible detector and threshold, launch the local drag-and-drop interface with:
 
 ```bash
-python scripts/generate_artifacts.py --input-manifest data/manifests/test_real_id.csv --root-dir data --out-dir data/images/ood_artifact --out-manifest data/manifests/test_artifact.csv --split test --source-splits test --artifacts text_watermark rectangle_annotation arrow_annotation composite_layout blur_artifact border_crop gaussian_noise jpeg_compression
-python scripts/build_ood_manifest.py --root-dir data --out-manifest data/manifests/test_modality.csv --mapping images/ood_modality/colour_fundus=modality_shift --mapping images/ood_modality/infrared=modality_shift --mapping images/ood_modality/oct_screenshot=modality_shift
-python scripts/build_ood_manifest.py --root-dir data --out-manifest data/manifests/test_semantic.csv --mapping images/ood_semantic/natural=semantic_outlier --mapping images/ood_semantic/non_retinal_medical=semantic_outlier
-python scripts/merge_manifests.py --out data/manifests/test_ood.csv data/manifests/test_modality.csv data/manifests/test_semantic.csv data/manifests/test_artifact.csv
+python scripts/serve_gatekeeper_app.py \
+  --config <experiment-config.yaml> \
+  --checkpoint <model-artifact>
 ```
 
-Validate manifests before training or evaluation:
+The interface returns an input-validity decision and, for PatchCore configurations, can display anomaly overlays. It does not diagnose disease or produce clinical labels.
 
-```bash
-python scripts/validate_manifests.py --root-dir data data/manifests/train_synthetic_faf.csv data/manifests/val_synthetic_faf.csv data/manifests/test_ood.csv
-```
+## Threshold Policy
 
-Example commands once the implementation is completed:
+Two threshold concepts are kept separate:
 
-```bash
-python scripts/train_patchcore.py --config configs/patchcore_l23.yaml
-python scripts/evaluate.py --config configs/patchcore_l23.yaml --checkpoint runs/patchcore_resnet50_layer2_layer3/patchcore_memory.npz --save-heatmaps
-python scripts/train_autoencoder.py --config configs/autoencoder_baseline.yaml
-python scripts/evaluate_autoencoder.py --config configs/autoencoder_baseline.yaml --checkpoint runs/autoencoder_baseline/model.pt
-python scripts/serve_gatekeeper_app.py --config configs/patchcore_l23.yaml --checkpoint runs/patchcore_resnet50_layer2_layer3/patchcore_memory.npz
-python scripts/generate_report_tables.py --runs-dir runs/ --out reports/generated/experiment_summary.md
-python scripts/generate_dissertation_figures.py --runs-dir runs/ --out-dir reports/generated/figures/
-```
+- **ID-calibrated threshold:** selected from held-out ID validation scores and used for the prototype operating decision.
+- **Research-only threshold:** selected using labelled evaluation OOD data for retrospective comparison, including FPR@95% TPR.
 
-## Reproducible experiment grid
+A research-only operating point is not a deployment threshold.
 
-For dissertation runs, prefer the grid runner so every comparison uses the same manifest audit,
-device override, seed, and output layout. Generated runs and reports stay outside Git history.
+## Reproducibility and Evidence
 
-Validate manifests first:
+The repository preserves:
 
-```bash
-python scripts/validate_manifests.py --root-dir data --write-json reports/generated/manifest_audit.json data/manifests/train_synthetic_faf.csv data/manifests/val_synthetic_faf.csv data/manifests/test_real_id.csv data/manifests/test_ood.csv
-```
+- version-controlled manifests and checksums;
+- configuration files and fixed random seeds;
+- sample-level score tables;
+- aggregate, family-level, and subtype-level metrics;
+- threshold and bootstrap analyses;
+- training-size and artefact-severity stress tests;
+- failure cases and method-disagreement examples;
+- PatchCore spatial anomaly maps;
+- Stage 2 grouped-split audits and predictions;
+- claim-to-evidence documentation for the dissertation.
 
-Run a small CPU smoke experiment for the main PatchCore L2+L3 setting:
+Key evidence locations:
 
-```bash
-python scripts/run_experiment_grid.py --grid-config configs/experiment_grid.yaml --root-dir data --out-dir reports/generated/grid_smoke --only patchcore_layer2_layer3 --max-train-images 8 --max-test-images 8 --device cpu --seed 42
-```
+- `reports/dissertation_results/multi_scheme_comparison/`
+- `reports/dissertation_results/robustness_analysis/`
+- `reports/stage2_grouped/`
+- `reports/dissertation_figures/`
+- `reports/dissertation_final/`
+- `docs/dissertation/final_evidence_index.md`
 
-Run the full comparison grid when the dataset is ready:
+## Limitations
 
-```bash
-python scripts/run_experiment_grid.py --grid-config configs/experiment_grid.yaml --root-dir data --out-dir reports/generated/grid_full --device auto --seed 42 --skip-existing
-```
+The reported results are an internal proof of concept, not clinical validation.
 
-The grid writes:
+- Nominal Stage 1 training, calibration, and fallback testing use synthetic FAF-like images.
+- The OOD benchmark is a curated stress test and does not estimate clinical prevalence.
+- The taxonomy cannot cover every future device shift, corruption, export format, or user error.
+- Stage 2 is supervised and closed-set; an unseen mechanism may be mapped to an existing category or returned as unknown.
+- Parent grouping prevents cross-partition parent overlap, but it is not patient-, device-, site-, or protocol-independent validation.
+- PatchCore maps show detector-relative feature discrepancy and are not pathology maps or segmentation masks.
 
-- `metrics_summary.csv` / `metrics_summary.md`
-- `per_ood_type_metrics.csv`
-- `per_ood_subtype_metrics.csv` when `ood_subtype` exists in `test_ood.csv`
-- `manifest_audit.json`
-- `index.md` plus report-ready comparison tables for per-category metrics, layer ablation,
-  AE vs PatchCore, threshold policy, heatmaps, and selected TP/FP/FN/borderline cases
+External evaluation on real FAF acquired across patients, devices, sites, and protocols is required before any deployment claim can be made.
 
-You can still regenerate legacy report tables from any run directory:
+## Data, Licensing, and Safety
 
-```bash
-python scripts/generate_report_tables.py --runs-dir reports/generated/grid_full/runs --out reports/generated/grid_full/experiment_summary.md --csv-out reports/generated/grid_full/experiment_summary.csv --per-ood-csv-out reports/generated/grid_full/per_ood_type_metrics.csv
-```
+The repository uses Git LFS for benchmark assets and retains manifests, content hashes, source-bucket fields, and available derivation metadata. Imported OOD assets remain subject to their original licences and usage conditions. The packaged benchmark does not provide complete immutable per-image upstream URLs and licence records for every imported image.
 
-Or regenerate the dissertation report index after adding heatmaps or extra runs:
+Do not commit:
 
-```bash
-python scripts/generate_report_index.py --reports-dir reports/generated/grid_full --top-k 5
-```
+- private clinical images or patient identifiers;
+- institutional credentials or access notes;
+- unrestricted local paths containing sensitive information;
+- private model weights or manifests;
+- files whose redistribution is not permitted by the source licence.
 
-Threshold policy:
+This repository is a research prototype. It is not a medical device, a diagnostic system, or evidence of prospective clinical safety.
 
-- `research_threshold`: computed using test labels for paper evaluation only.
-- `deployment_threshold`: computed from validation ID score quantile only, for UI/demo decision.
+## Author and Academic Context
 
-## Manifest CSV schema
+**Xiangyu Cui**  
+MSc Scientific and Data Intensive Computing  
+University College London
 
-Each manifest should contain at least:
-
-```csv
-image_path,label,split,source,ood_type,patient_id,scanner,notes
-images/synthetic_faf/faf_0001.png,0,train,synthetic_faf,id,,,synthetic ID FAF
-images/ood_modality/colour_fundus_0001.jpg,1,test,public_ood,modality_shift,,,colour fundus OOD
-```
-
-Labels:
-
-- `0`: in-distribution / valid FAF
-- `1`: anomaly / OOD / invalid input
-
-OOD types:
-
-- `id` for valid FAF rows
-- `modality_shift`
-- `sensory_artifact`
-- `semantic_outlier`
-
-Keep generated artifact images based on held-out `val` or `test` rows, not `train` rows. The
-artifact generator writes anonymized output filenames and does not preserve original image stems.
-
-## Local drag-drop gatekeeper
-
-After training PatchCore and running evaluation once to set a threshold, launch the local UI:
-
-```bash
-python scripts/serve_gatekeeper_app.py --config configs/patchcore_l23.yaml --checkpoint runs/patchcore_resnet50_layer2_layer3/patchcore_memory.npz
-```
-
-Open `http://127.0.0.1:7860` and drop a `.png`, `.jpg`, `.jpeg`, `.tif`, `.tiff`, or `.bmp`
-image. The UI returns a binary gatekeeper decision: `ACCEPT: likely valid FAF` or
-`REJECT: OOD / invalid input`. It does not diagnose disease or assign disease classes.
-Multiple files can be scored in one session, reviewed with PatchCore overlays, and exported
-as a local CSV summary.
-
-## Project documentation
-
-See the `docs/` directory:
-
-- `dissertation/README.md` - final dissertation handoff entry point for examiners.
-- `dissertation/final_evidence_index.md` - central claim-to-evidence map.
-- `dissertation/final_figure_shortlist.md` - recommended main-text and appendix figures.
-- `dissertation/final_table_shortlist.md` - recommended main-text and appendix tables.
-- `dissertation/reproducibility_runbook.md` - one-command-oriented verification and reproduction guide.
-- `dissertation/school_server_runbook.md` - school-server / Jackpot reproduction guide.
-- `dissertation/claims_and_limitations_matrix.md` - safe thesis wording and limitations matrix.
-- `experiments/reason_attribution_method_comparison.md` - optional Stage 2 rejected-input reason-attribution comparison.
-- `LITERATURE_REVIEW_ANALYSIS_CN.md` — Chinese explanation of what the literature review means for implementation.
-- `PROJECT_SPEC_CN.md` — product and research specification.
-- `DATASET_PLAN_CN.md` — dataset layout, manifests, split strategy, privacy rules.
-- `LOCAL_RUN_AND_DATASET_GUIDE_CN.md` — practical dataset selection, manifest examples, and local run commands.
-- `datasets/local_experiment_dataset.md` — local proof-of-concept dataset notes and manifest audit guidance.
-- `datasets/dataset_quality_protocol.md` — local image audit, contact-sheet QA, generated evaluation subsets, and dataset acceptance gates.
-- `datasets/dissertation_dataset_v1.md` — dissertation v1 dataset contract, package builder, and validation commands.
-- `datasets/dissertation_dataset_card_v1.md` — metadata-only dataset card and limitations.
-- `EXPERIMENT_RUNBOOK_CN.md` — step-by-step public dataset, local, Jackpot, UI, and reporting runbook.
-- `EXPERIMENT_PROTOCOL_CN.md` — exact experiments, metrics, ablations, reporting.
-- `TEN_WEEK_DISSERTATION_PLAN_CN.md` — ten-week dataset, experiment, writing, and polishing timeline.
-- `CODEX_MASTER_PROMPT.md` — reusable prompt to paste into Codex tasks.
-- `CODEX_TASKS.md` — staged Codex task list with ready-to-use prompts.
-- `GITHUB_WORKFLOW_CN.md` — GitHub branch/issue/PR workflow.
-- `FINAL_REPORT_OUTLINE_CN.md` — thesis/report writing structure.
-- `RESULTS_INTERPRETATION_TEMPLATE_CN.md` — templates for interpreting metrics, layer ablations, heatmaps, limitations, and future work.
-
-## Privacy and safety
-
-This repository is a proof-of-concept research project, not a clinical device and not clinical deployment validation. The gatekeeper is not a disease classifier: it only returns `ACCEPT: valid FAF` or `REJECT: OOD / invalid input`.
-
-The optional Stage 2 reason-attribution module is also not a disease classifier. It is invoked only after rejection to describe a likely reason for the rejection.
-
-Never commit:
-
-- clinical images,
-- patient identifiers,
-- full local paths containing patient information,
-- model weights trained on private data,
-- institutional credentials or data-access notes.
-
-Use `.gitignore` and private storage for all datasets.
-
-## Suggested final deliverables
-
-- Working training/evaluation code.
-- At least one strong feature-space model and one baseline.
-- Reproducible experiment configs.
-- Metrics tables and plots.
-- Heatmap visualizations.
-- Written analysis of sim-to-real gap and feature-layer ablation.
-- GitHub repository with clean documentation and tests.
+Dissertation supervisors: **Dr. William Woof** and **Dr. Nikos Nikolaou**  
+Research advisor: **Yiu Wai Chan**
