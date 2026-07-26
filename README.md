@@ -6,9 +6,13 @@ This repository contains the research code, benchmark package, experiment output
 
 > **Unsupervised Out-of-Distribution Detection for Quality Control in Retinal Imaging**
 
-The project develops a pre-diagnostic gatekeeper for fundus autofluorescence (FAF) imaging. Its purpose is to identify unsupported or invalid inputs before they reach a downstream analysis system.
+The project implements a pre-diagnostic gatekeeper for fundus autofluorescence (FAF) imaging. Its purpose is to identify unsupported or invalid inputs before they reach a downstream analysis system.
 
 The gatekeeper is an input-validity model, not a disease classifier. In-distribution (ID) means supported by the intended FAF input domain; it does not mean healthy. Rejection indicates insufficient support from the learned reference distribution and does not imply disease.
+
+> **Research prototype only.** This repository is not a clinical device, and the reported results
+> are not clinical deployment validation. Real clinical FAF evaluation and prospective threshold
+> calibration are required before any clinical use could be considered.
 
 ## Project at a Glance
 
@@ -31,12 +35,18 @@ Stage 1: ID-only anomaly detector
     +-- REJECT --> optional Stage 2 family/subtype attribution
 ```
 
-### Selected methods
+## Research Contributions
 
-- **Primary Stage 1 detector:** Mahalanobis feature distance
-- **Localisation-oriented companion:** PatchCore L3
-- **Stage 2 family model:** `feature_statistics_fusion`
-- **Stage 2 subtype model:** non-oracle `hierarchical_classifier`
+- A manifest-driven, ID-only Stage 1 evaluation pipeline spanning low-level statistics,
+  reconstruction, global feature distance, and patch-level anomaly detection.
+- A controlled benchmark organised into modality shift, sensory artefact, and semantic-outlier
+  families, with per-subtype reporting and explicit dataset audits.
+- A threshold analysis that separates retrospective ranking metrics from an ID-validation-only
+  prototype operating threshold.
+- PatchCore localisation evidence and failure analysis alongside the quantitatively stronger
+  Mahalanobis detector.
+- An optional, separately evaluated Stage 2 experiment for closed-set family and subtype
+  attribution after rejection.
 
 ## Main Results
 
@@ -50,12 +60,15 @@ Stage 1: ID-only anomaly detector
 
 At the 95th-percentile ID-validation threshold, Mahalanobis rejected **90.79%** of the OOD benchmark while falsely rejecting **4.67%** of the synthetic ID fallback set.
 
-Subtype analysis showed complementary detector behaviour:
+AUROC, AUPRC, and FPR@95% TPR are retrospective ranking/safety metrics; the 95th-percentile
+ID-validation threshold is the prototype decision policy. The high AUPRC is also influenced by
+the OOD-heavy class balance of the evaluation set and should not be read as a prevalence-neutral
+clinical estimate.
 
-- Mahalanobis was strongest for broad modality shifts, semantic outliers, and several diffuse corruptions.
-- PatchCore L3 was more sensitive to local overlays, especially text watermarks, and produced spatial anomaly maps.
-- Text watermark was the main Stage 1 weakness for globally pooled feature methods.
-- Mild blur and high-quality JPEG compression were difficult for maximum-patch scoring.
+Subtype analysis showed complementary behaviour. Mahalanobis was strongest for broad shifts and
+several diffuse corruptions, whereas PatchCore L3 was useful for local overlays and spatial
+anomaly maps, especially text watermarks. Mild blur and high-quality JPEG compression remained
+difficult for maximum-patch scoring.
 
 ### Stage 2: post-rejection reason attribution
 
@@ -64,7 +77,9 @@ Subtype analysis showed complementary detector behaviour:
 | OOD family | `feature_statistics_fusion` | 0.9925 | 1.0000 | 1.0000 |
 | OOD subtype | `hierarchical_classifier` | 0.9059 | 0.9357 | 0.9176 |
 
-The hardest Stage 2 subtype was `text_watermark`, with test F1 **0.7742**. These results describe closed-set attribution on labelled OOD data and are not end-to-end clinical performance estimates.
+The hardest Stage 2 subtype was `text_watermark`, with test F1 **0.7742**. These are results from
+a separate closed-set attribution experiment, not end-to-end gatekeeper performance or clinical
+validation.
 
 ## Benchmark
 
@@ -85,11 +100,17 @@ The OOD taxonomy contains three operational families and 11 subtypes:
 
 ### Experimental views
 
-- **Stage 1 ID split:** 700 training, 150 validation, 150 fallback test images
-- **Primary Stage 1 benchmark:** 150 synthetic ID fallback images and 1,650 subtype-balanced OOD images
-- **Stage 2 grouped split:** 1,260 training, 420 validation, and 420 test OOD images
+- `train_id.csv`: 700 synthetic ID training images
+- `val_id.csv`: 150 synthetic ID images for threshold calibration
+- `test_id_synthetic_fallback.csv`: 150 synthetic fallback ID test images
+- `test_ood_full.csv`: 2,100 OOD stress-test images
+- `test_ood_balanced_by_subtype.csv`: 1,650 OOD images used for the primary balanced comparison
+- Stage 2 parent-grouped split: 1,260 training, 420 validation, and 420 test OOD images
 
-Stage 2 grouping uses the parent-image hash where available and the image path otherwise. This removes cross-partition parent overlap, although transformed variants remain dependent within their assigned partition.
+The final Stage 2 split audit reports zero cross-partition image-path overlap and zero overlap in
+normalised group IDs. Grouping uses the parent-image hash where available and the image path
+otherwise. Variants from a shared parent may still be dependent within the same split, so this is
+not patient-independent clinical validation.
 
 ## Methods Evaluated
 
@@ -122,16 +143,15 @@ All Stage 1 methods are fitted using ID images only. OOD labels are reserved for
 
 ## Start Here
 
-For a concise understanding of the study, use the following documents:
-
 - [Project overview](docs/dissertation/project_overview.md)
 - [Final evidence index](docs/dissertation/final_evidence_index.md)
-- [Reproducibility runbook](docs/dissertation/reproducibility_runbook.md)
 - [Final figure shortlist](docs/dissertation/final_figure_shortlist.md)
 - [Final table shortlist](docs/dissertation/final_table_shortlist.md)
+- [Reproducibility runbook](docs/dissertation/reproducibility_runbook.md)
+- [School server runbook](docs/dissertation/school_server_runbook.md)
 - [Claims and limitations matrix](docs/dissertation/claims_and_limitations_matrix.md)
-
-The evidence index links the principal dissertation claims to the corresponding manifests, scripts, tables, figures, and limitations.
+- [Dissertation handoff index](docs/dissertation/README.md)
+- [Final result summary](reports/dissertation_final/final_result_summary.md)
 
 ## Quick Start
 
@@ -170,52 +190,34 @@ The final audit verifies the dissertation evidence bundle, required documentatio
 
 ## Reproducing the Experiments
 
-The complete command sequence is documented in the [reproducibility runbook](docs/dissertation/reproducibility_runbook.md). The main entry points are summarised below.
+The final complete Stage 1 comparison uses `configs/multi_scheme_grid.yaml`, which includes the
+image-statistics, autoencoder, global kNN, Mahalanobis, and PatchCore configurations.
 
-### Stage 1 experiment grid
+<details>
+<summary>Mahalanobis CPU smoke test</summary>
 
 ```bash
 python scripts/run_experiment_grid.py \
-  --grid-config configs/experiment_grid.yaml \
+  --grid-config configs/multi_scheme_grid.yaml \
   --root-dir data \
-  --out-dir reports/generated/grid_full \
-  --device auto \
-  --seed 42 \
-  --skip-existing
-```
-
-The grid runner applies a common manifest audit, seed, device policy, and output structure across method comparisons. It produces aggregate metrics, per-family and per-subtype results, threshold analyses, heatmaps, and selected failure cases.
-
-### Final parent-grouped Stage 2 evaluation
-
-```bash
-python scripts/build_reason_attribution_manifests.py \
-  --input datasets/dissertation_v1/manifests/test_ood_full.csv \
-  --out-dir datasets/dissertation_v1/manifests \
-  --split-mode grouped \
-  --output-prefix reason_grouped \
-  --seed 42
-
-python scripts/audit_stage2_grouped.py \
-  --input datasets/dissertation_v1/manifests/test_ood_full.csv \
-  --train datasets/dissertation_v1/manifests/reason_grouped_train.csv \
-  --val datasets/dissertation_v1/manifests/reason_grouped_val.csv \
-  --test datasets/dissertation_v1/manifests/reason_grouped_test.csv \
-  --out-dir reports/stage2_grouped \
-  --seed 42
-
-python scripts/generate_stage2_grouped_report.py \
-  --root-dir data \
-  --train-manifest datasets/dissertation_v1/manifests/reason_grouped_train.csv \
-  --val-manifest datasets/dissertation_v1/manifests/reason_grouped_val.csv \
-  --test-manifest datasets/dissertation_v1/manifests/reason_grouped_test.csv \
-  --legacy-dir reports/dissertation_results/reason_attribution_method_comparison \
-  --out-dir reports/stage2_grouped \
-  --figures-dir reports/dissertation_figures/stage2_grouped \
+  --out-dir reports/generated/dissertation_delivery_smoke \
+  --only mahalanobis_feature \
+  --train-manifest datasets/dissertation_v1/manifests/train_id.csv \
+  --val-manifest datasets/dissertation_v1/manifests/val_id.csv \
+  --test-id-manifest datasets/dissertation_v1/manifests/test_id_synthetic_fallback.csv \
+  --test-ood-manifest datasets/dissertation_v1/manifests/test_ood_smoke.csv \
+  --max-train-images 8 \
+  --max-test-images 8 \
+  --device cpu \
   --seed 42
 ```
 
-Manifest paths beginning with `images/...` resolve under `--root-dir data`.
+</details>
+
+See the [reproducibility runbook](docs/dissertation/reproducibility_runbook.md) for the complete
+Stage 1 and Stage 2 command sequences. For Linux cluster setup, storage guidance, and SLURM
+examples, use the [school server runbook](docs/dissertation/school_server_runbook.md). Generated
+runs remain outside Git history.
 
 ## Local Gatekeeper Demo
 
@@ -240,27 +242,11 @@ A research-only operating point is not a deployment threshold.
 
 ## Reproducibility and Evidence
 
-The repository preserves:
-
-- version-controlled manifests and checksums;
-- configuration files and fixed random seeds;
-- sample-level score tables;
-- aggregate, family-level, and subtype-level metrics;
-- threshold and bootstrap analyses;
-- training-size and artefact-severity stress tests;
-- failure cases and method-disagreement examples;
-- PatchCore spatial anomaly maps;
-- Stage 2 grouped-split audits and predictions;
-- claim-to-evidence documentation for the dissertation.
-
-Key evidence locations:
-
-- `reports/dissertation_results/multi_scheme_comparison/`
-- `reports/dissertation_results/robustness_analysis/`
-- `reports/stage2_grouped/`
-- `reports/dissertation_figures/`
-- `reports/dissertation_final/`
-- `docs/dissertation/final_evidence_index.md`
+The repository preserves versioned manifests, checksums, fixed configurations, sample-level
+scores, aggregate and category metrics, threshold/robustness analyses, heatmaps, grouped Stage 2
+audits, and claim-to-evidence documentation. The canonical map is the
+[final evidence index](docs/dissertation/final_evidence_index.md); results are under
+`reports/dissertation_results/`, `reports/stage2_grouped/`, and `reports/dissertation_final/`.
 
 ## Limitations
 
@@ -269,7 +255,8 @@ The reported results are an internal proof of concept, not clinical validation.
 - Nominal Stage 1 training, calibration, and fallback testing use synthetic FAF-like images.
 - The OOD benchmark is a curated stress test and does not estimate clinical prevalence.
 - The taxonomy cannot cover every future device shift, corruption, export format, or user error.
-- Stage 2 is supervised and closed-set; an unseen mechanism may be mapped to an existing category or returned as unknown.
+- Stage 2 is supervised and closed-set; an unseen mechanism may be forced into a known category
+  or misclassified.
 - Parent grouping prevents cross-partition parent overlap, but it is not patient-, device-, site-, or protocol-independent validation.
 - PatchCore maps show detector-relative feature discrepancy and are not pathology maps or segmentation masks.
 
@@ -277,17 +264,26 @@ External evaluation on real FAF acquired across patients, devices, sites, and pr
 
 ## Data, Licensing, and Safety
 
-The repository uses Git LFS for benchmark assets and retains manifests, content hashes, source-bucket fields, and available derivation metadata. Imported OOD assets remain subject to their original licences and usage conditions. The packaged benchmark does not provide complete immutable per-image upstream URLs and licence records for every imported image.
+Dataset images are tracked through Git LFS where applicable. The benchmark combines synthetic
+FAF-like images with prepared public-source OOD assets and retains manifests, content hashes,
+source-bucket fields, and available derivation metadata. Imported assets remain subject to their
+original source licences and conditions; this repository does not grant unrestricted
+redistribution rights for every image asset. Code and data reuse should therefore be assessed
+separately against the applicable repository and upstream-source terms. No new `LICENSE` claim is
+made here.
 
-Do not commit:
+Do not commit private clinical images, patient identifiers, credentials, sensitive local paths,
+private model artefacts, or assets whose redistribution is not permitted.
 
-- private clinical images or patient identifiers;
-- institutional credentials or access notes;
-- unrestricted local paths containing sensitive information;
-- private model weights or manifests;
-- files whose redistribution is not permitted by the source licence.
+It is not a medical device, a diagnostic system, or evidence of prospective clinical safety.
 
-This repository is a research prototype. It is not a medical device, a diagnostic system, or evidence of prospective clinical safety.
+## Citation and Versioning
+
+When referring to this work, cite the associated UCL MSc dissertation and record the exact
+repository revision used. A commit can be recorded with `git rev-parse HEAD`; a tagged release is
+preferable if one is created for submission. Results and documentation may evolve after the
+submitted dissertation version, so the repository URL alone is not a sufficient version
+identifier.
 
 ## Author and Academic Context
 
