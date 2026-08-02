@@ -417,7 +417,10 @@ def _plot_score_distribution(
     order = ["ID", *_OOD_TYPE_ORDER]
     grouped = [table.loc[table["score_group"] == group, "score"].dropna().to_numpy() for group in order]
     fig, ax = plt.subplots(figsize=(7.4, 4.8))
-    ax.boxplot(grouped, labels=order, showfliers=False, patch_artist=True)
+    try:
+        ax.boxplot(grouped, tick_labels=order, showfliers=False, patch_artist=True)
+    except TypeError:
+        ax.boxplot(grouped, labels=order, showfliers=False, patch_artist=True)
     for patch, color in zip(
         ax.artists,
         [_PALETTE["light_green"], _PALETTE["light_blue"], _PALETTE["light_gold"], _PALETTE["light_red"]],
