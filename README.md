@@ -14,6 +14,11 @@ The gatekeeper is an input-validity model, not a disease classifier. In-distribu
 > are not clinical deployment validation. Real clinical FAF evaluation and prospective threshold
 > calibration are required before any clinical use could be considered.
 
+## Dissertation Submission Version
+
+The code and evidence corresponding to the submitted PHAS0077 MSc dissertation are preserved in
+the GitHub release [`v1.0-dissertation-submission`](https://github.com/Xiangyu2141480/retinal-ood-gatekeeper/releases/tag/v1.0-dissertation-submission).
+
 ## Project at a Glance
 
 The completed prototype has two separate stages:
@@ -279,11 +284,10 @@ It is not a medical device, a diagnostic system, or evidence of prospective clin
 
 ## Citation and Versioning
 
-When referring to this work, cite the associated UCL MSc dissertation and record the exact
-repository revision used. A commit can be recorded with `git rev-parse HEAD`; a tagged release is
-preferable if one is created for submission. Results and documentation may evolve after the
-submitted dissertation version, so the repository URL alone is not a sufficient version
-identifier.
+When referring to this work, cite the associated UCL MSc dissertation and use the
+`v1.0-dissertation-submission` release as the version corresponding to the submitted project.
+Later repository revisions may evolve beyond the dissertation snapshot, so the repository URL
+alone is not a sufficient version identifier.
 
 ## Author and Academic Context
 
