@@ -156,6 +156,7 @@ All Stage 1 methods are fitted using ID images only. OOD labels are reserved for
 - [School server runbook](docs/dissertation/school_server_runbook.md)
 - [Claims and limitations matrix](docs/dissertation/claims_and_limitations_matrix.md)
 - [Dissertation handoff index](docs/dissertation/README.md)
+- [Submitted dissertation source snapshot](docs/dissertation/submission_source/README.md)
 - [Final result summary](reports/dissertation_final/final_result_summary.md)
 
 ## Quick Start
