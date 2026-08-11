@@ -1,0 +1,140 @@
+note: Running TeX ...
+tectonic.exe : Fontconfig error: Cannot load default config file: No such file: (null)
+At line:2 char:273
++ ... lyContinue; & '<local-tectonic-path>' ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Fontconfig erro...ch file: (null):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+warning: lineno.sty:296: Invalid UTF-8 byte or sequence at line 296 replaced by U+FFFD.
+warning: main.tex:268: Overfull \hbox (14.65193pt too wide) in paragraph at lines 258--268
+warning: main.tex:284: Overfull \hbox (4.60767pt too wide) in paragraph at lines 277--284
+warning: main.tex:585: Overfull \hbox (1.9143pt too wide) in paragraph at lines 584--585
+warning: main.tex:605: Overfull \hbox (1.21515pt too wide) in paragraph at lines 604--605
+warning: main.tex:671: Overfull \hbox (42.65054pt too wide) in paragraph at lines 670--671
+warning: main.tex:679: Overfull \hbox (8.24266pt too wide) in paragraph at lines 678--679
+warning: main.tex:1367: Overfull \hbox (8.82312pt too wide) in paragraph at lines 1365--1367
+warning: main.tex:1370: Overfull \hbox (3.66101pt too wide) in paragraph at lines 1369--1370
+warning: main.tex:1425: Overfull \hbox (5.26607pt too wide) in paragraph at lines 1424--1425
+warning: main.tex:1993: Overfull \hbox (9.99113pt too wide) in paragraph at lines 1986--1993
+warning: main.tex:2083: Overfull \hbox (1.84445pt too wide) in paragraph at lines 2083--2083
+warning: main.tex:2364: Overfull \hbox (84.33977pt too wide) detected at line 2364
+warning: main.tex:3244: Overfull \hbox (7.64366pt too wide) in paragraph at lines 3239--3244
+warning: main.tex:3382: Overfull \hbox (7.47328pt too wide) in paragraph at lines 3377--3382
+warning: main.tex:3669: Overfull \hbox (2.89615pt too wide) in paragraph at lines 3668--3669
+warning: main.tex:3695: Overfull \hbox (76.14203pt too wide) in paragraph at lines 3693--3695
+warning: main.tex:3926: Overfull \hbox (12.81433pt too wide) in paragraph at lines 3920--3926
+warning: main.tex:3946: Overfull \hbox (10.80312pt too wide) in paragraph at lines 3940--3946
+warning: main.tex:4036: Overfull \hbox (15.70847pt too wide) in paragraph at lines 4031--4036
+warning: main.tex:4104: Overfull \hbox (10.59836pt too wide) in paragraph at lines 4097--4104
+warning: main.tex:4449: Overfull \hbox (6.57431pt too wide) in paragraph at lines 4444--4449
+warning: main.tex:4564: Overfull \hbox (2.36766pt too wide) in paragraph at lines 4553--4564
+warning: main.tex:4927: Overfull \hbox (9.83112pt too wide) in paragraph at lines 4922--4927
+warning: main.tex:4938: Overfull \hbox (3.44713pt too wide) in paragraph at lines 4932--4938
+note: Running BibTeX on main.aux ...
+note: Rerunning TeX because bibtex was run ...
+warning: lineno.sty:296: Invalid UTF-8 byte or sequence at line 296 replaced by U+FFFD.
+warning: main.tex:268: Overfull \hbox (14.65193pt too wide) in paragraph at lines 258--268
+warning: main.tex:284: Overfull \hbox (4.60767pt too wide) in paragraph at lines 277--284
+warning: main.lof:7: Overfull \hbox (1.7315pt too wide) in paragraph at lines 7--7
+warning: main.lof:8: Overfull \hbox (23.08618pt too wide) in paragraph at lines 8--8
+warning: main.lof:13: Overfull \hbox (27.11693pt too wide) in paragraph at lines 13--13
+warning: main.lof:15: Overfull \hbox (3.12216pt too wide) in paragraph at lines 15--15
+warning: main.lof:16: Overfull \hbox (0.89017pt too wide) in paragraph at lines 16--16
+warning: main.lot:13: Overfull \hbox (14.19817pt too wide) in paragraph at lines 13--13
+warning: main.tex:585: Overfull \hbox (1.9143pt too wide) in paragraph at lines 584--585
+warning: main.tex:605: Overfull \hbox (1.21515pt too wide) in paragraph at lines 604--605
+warning: main.tex:671: Overfull \hbox (42.65054pt too wide) in paragraph at lines 670--671
+warning: main.tex:679: Overfull \hbox (3.03467pt too wide) in paragraph at lines 678--679
+warning: main.tex:1367: Overfull \hbox (8.82312pt too wide) in paragraph at lines 1365--1367
+warning: main.tex:1370: Overfull \hbox (3.66101pt too wide) in paragraph at lines 1369--1370
+warning: main.tex:1425: Overfull \hbox (5.26607pt too wide) in paragraph at lines 1424--1425
+warning: main.tex:1993: Overfull \hbox (9.99113pt too wide) in paragraph at lines 1986--1993
+warning: main.tex:2083: Overfull \hbox (1.84445pt too wide) in paragraph at lines 2083--2083
+warning: main.tex:2364: Overfull \hbox (84.33977pt too wide) detected at line 2364
+warning: main.tex:3244: Overfull \hbox (7.64366pt too wide) in paragraph at lines 3239--3244
+warning: main.tex:3382: Overfull \hbox (7.47328pt too wide) in paragraph at lines 3377--3382
+warning: main.tex:3669: Overfull \hbox (2.89615pt too wide) in paragraph at lines 3668--3669
+warning: main.tex:3695: Overfull \hbox (76.14203pt too wide) in paragraph at lines 3693--3695
+warning: main.tex:3926: Overfull \hbox (12.81433pt too wide) in paragraph at lines 3920--3926
+warning: main.tex:3946: Overfull \hbox (10.80312pt too wide) in paragraph at lines 3940--3946
+warning: main.tex:4036: Overfull \hbox (15.70847pt too wide) in paragraph at lines 4031--4036
+warning: main.tex:4104: Overfull \hbox (10.59836pt too wide) in paragraph at lines 4097--4104
+warning: main.tex:4449: Overfull \hbox (6.57431pt too wide) in paragraph at lines 4444--4449
+warning: main.tex:4564: Overfull \hbox (2.36766pt too wide) in paragraph at lines 4553--4564
+warning: main.tex:4927: Overfull \hbox (9.83112pt too wide) in paragraph at lines 4922--4927
+warning: main.tex:4938: Overfull \hbox (3.44713pt too wide) in paragraph at lines 4932--4938
+note: Rerunning TeX because "main.out" changed ...
+warning: lineno.sty:296: Invalid UTF-8 byte or sequence at line 296 replaced by U+FFFD.
+warning: main.tex:268: Overfull \hbox (14.65193pt too wide) in paragraph at lines 258--268
+warning: main.tex:284: Overfull \hbox (4.60767pt too wide) in paragraph at lines 277--284
+warning: main.lof:7: Overfull \hbox (1.7315pt too wide) in paragraph at lines 7--7
+warning: main.lof:8: Overfull \hbox (23.08618pt too wide) in paragraph at lines 8--8
+warning: main.lof:13: Overfull \hbox (27.11693pt too wide) in paragraph at lines 13--13
+warning: main.lof:15: Overfull \hbox (3.12216pt too wide) in paragraph at lines 15--15
+warning: main.lof:16: Overfull \hbox (0.89017pt too wide) in paragraph at lines 16--16
+warning: main.lot:13: Overfull \hbox (14.19817pt too wide) in paragraph at lines 13--13
+warning: main.tex:585: Overfull \hbox (1.9143pt too wide) in paragraph at lines 584--585
+warning: main.tex:605: Overfull \hbox (1.21515pt too wide) in paragraph at lines 604--605
+warning: main.tex:671: Overfull \hbox (42.65054pt too wide) in paragraph at lines 670--671
+warning: main.tex:679: Overfull \hbox (3.03467pt too wide) in paragraph at lines 678--679
+warning: main.tex:1370: Overfull \hbox (3.66101pt too wide) in paragraph at lines 1369--1370
+warning: main.tex:1425: Overfull \hbox (5.26607pt too wide) in paragraph at lines 1424--1425
+warning: main.tex:1993: Overfull \hbox (9.99113pt too wide) in paragraph at lines 1986--1993
+warning: main.tex:2083: Overfull \hbox (1.84445pt too wide) in paragraph at lines 2083--2083
+warning: main.tex:2364: Overfull \hbox (84.33977pt too wide) detected at line 2364
+warning: main.tex:3244: Overfull \hbox (7.64366pt too wide) in paragraph at lines 3239--3244
+warning: main.tex:3382: Overfull \hbox (7.47328pt too wide) in paragraph at lines 3377--3382
+warning: main.tex:3669: Overfull \hbox (2.89615pt too wide) in paragraph at lines 3668--3669
+warning: main.tex:3695: Overfull \hbox (76.14203pt too wide) in paragraph at lines 3693--3695
+warning: main.tex:3926: Overfull \hbox (12.81433pt too wide) in paragraph at lines 3920--3926
+warning: main.tex:3946: Overfull \hbox (10.80312pt too wide) in paragraph at lines 3940--3946
+warning: main.tex:4036: Overfull \hbox (15.70847pt too wide) in paragraph at lines 4031--4036
+warning: main.tex:4104: Overfull \hbox (10.59836pt too wide) in paragraph at lines 4097--4104
+warning: main.tex:4449: Overfull \hbox (6.57431pt too wide) in paragraph at lines 4444--4449
+warning: main.tex:4564: Overfull \hbox (2.36766pt too wide) in paragraph at lines 4553--4564
+warning: main.tex:4927: Overfull \hbox (9.83112pt too wide) in paragraph at lines 4922--4927
+warning: main.tex:4938: Overfull \hbox (3.44713pt too wide) in paragraph at lines 4932--4938
+note: Rerunning TeX because "main.toc" changed ...
+warning: lineno.sty:296: Invalid UTF-8 byte or sequence at line 296 replaced by U+FFFD.
+warning: main.tex:268: Overfull \hbox (14.65193pt too wide) in paragraph at lines 258--268
+warning: main.tex:284: Overfull \hbox (4.60767pt too wide) in paragraph at lines 277--284
+warning: main.lof:7: Overfull \hbox (1.7315pt too wide) in paragraph at lines 7--7
+warning: main.lof:8: Overfull \hbox (23.08618pt too wide) in paragraph at lines 8--8
+warning: main.lof:13: Overfull \hbox (27.11693pt too wide) in paragraph at lines 13--13
+warning: main.lof:15: Overfull \hbox (3.12216pt too wide) in paragraph at lines 15--15
+warning: main.lof:16: Overfull \hbox (0.89017pt too wide) in paragraph at lines 16--16
+warning: main.lot:13: Overfull \hbox (14.19817pt too wide) in paragraph at lines 13--13
+warning: main.tex:585: Overfull \hbox (1.9143pt too wide) in paragraph at lines 584--585
+warning: main.tex:605: Overfull \hbox (1.21515pt too wide) in paragraph at lines 604--605
+warning: main.tex:671: Overfull \hbox (42.65054pt too wide) in paragraph at lines 670--671
+warning: main.tex:679: Overfull \hbox (3.03467pt too wide) in paragraph at lines 678--679
+warning: main.tex:1370: Overfull \hbox (3.66101pt too wide) in paragraph at lines 1369--1370
+warning: main.tex:1425: Overfull \hbox (5.26607pt too wide) in paragraph at lines 1424--1425
+warning: main.tex:1993: Overfull \hbox (9.99113pt too wide) in paragraph at lines 1986--1993
+warning: main.tex:2083: Overfull \hbox (1.84445pt too wide) in paragraph at lines 2083--2083
+warning: main.tex:2364: Overfull \hbox (84.33977pt too wide) detected at line 2364
+warning: main.tex:3244: Overfull \hbox (7.64366pt too wide) in paragraph at lines 3239--3244
+warning: main.tex:3382: Overfull \hbox (7.47328pt too wide) in paragraph at lines 3377--3382
+warning: main.tex:3669: Overfull \hbox (2.89615pt too wide) in paragraph at lines 3668--3669
+warning: main.tex:3695: Overfull \hbox (76.14203pt too wide) in paragraph at lines 3693--3695
+warning: main.tex:3926: Overfull \hbox (12.81433pt too wide) in paragraph at lines 3920--3926
+warning: main.tex:3946: Overfull \hbox (10.80312pt too wide) in paragraph at lines 3940--3946
+warning: main.tex:4036: Overfull \hbox (15.70847pt too wide) in paragraph at lines 4031--4036
+warning: main.tex:4104: Overfull \hbox (10.59836pt too wide) in paragraph at lines 4097--4104
+warning: main.tex:4449: Overfull \hbox (6.57431pt too wide) in paragraph at lines 4444--4449
+warning: main.tex:4564: Overfull \hbox (2.36766pt too wide) in paragraph at lines 4553--4564
+warning: main.tex:4927: Overfull \hbox (9.83112pt too wide) in paragraph at lines 4922--4927
+warning: main.tex:4938: Overfull \hbox (3.44713pt too wide) in paragraph at lines 4932--4938
+note: Running xdvipdfmx ...
+warning: warnings were issued by the TeX engine; use --print and/or --keep-logs for details.
+warning: Object @page.1 already defined.
+note: Writing `main.blg` (189 B)
+note: Writing `main.log` (45.5908203125 KiB)
+note: Writing `main.pdf` (1.766280174255371 MiB)
+note: Writing `main.lot` (1.79296875 KiB)
+note: Writing `main.out` (15.5654296875 KiB)
+note: Writing `main.bbl` (16.435546875 KiB)
+note: Writing `main.aux` (50.158203125 KiB)
+note: Writing `main.toc` (9.7880859375 KiB)
+note: Writing `main.lof` (6.0302734375 KiB)
